@@ -1,0 +1,3 @@
+# local overrides for `quickshell --path ./src`; the nix build generates its own
+/src/config.json
+/result
