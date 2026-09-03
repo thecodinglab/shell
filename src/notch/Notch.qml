@@ -127,6 +127,12 @@ PanelWindow {
         peekTimer.restart();
     }
 
+    // Announce the volume under the top edge for a moment, without bringing
+    // the notch out to do it.
+    function showVolume(): void {
+        osd.show();
+    }
+
     screen: root.modelData
 
     anchors {
@@ -521,13 +527,49 @@ PanelWindow {
     // it rather than being covered by it, and get out of the way entirely
     // once the panel opens.
 
+    // ── the volume, from the keyboard ─────────────────────────────────────
+    //
+    // Set from a media key, the volume is announced the way a notification
+    // is: a pill drops out from under the slab, shows the level, and goes
+    // back up. The shell root decides which monitor it drops on — see
+    // `showVolume` — and an open notch has its own slider in view, so it is
+    // never asked.
+
+    Osd {
+        id: osd
+
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        // where it rests, hanging under the slab like the toasts do; put away
+        // it is that plus its own height further up, off the top edge
+        readonly property int rest: slab.y + slab.height + Theme.toastSpacing
+        // what the toasts have to move down by to hang under it; plain rather
+        // than readonly so the move can be animated
+        property int room: osd.shown ? osd.height + Theme.toastSpacing : 0
+
+        y: osd.rest - osd.slide * (osd.rest + osd.height)
+
+        icon: Icons.volume(Audio.volume, Audio.muted)
+        value: Audio.muted ? 0 : Audio.volume
+        // a muted output draws an empty track, and the figure has to agree
+        text: Audio.muted ? "Muted" : Fmt.percent(Audio.volume)
+
+        Behavior on room {
+            NumberAnimation {
+                duration: Theme.revealDuration
+                easing.type: Theme.expandEasing
+            }
+        }
+    }
+
     Column {
         id: toasts
 
         anchors.horizontalCenter: parent.horizontalCenter
         // slab.y is -slab.height while the notch is put away, so this is the
-        // top of the screen until the notch slides out from over it
-        y: slab.y + slab.height + Theme.toastSpacing
+        // top of the screen until the notch slides out from over it, and the
+        // volume pill pushes them further down while it is out
+        y: slab.y + slab.height + Theme.toastSpacing + osd.room
 
         width: Theme.toastWidth
         spacing: Theme.toastSpacing

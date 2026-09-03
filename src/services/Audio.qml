@@ -24,6 +24,25 @@ Singleton {
     readonly property real inputVolume: root.source?.audio?.volume ?? 0
     readonly property bool inputMuted: root.source?.audio?.muted ?? false
 
+    // The output's volume or mute has been set, by whoever set it: a media
+    // key, the notch's own slider, another application. It is the sink's
+    // own change signals rather than `volume` above changing, so that the
+    // default output switching to a device that happens to be at a different
+    // level does not count as anyone having turned it.
+    signal adjusted
+
+    Connections {
+        target: root.sink?.audio ?? null
+
+        function onVolumesChanged(): void {
+            root.adjusted();
+        }
+
+        function onMutedChanged(): void {
+            root.adjusted();
+        }
+    }
+
     // A node's own name is a pipewire object path more often than not, so
     // prefer whatever it says it would like to be called.
     function label(node: PwNode): string {

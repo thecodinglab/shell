@@ -13,7 +13,11 @@ time it is not there at all: the screen belongs to the windows on it, nothing
 is reserved, and all the shell occupies is a few pixels along the top edge.
 Reach the top of the screen and the tab slides back out; leave and it puts
 itself away again. A notification drops out from under the top edge on its
-own, whether the tab is out or not.
+own, whether the tab is out or not, and so does the volume: set it from a
+media key and a pill drops out under the notch on the focused monitor with
+the speaker glyph, a bar and the figure, moves with every further press, and
+goes back up a moment and a half after the last one. It is not there while
+the notch is open, where the slider already is.
 
 Clicking the tab grows the same slab into a 440px panel — over the windows,
 so opening the notch never reflows what is behind it. It is laid out the way

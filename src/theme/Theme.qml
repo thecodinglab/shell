@@ -244,6 +244,16 @@ Singleton {
     readonly property int toastSpacing: root.px(8)
     readonly property int toastRadius: root.px(18)
 
+    // The reading that drops out of the top edge when the volume is set from
+    // the keyboard: narrower than a notification, because it carries one
+    // bar and a figure rather than a line of prose, and a pill rather than a
+    // card, because it is the notch's own shape at the notch's own size.
+    readonly property int osdWidth: root.px(240)
+    readonly property int osdPadding: root.px(10)
+    // its bar is read, never dragged, so it is drawn at the scrubber's
+    // hovered weight rather than the slider's
+    readonly property int osdTrackHeight: root.px(6)
+
     // ── motion ────────────────────────────────────────────────────────────
 
     // the slab unfolding, and the crossfade between what it held before and
@@ -267,6 +277,10 @@ Singleton {
     // one turn of a spinner; slow enough to read as waiting rather than as
     // something having gone wrong
     readonly property int spinDuration: 900
+    // How long the volume reading stays out after the last key press: long
+    // enough to be read, short enough that it is gone before it is in the
+    // way of anything. Every press starts it over.
+    readonly property int osdHold: 1500
 
     // a pointer clipping the top edge on its way somewhere else should not
     // pull the notch out
