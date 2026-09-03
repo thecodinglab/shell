@@ -46,7 +46,7 @@ stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "Custom quickshell bar";
+    description = "Custom quickshell notch shell";
     mainProgram = "shell";
     platforms = lib.platforms.linux;
   };

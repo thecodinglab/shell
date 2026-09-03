@@ -1,5 +1,5 @@
 {
-  description = "custom quickshell bar";
+  description = "custom quickshell notch shell";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -40,7 +40,7 @@
             ];
 
             shellHook = ''
-              echo "run the bar against the working tree with: quickshell --path ./src"
+              echo "run the shell against the working tree with: quickshell --path ./src"
             '';
           };
         }

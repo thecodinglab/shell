@@ -1,0 +1,62 @@
+pragma Singleton
+
+import QtQuick
+import Quickshell
+import Quickshell.Services.Mpris
+
+// Every player that can be controlled, whatever is playing first.
+//
+// The notch shows all of them stacked rather than picking one, so a paused
+// video does not disappear the moment music starts somewhere else. `player`
+// is only for the places that genuinely have room for a single one.
+Singleton {
+    id: root
+
+    readonly property var players: Mpris.players.values.filter(p => p.canControl).sort((a, b) => {
+        if (a.isPlaying !== b.isPlaying)
+            return a.isPlaying ? -1 : 1;
+        // a stable tiebreak, so two paused players do not swap places while
+        // you are looking at them
+        return a.uniqueId - b.uniqueId;
+    })
+
+    readonly property MprisPlayer player: root.players[0] ?? null
+    readonly property bool active: root.players.length > 0
+    readonly property bool playing: root.players.some(p => p.isPlaying)
+
+    function toggle(player: MprisPlayer): void {
+        if (player?.canTogglePlaying)
+            player.togglePlaying();
+    }
+
+    function next(player: MprisPlayer): void {
+        if (player?.canGoNext)
+            player.next();
+    }
+
+    function previous(player: MprisPlayer): void {
+        if (player?.canGoPrevious)
+            player.previous();
+    }
+
+    function seek(player: MprisPlayer, fraction: real): void {
+        const length = player?.lengthSupported ? player.length : 0;
+        if (player?.canSeek && length > 0)
+            player.position = Math.max(0, Math.min(1, fraction)) * length;
+    }
+
+    // mpris players are not obliged to announce that the playhead moved, so
+    // a position is only as fresh as the last time somebody asked for it.
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.playing
+
+        onTriggered: {
+            for (const player of root.players) {
+                if (player.isPlaying && player.positionSupported)
+                    player.positionChanged();
+            }
+        }
+    }
+}

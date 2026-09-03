@@ -1,10 +1,10 @@
 import Quickshell
-import qs.bar
+import qs.notch
 
 ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        Bar {}
+        Notch {}
     }
 }

@@ -3,28 +3,48 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.util
 
-// Total cpu usage in percent, sampled from /proc/stat on waybar's 10s cadence.
+// Total cpu usage, sampled from /proc/stat.
+//
+// The resources panel draws the last `history.size` samples as a graph, so
+// this ticks fast enough for that to say something: forty samples two seconds
+// apart is a little over a minute of history.
 Singleton {
     id: root
 
-    readonly property int usage: internal.usage
+    // 0..1
+    readonly property real usage: internal.usage
+    readonly property alias history: ring.values
+    readonly property int threads: internal.threads
+
+    readonly property int interval: 2000
+    // how far back the history reaches, for the graph to label itself with
+    readonly property int historySeconds: Math.round(ring.size * root.interval / 1000)
+
+    Ring {
+        id: ring
+    }
 
     QtObject {
         id: internal
 
-        property int usage: 0
+        property real usage: 0
+        property int threads: 0
         property real previousIdle: -1
         property real previousTotal: -1
     }
 
     function sample(stat: string): void {
-        // the first line is the "cpu" aggregate over all cores
-        const fields = stat.split("\n")[0].trim().split(/\s+/).slice(1).map(Number);
+        const lines = stat.split("\n");
+        // one "cpuN" line per thread, below the "cpu" aggregate
+        internal.threads = lines.filter(l => /^cpu[0-9]/.test(l)).length;
+
+        const fields = lines[0].trim().split(/\s+/).slice(1).map(Number);
         if (fields.length < 5)
             return;
 
-        // waybar counts iowait as idle
+        // iowait counts as idle; a machine waiting on a disk is not busy
         const idle = fields[3] + fields[4];
         const total = fields.reduce((a, b) => a + b, 0);
 
@@ -32,9 +52,10 @@ Singleton {
             const deltaIdle = idle - internal.previousIdle;
             const deltaTotal = total - internal.previousTotal;
 
-            if (deltaTotal > 0)
-                // truncated, not rounded, like waybar's cast to uint16
-                internal.usage = Math.trunc(100 * (1 - deltaIdle / deltaTotal));
+            if (deltaTotal > 0) {
+                internal.usage = 1 - deltaIdle / deltaTotal;
+                ring.push(internal.usage);
+            }
         }
 
         internal.previousIdle = idle;
@@ -49,15 +70,15 @@ Singleton {
     }
 
     Timer {
-        interval: 10000
+        interval: root.interval
         running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: file.reload()
     }
 
-    // waybar seeds its baseline and takes a second sample 100ms later so the
-    // bar shows a real number immediately instead of 0% for the first tick
+    // The first sample only establishes the baseline. Take a second one right
+    // after it so the notch opens on a real number instead of 0%.
     Timer {
         interval: 100
         running: true

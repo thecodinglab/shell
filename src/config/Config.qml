@@ -17,7 +17,7 @@ Singleton {
         id: file
 
         path: `${Quickshell.shellDir}/config.json`
-        // read before the first frame; the bar geometry depends on it
+        // read before the first frame; the notch geometry depends on it
         blockLoading: true
         // a missing config.json just means "use the defaults"
         printErrors: false
@@ -43,23 +43,54 @@ Singleton {
 
     // ── base16 palette ────────────────────────────────────────────────────
     // defaults: catppuccin mocha, matching modules/home-manager/theme/theme.yaml
+    //
+    // The notch is deliberately monochrome plus one accent, so it only needs
+    // the ground, the ink, the accent and a colour for things that are wrong.
 
     readonly property string base00: value("base00", "#1e1e2e") // background
     readonly property string base05: value("base05", "#cdd6f4") // foreground
     readonly property string base08: value("base08", "#f38ba8") // red, urgent
-    readonly property string base0D: value("base0D", "#89b4fa") // blue, active
+    readonly property string base0D: value("base0D", "#89b4fa") // blue, accent
 
     // ── typography ────────────────────────────────────────────────────────
 
-    readonly property string fontFamily: value("fontFamily", "JetBrainsMono Nerd Font Mono")
+    // labels and names read better in a proportional face; numbers, glyphs
+    // and anything that has to line up column-wise stay monospaced
+    readonly property string sansFamily: value("sansFamily", "Inter")
+    readonly property string monoFamily: value("monoFamily", "JetBrainsMono Nerd Font Mono")
+
+    // The notch was drawn against a 10pt base. Everything in Theme is a
+    // multiple of it, so raising this grows the whole surface, not just text.
     readonly property real fontSize: value("fontSize", 10)
 
-    // Locale used for the clock. Empty means "whatever the session is set to",
-    // which is what waybar's strftime did.
+    // ...and how large the notch is over and above that. The font size is the
+    // session's — stylix hands it over, and it is the size the rest of the
+    // desktop is set in — while this one belongs to the notch alone, for when
+    // the surface wants to be bigger than that text alone would make it. 1 is
+    // the drawing at the size it was drawn.
+    readonly property real scale: value("scale", 1.25)
+
+    // Locale used for the clock and the date. Empty means "whatever the
+    // session is set to".
     readonly property string locale: value("locale", "")
+    readonly property bool twelveHour: value("twelveHour", false)
 
     // ── modules ───────────────────────────────────────────────────────────
 
     readonly property string diskPath: value("diskPath", "/")
     readonly property string networkInterface: value("networkInterface", "enp13s0")
+
+    // Interfaces the notch does not count as ways out of the machine: bridges,
+    // container veths and the like, matched by the start of their name.
+    readonly property var networkIgnore: value("networkIgnore", ["veth", "docker", "br-", "virbr", "vnet"])
+
+    // A monitor's dots are the workspaces hyprland's rules bind to it. On a
+    // monitor with no such rules they are the first this many instead, so the
+    // collapsed notch keeps its width instead of twitching every time one
+    // opens or closes.
+    readonly property int workspaceCount: value("workspaceCount", 5)
+
+    // How long a notification sits under the notch before it fades out. The
+    // sender can ask for less; it can never ask for more.
+    readonly property int notificationTimeout: value("notificationTimeout", 6000)
 }

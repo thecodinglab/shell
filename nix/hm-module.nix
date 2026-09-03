@@ -8,7 +8,7 @@
 let
   cfg = config.custom.shell;
 
-  # Follow stylix when it is in the picture, so the bar keeps matching the
+  # Follow stylix when it is in the picture, so the notch keeps matching the
   # rest of the session without having to restate the palette here.
   hasStylix = config ? stylix && config.stylix.enable;
   colors = config.lib.stylix.colors.withHashtag;
@@ -21,13 +21,14 @@ let
       base0D
       ;
 
-    fontFamily = config.stylix.fonts.monospace.name;
+    sansFamily = config.stylix.fonts.sansSerif.name;
+    monoFamily = config.stylix.fonts.monospace.name;
     fontSize = config.stylix.fonts.sizes.desktop;
   };
 in
 {
   options.custom.shell = {
-    enable = lib.mkEnableOption "the quickshell bar";
+    enable = lib.mkEnableOption "the quickshell notch";
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -39,7 +40,7 @@ in
     systemd.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Run the bar as a user service tied to the graphical session.";
+      description = "Run the shell as a user service tied to the graphical session.";
     };
 
     settings = lib.mkOption {
@@ -68,7 +69,7 @@ in
 
       systemd.user.services.shell = lib.mkIf cfg.systemd.enable {
         Unit = {
-          Description = "Custom quickshell bar";
+          Description = "Custom quickshell notch";
           PartOf = [ config.wayland.systemd.target ];
           After = [ config.wayland.systemd.target ];
         };
