@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import qs.theme
@@ -10,7 +12,8 @@ import qs.widgets
 // A row is a single gesture that does the obvious next thing: pair what is
 // new, connect what is known, hang up on what is already connected. Whatever
 // bluez is still thinking about spins instead, and takes no taps until it has
-// finished thinking.
+// finished thinking. The line under a device's name says which of those it
+// is; a lit disc beside it says it is on the line right now.
 //
 // The panel neither starts nor stops discovery — it only reports it, in the
 // header. The field at the top narrows the list down rather than going
@@ -27,7 +30,7 @@ ColumnLayout {
     // the rest and scrolls once it runs out.
     readonly property int listMax: Math.max(Theme.listMinHeight, root.notch.bodyMaxHeight - header.height - search.height - root.spacing * 2)
 
-    spacing: Theme.px(10)
+    spacing: Theme.expandedSpacing
 
     // The field borrows the keyboard while the panel is up; hand it back on
     // the way out so escape still steps out of the notch.
@@ -37,7 +40,6 @@ ColumnLayout {
         id: header
 
         Layout.fillWidth: true
-        Layout.leftMargin: Theme.px(4)
 
         title: "Bluetooth"
 
@@ -46,7 +48,7 @@ ColumnLayout {
         Caption {
             visible: Bt.discovering
 
-            text: "scanning"
+            text: "Scanning"
             color: Theme.accent
         }
 
@@ -65,7 +67,6 @@ ColumnLayout {
         visible: Bt.enabled
 
         placeholder: "Search devices"
-        padding: Theme.px(9)
 
         // escape on an empty field is a step back out, the same as it is
         // anywhere else in the notch
@@ -74,21 +75,22 @@ ColumnLayout {
         Component.onCompleted: search.take()
     }
 
-    Mono {
+    Sans {
         Layout.fillWidth: true
-        Layout.margins: Theme.px(4)
+        Layout.margins: Theme.cardPadding
 
         visible: root.matches.length === 0
 
         text: {
             if (!Bt.available)
-                return "no bluetooth adapter";
+                return "No bluetooth adapter on this machine.";
             if (!Bt.enabled)
-                return "adapter is off";
+                return "Turn bluetooth on to see devices.";
             if (Bt.devices.length === 0)
-                return Bt.discovering ? "looking for devices" : "no devices yet";
-            return `nothing called “${search.text.trim()}”`;
+                return Bt.discovering ? "Looking for devices…" : "No devices yet.";
+            return `Nothing called “${search.text.trim()}”.`;
         }
+        color: Theme.textDim
     }
 
     // The list, and the bar that turns up beside it once there is more in it
@@ -121,24 +123,31 @@ ColumnLayout {
                 required property var modelData
 
                 readonly property bool busy: Bt.busy(deviceRow.modelData)
+                readonly property bool connected: deviceRow.modelData.connected
 
                 width: ListView.view.width
 
-                active: deviceRow.modelData.connected
+                flat: true
                 // a device mid-handshake has nothing to offer a tap: the next
                 // one could only countermand the last
                 interactive: !deviceRow.busy
-                padding: Theme.px(9)
+                padding: Theme.rowPadding
 
                 onClicked: Bt.activate(deviceRow.modelData)
 
-                Glyph {
-                    text: Icons.device(deviceRow.modelData.icon)
-                    color: deviceRow.active ? Theme.accent : Theme.textMuted
+                IconDisc {
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.leftMargin: Theme.px(2)
+
+                    icon: Icons.device(deviceRow.modelData.icon)
+                    on: deviceRow.connected
+                    size: Theme.discSizeSmall
+                    iconColor: deviceRow.modelData.paired ? Theme.textBody : Theme.textMuted
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
 
                     spacing: Theme.px(1)
 
@@ -151,35 +160,39 @@ ColumnLayout {
                         font.weight: Font.Medium
                     }
 
-                    Mono {
+                    Caption {
                         Layout.fillWidth: true
 
+                        // What is happening to it, or failing that what it
+                        // is. Every paired row connects when it is clicked,
+                        // so that is not worth saying on each of them.
                         text: {
                             const device = deviceRow.modelData;
-                            const parts = [];
 
-                            if (device.icon)
-                                parts.push(device.icon.replace(/^(audio|input|video)-/, ""));
-                            if (device.batteryAvailable)
-                                parts.push(`battery ${Fmt.percent(device.battery)}`);
-                            else if (!device.paired)
-                                parts.push("not paired");
-
-                            return parts.join(" · ");
+                            switch (Bt.status(device)) {
+                            case "pairing":
+                                return "Pairing…";
+                            case "connecting":
+                                return "Connecting…";
+                            case "disconnecting":
+                                return "Disconnecting…";
+                            case "connected":
+                                return device.batteryAvailable ? `Connected · ${Fmt.percent(device.battery)}` : "Connected";
+                            case "pair":
+                                return "Not paired";
+                            default:
+                                return Bt.kind(device);
+                            }
                         }
+                        color: deviceRow.connected || deviceRow.busy ? Theme.accent : Theme.textDim
                     }
                 }
 
                 Spinner {
                     Layout.alignment: Qt.AlignVCenter
+                    Layout.rightMargin: Theme.px(4)
 
                     visible: deviceRow.busy
-                }
-
-                Tag {
-                    accented: deviceRow.modelData.connected || deviceRow.busy
-
-                    text: Bt.status(deviceRow.modelData)
                 }
             }
         }

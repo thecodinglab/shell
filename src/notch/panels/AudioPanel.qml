@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Pipewire
@@ -8,186 +10,140 @@ import qs.widgets
 
 // Where the sound goes and where it comes from.
 //
-// One tap on a row makes that device the default; pipewire moves the streams
-// that follow the default across on its own.
+// Two modules, one each way. Each has its bar at the top and the devices it
+// could be going through underneath; one tap on a device makes it the
+// default, and pipewire moves the streams that follow the default across on
+// its own.
 ColumnLayout {
     id: root
 
     required property var notch
 
-    spacing: Theme.px(10)
+    spacing: Theme.expandedSpacing
 
     PanelHeader {
         Layout.fillWidth: true
-        Layout.leftMargin: Theme.px(4)
 
-        title: "Audio"
+        title: "Sound"
 
         onBack: root.notch.panel = "home"
-
-        Caption {
-            text: "pipewire"
-            color: Theme.textDim
-        }
     }
 
-    // ── the default sink, big enough to aim at ────────────────────────────
+    // ── output ────────────────────────────────────────────────────────────
 
     Card {
         Layout.fillWidth: true
 
-        radius: Theme.rowRadius
+        ColumnLayout {
+            spacing: Theme.px(8)
 
-        RowLayout {
-            spacing: Theme.rowSpacing
+            Caption {
+                Layout.bottomMargin: Theme.px(2)
 
-            Glyph {
-                Layout.alignment: Qt.AlignVCenter
+                text: "Output"
+            }
 
-                text: Icons.volume(Audio.volume, Audio.muted)
-                color: Audio.muted ? Theme.textDim : Theme.textBody
+            RowLayout {
+                Layout.fillWidth: true
 
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -Theme.px(4)
+                spacing: Theme.rowSpacing
 
-                    cursorShape: Qt.PointingHandCursor
+                Slider {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
 
-                    onClicked: Audio.toggleMute(Audio.sink)
+                    icon: Icons.volume(Audio.volume, Audio.muted)
+                    value: Audio.muted ? 0 : Audio.volume
+
+                    onMoved: fraction => Audio.setVolume(Audio.sink, fraction)
+                    onIconClicked: Audio.toggleMute(Audio.sink)
+                }
+
+                Num {
+                    Layout.preferredWidth: Theme.figureWidth
+                    Layout.alignment: Qt.AlignVCenter
+
+                    // a muted device draws an empty track, and the figure
+                    // beside it has to agree with that
+                    text: Audio.muted ? "Muted" : Fmt.percent(Audio.volume)
+                    color: Audio.muted ? Theme.textDim : Theme.textMuted
+
+                    horizontalAlignment: Text.AlignRight
                 }
             }
 
-            Slider {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
+            DeviceList {
+                nodes: Audio.sinks
+                current: Audio.sink
 
-                value: Audio.muted ? 0 : Audio.volume
-                knob: true
-                trackHeight: Theme.px(8)
-
-                onMoved: fraction => Audio.setVolume(Audio.sink, fraction)
-            }
-
-            Mono {
-                Layout.preferredWidth: Theme.px(34)
-                Layout.alignment: Qt.AlignVCenter
-
-                text: Fmt.percent(Audio.volume)
-                color: Theme.textMuted
-
-                font.pixelSize: Theme.fontMeta
-                horizontalAlignment: Text.AlignRight
+                onPicked: node => Audio.setDefaultSink(node)
             }
         }
     }
 
-    Caption {
-        Layout.leftMargin: Theme.px(6)
-
-        text: "output"
-    }
-
-    Repeater {
-        model: Audio.sinks
-
-        ListRow {
-            id: sinkRow
-
-            required property var modelData
-
-            Layout.fillWidth: true
-
-            active: sinkRow.modelData === Audio.sink
-            padding: Theme.px(9)
-
-            onClicked: Audio.setDefaultSink(sinkRow.modelData)
-
-            Mono {
-                Layout.preferredWidth: Theme.px(14)
-
-                text: sinkRow.active ? Icons.selected : Icons.unselected
-                color: sinkRow.active ? Theme.accent : Theme.textDim
-
-                font.pixelSize: Theme.fontMeta
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            Sans {
-                Layout.fillWidth: true
-
-                text: Audio.label(sinkRow.modelData)
-                color: Theme.text
-            }
-
-            Mono {
-                text: Audio.bus(sinkRow.modelData)
-            }
-        }
-    }
-
-    // ── the default source, with what it is actually hearing ──────────────
+    // ── input, with what it is actually hearing ───────────────────────────
 
     Card {
         Layout.fillWidth: true
-        Layout.topMargin: Theme.px(2)
 
-        radius: Theme.rowRadius
         visible: Audio.source !== null
 
-        RowLayout {
-            spacing: Theme.rowSpacing
+        ColumnLayout {
+            spacing: Theme.px(8)
 
-            Glyph {
-                Layout.alignment: Qt.AlignVCenter
+            Caption {
+                Layout.bottomMargin: Theme.px(2)
 
-                text: Audio.inputMuted ? Icons.microphoneMuted : Icons.microphone
-                color: Audio.inputMuted ? Theme.textDim : Theme.textBody
-
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -Theme.px(4)
-
-                    cursorShape: Qt.PointingHandCursor
-
-                    onClicked: Audio.toggleMute(Audio.source)
-                }
+                text: "Input"
             }
 
-            ColumnLayout {
+            RowLayout {
                 Layout.fillWidth: true
 
-                spacing: Theme.px(4)
+                spacing: Theme.rowSpacing
 
-                Sans {
+                Slider {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
 
-                    text: Audio.label(Audio.source)
-                    color: Theme.text
+                    icon: Audio.inputMuted ? Icons.microphoneMuted : Icons.microphone
+                    value: Audio.inputMuted ? 0 : Audio.inputVolume
+
+                    onMoved: fraction => Audio.setVolume(Audio.source, fraction)
+                    onIconClicked: Audio.toggleMute(Audio.source)
                 }
 
-                Graph {
-                    Layout.fillWidth: true
+                Num {
+                    Layout.preferredWidth: Theme.figureWidth
+                    Layout.alignment: Qt.AlignVCenter
 
-                    // the last second or so of what the microphone picked up,
-                    // which is the only honest way to show a level
-                    values: peaks.values
-                    slots: 18
-                    recent: 0
-                    implicitHeight: Theme.px(10)
+                    text: Audio.inputMuted ? "Muted" : Fmt.percent(Audio.inputVolume)
+                    color: Audio.inputMuted ? Theme.textDim : Theme.textMuted
 
-                    pastColor: Audio.inputMuted ? Theme.track : Theme.alpha(Theme.text, 0.4)
+                    horizontalAlignment: Text.AlignRight
                 }
             }
 
-            Mono {
-                Layout.preferredWidth: Theme.px(34)
-                Layout.alignment: Qt.AlignVCenter
+            // the last second or so of what the microphone picked up, which
+            // is the only honest way to show a level
+            Graph {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.px(2)
+                Layout.rightMargin: Theme.figureWidth + Theme.rowSpacing + Theme.px(2)
 
-                text: Fmt.percent(Audio.inputVolume)
-                color: Theme.textMuted
+                values: peaks.values
+                slots: 24
+                recent: 0
+                implicitHeight: Theme.px(10)
 
-                font.pixelSize: Theme.fontMeta
-                horizontalAlignment: Text.AlignRight
+                pastColor: Audio.inputMuted ? Theme.track : Theme.alpha(Theme.text, 0.4)
+            }
+
+            DeviceList {
+                nodes: Audio.sources
+                current: Audio.source
+
+                onPicked: node => Audio.setDefaultSource(node)
             }
         }
     }
@@ -195,7 +151,7 @@ ColumnLayout {
     Ring {
         id: peaks
 
-        size: 18
+        size: 24
     }
 
     // Monitoring a node costs pipewire real work, so it only runs while this
@@ -213,5 +169,64 @@ ColumnLayout {
         repeat: true
 
         onTriggered: peaks.push(Audio.inputMuted ? 0 : monitor.peak)
+    }
+
+    // The devices a bar could be going through, with a check beside the one
+    // it is. The rows reach out past the module's content edge so their
+    // hover ground wraps the name rather than starting at it.
+    component DeviceList: ColumnLayout {
+        id: list
+
+        required property var nodes
+        required property PwNode current
+
+        signal picked(PwNode node)
+
+        Layout.fillWidth: true
+        Layout.leftMargin: -Theme.rowPadding
+        Layout.rightMargin: -Theme.rowPadding
+        Layout.topMargin: Theme.px(2)
+        Layout.bottomMargin: -Theme.px(4)
+
+        spacing: Theme.listSpacing
+
+        Repeater {
+            model: list.nodes
+
+            ListRow {
+                id: row
+
+                required property var modelData
+
+                readonly property bool selected: row.modelData === list.current
+
+                Layout.fillWidth: true
+
+                flat: true
+
+                onClicked: list.picked(row.modelData)
+
+                Sans {
+                    Layout.fillWidth: true
+
+                    text: Audio.label(row.modelData)
+                    color: row.selected ? Theme.text : Theme.textBody
+                }
+
+                Caption {
+                    text: Audio.bus(row.modelData)
+                    color: Theme.textFaint
+                }
+
+                Glyph {
+                    visible: row.selected
+
+                    text: Icons.check
+                    color: Theme.accent
+
+                    font.pixelSize: Theme.fontSmall
+                }
+            }
+        }
     }
 }

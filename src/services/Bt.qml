@@ -34,6 +34,36 @@ Singleton {
         return device?.name || device?.deviceName || device?.address || "unknown device";
     }
 
+    // What a device is, in a word, from the freedesktop icon name bluez
+    // hands out for it.
+    function kind(device: BluetoothDevice): string {
+        switch (device?.icon ?? "") {
+        case "audio-headset":
+            return "Headset";
+        case "audio-headphones":
+            return "Headphones";
+        case "audio-card":
+        case "audio-speakers":
+            return "Speaker";
+        case "input-keyboard":
+            return "Keyboard";
+        case "input-mouse":
+            return "Mouse";
+        case "input-tablet":
+            return "Trackpad";
+        case "input-gaming":
+            return "Controller";
+        case "phone":
+            return "Phone";
+        case "computer":
+            return "Computer";
+        case "video-display":
+            return "Display";
+        default:
+            return "Device";
+        }
+    }
+
     function toggle(): void {
         if (root.adapter)
             root.adapter.enabled = !root.adapter.enabled;

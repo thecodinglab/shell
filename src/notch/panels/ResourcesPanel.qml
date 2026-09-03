@@ -10,58 +10,45 @@ import qs.widgets
 
 // The three numbers worth watching, twice over: a dial for where each one is
 // now, and the history beside it for how it got there.
+//
+// Each has a module to itself, and the room to be read: the dial is the
+// larger of the two sizes here, and the name beside it says in words what
+// the home strip only had room to say in three letters.
 ColumnLayout {
     id: root
 
     required property var notch
 
-    spacing: Theme.px(10)
+    spacing: Theme.expandedSpacing
 
     PanelHeader {
         Layout.fillWidth: true
-        Layout.leftMargin: Theme.px(4)
 
-        title: "Resources"
+        title: "System"
 
         onBack: root.notch.panel = "home"
-
-        Caption {
-            text: {
-                switch (Network.state) {
-                case "connected":
-                    return `${Network.name} · ${Network.address}`;
-                case "linked":
-                    return `${Network.name} · no address`;
-                default:
-                    return "offline";
-                }
-            }
-            color: Network.state === "connected" ? Theme.textDim : Theme.urgent
-
-            font.capitalization: Font.MixedCase
-        }
     }
 
     Repeater {
         model: [
             {
-                label: "cpu",
+                name: "Processor",
                 fraction: Cpu.usage,
-                detail: Cpu.threads > 0 ? `${Cpu.threads} threads` : "processor",
+                detail: Cpu.threads > 0 ? `${Cpu.threads} threads` : "",
                 history: Cpu.history,
                 span: Cpu.historySeconds
             },
             {
-                label: "mem",
+                name: "Memory",
                 fraction: Memory.usage,
-                detail: `${Fmt.gibibytes(Memory.usedKb)}G of ${Fmt.gibibytes(Memory.totalKb)}G`,
+                detail: `${Fmt.gibibytes(Memory.usedKb)} of ${Fmt.gibibytes(Memory.totalKb)} GiB`,
                 history: Memory.history,
                 span: Memory.historySeconds
             },
             {
-                label: "disk",
+                name: "Disk",
                 fraction: Disk.usage,
-                detail: `${Config.diskPath} · ${Fmt.bytes(Disk.freeBytes)} free of ${Fmt.bytes(Disk.totalBytes)}`,
+                detail: `${Fmt.bytes(Disk.freeBytes)} free of ${Fmt.bytes(Disk.totalBytes)} on ${Config.diskPath}`,
                 history: Disk.history,
                 span: Disk.historySeconds
             }
@@ -75,22 +62,24 @@ ColumnLayout {
             Layout.fillWidth: true
 
             RowLayout {
-                spacing: Theme.rowSpacing
+                spacing: Theme.px(14)
 
                 Gauge {
                     id: dial
 
                     Layout.alignment: Qt.AlignVCenter
 
+                    // the larger of the two: here the dial is the subject of
+                    // its own module rather than one of three in a strip
                     size: Theme.gaugeLarge
 
                     value: card.modelData.fraction
                     text: Fmt.percent(card.modelData.fraction)
-                    label: card.modelData.label
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
 
                     spacing: Theme.px(6)
 
@@ -99,22 +88,36 @@ ColumnLayout {
 
                         spacing: Theme.rowSpacing
 
-                        Mono {
+                        ColumnLayout {
                             Layout.fillWidth: true
 
-                            text: card.modelData.detail
-                            color: Theme.textMuted
+                            spacing: Theme.px(1)
 
-                            font.pixelSize: Theme.fontMeta
+                            Sans {
+                                Layout.fillWidth: true
+
+                                text: card.modelData.name
+                                color: Theme.text
+
+                                font.weight: Font.Medium
+                            }
+
+                            Caption {
+                                Layout.fillWidth: true
+
+                                visible: text !== ""
+
+                                text: card.modelData.detail
+                            }
                         }
 
                         // how much time the bars beside it cover, which is
                         // the only axis a histogram this small has room for
                         Caption {
+                            Layout.alignment: Qt.AlignTop
+
                             text: `last ${Fmt.span(card.modelData.span)}`
                             color: Theme.textFaint
-
-                            font.pixelSize: Theme.fontTiny
                         }
                     }
 

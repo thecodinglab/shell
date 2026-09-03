@@ -4,6 +4,9 @@ import qs.theme
 
 // The first row of a sub-panel: the way back, what you are looking at, and
 // whatever that panel wants on the right.
+//
+// Inset to the same margin a module sets its contents in by, so the title
+// hangs off the edge the discs and the glyphs below it hang off.
 RowLayout {
     id: root
 
@@ -13,45 +16,29 @@ RowLayout {
 
     signal back
 
-    spacing: Theme.rowSpacing
+    spacing: Theme.px(6)
 
-    Text {
+    IconButton {
         Layout.alignment: Qt.AlignVCenter
+        Layout.leftMargin: Theme.px(4)
 
-        text: Icons.back
-        color: back.containsMouse ? Theme.text : Theme.textDim
+        icon: Icons.back
+        pixelSize: Theme.fontSmall
 
-        font.family: Theme.monoFamily
-        font.pixelSize: Theme.fontMeta
-
-        MouseArea {
-            id: back
-
-            anchors.fill: parent
-            anchors.margins: -Theme.px(6)
-
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-
-            onClicked: root.back()
-        }
+        onClicked: root.back()
     }
 
-    Text {
+    Title {
         Layout.fillWidth: true
 
         text: root.title
-        color: Theme.text
-
-        font.family: Theme.sansFamily
-        font.pixelSize: Theme.fontTitle
-        font.weight: Font.DemiBold
     }
 
     RowLayout {
         id: trailingRow
 
         Layout.alignment: Qt.AlignVCenter
+        Layout.rightMargin: Theme.px(4)
 
         spacing: Theme.rowSpacing
     }

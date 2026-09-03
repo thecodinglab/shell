@@ -9,8 +9,8 @@ Rectangle {
 
     signal toggled
 
-    implicitWidth: Theme.px(30)
-    implicitHeight: Theme.px(16)
+    implicitWidth: Theme.px(32)
+    implicitHeight: Theme.px(18)
 
     radius: height / 2
     color: root.checked ? Theme.accent : Theme.track

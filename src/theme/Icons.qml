@@ -59,8 +59,7 @@ Singleton {
     readonly property string close: "󰅖"
     readonly property string bell: "󰂚"
     readonly property string search: "󰍉"
-    readonly property string selected: "󰝥"
-    readonly property string unselected: "󰝦"
+    readonly property string check: "󰄬"
 
     // The `icon` bluez hands out is a freedesktop icon name; map the ones
     // that actually show up and fall back to a plain bluetooth mark.

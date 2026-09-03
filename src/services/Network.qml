@@ -44,6 +44,18 @@ Singleton {
         return "wired";
     }
 
+    // ...and what that kind is called on the panel.
+    function kindLabel(kind: string): string {
+        switch (kind) {
+        case "wireless":
+            return "Wi‑Fi";
+        case "tunnel":
+            return "VPN";
+        default:
+            return "Ethernet";
+        }
+    }
+
     // Bridges, container veths and the like: real interfaces, but not ways out
     // of the machine, so they are not connections as far as the notch is
     // concerned.

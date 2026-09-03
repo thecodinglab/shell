@@ -2,14 +2,14 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 
-// A row you type into, on the same ground as a ListRow so it sits at the foot
+// A row you type into, on the same ground as a ListRow so it sits at the head
 // of a list without looking like it came from somewhere else.
 Rectangle {
     id: root
 
     property alias text: input.text
     property string placeholder: "Search"
-    property int padding: Theme.px(9)
+    property int padding: Theme.px(10)
 
     readonly property bool empty: input.text.length === 0
     readonly property alias typing: input.activeFocus
@@ -29,11 +29,8 @@ Rectangle {
     implicitWidth: row.implicitWidth + root.padding * 2
     implicitHeight: row.implicitHeight + root.padding * 2
 
-    radius: Theme.rowRadius
+    radius: Theme.cardRadius
     color: input.activeFocus ? Theme.surfaceHover : Theme.surface
-
-    border.width: input.activeFocus ? 1 : 0
-    border.color: Theme.accentBorder
 
     Behavior on color {
         ColorAnimation {
@@ -61,9 +58,10 @@ Rectangle {
 
         Glyph {
             Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: Theme.px(2)
 
             text: Icons.search
-            color: input.activeFocus ? Theme.accent : Theme.textMuted
+            color: input.activeFocus ? Theme.textBody : Theme.textMuted
         }
 
         Item {
@@ -112,6 +110,7 @@ Rectangle {
             visible: !root.empty
 
             icon: Icons.close
+            size: Theme.px(20)
             pixelSize: Theme.fontSmall
 
             onClicked: {

@@ -6,8 +6,8 @@ import qs.theme
 // it stands for sitting in the gap.
 //
 // The ring is a fixed size centred in whatever width it is given, so a row of
-// gauges holds still while the numbers inside it change — which is half the
-// reason to draw a percentage as an arc instead of as text.
+// gauges holds still while the numbers inside it change. Three abreast in the
+// home tile, one to a card in the resources panel.
 Item {
     id: root
 
@@ -44,10 +44,9 @@ Item {
 
     // The type inside the ring comes off the ring rather than off the panel's
     // type ramp: the ramp is a step up from the units the dial is drawn in,
-    // so a figure taken from it runs into the band on the small gauge and
-    // swims in the large one. Taken from the diameter instead, both read the
-    // same and both keep their distance.
-    readonly property int valueSize: Math.round(root.size * 0.21)
+    // so a figure taken from it runs into the band. Taken from the diameter
+    // instead, the figure and its label keep their distance at any size.
+    readonly property int valueSize: Math.round(root.size * 0.22)
     readonly property int labelSize: Math.round(root.size * 0.15)
 
     implicitWidth: root.size + root.padding * 2
@@ -126,7 +125,7 @@ Item {
 
         spacing: Math.round(root.size * 0.02)
 
-        Mono {
+        Num {
             anchors.horizontalCenter: parent.horizontalCenter
 
             text: root.text
@@ -138,20 +137,19 @@ Item {
 
         Caption {
             anchors.horizontalCenter: parent.horizontalCenter
-            // tracking is added after the last letter as well as between the
-            // others, which walks the word off centre by half a step
-            anchors.horizontalCenterOffset: -font.letterSpacing / 2
 
             // a label the ring has no room for is cut rather than drawn
             // through the band
             width: Math.min(implicitWidth, root.opening)
+
+            // a dial with a name beside it does not repeat it inside
+            visible: root.label !== ""
 
             text: root.label
             color: Theme.textDim
 
             horizontalAlignment: Text.AlignHCenter
             font.pixelSize: root.labelSize
-            font.letterSpacing: root.labelSize * 0.12
         }
     }
 }

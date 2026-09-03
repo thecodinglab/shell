@@ -37,6 +37,26 @@ PanelWindow {
     property bool expanded: false
     // which panel the unfolded slab is showing
     property string panel: "home"
+    // out for a moment on request, without a pointer anywhere near it
+    property bool held: false
+    // Closed with the pointer nowhere near it, and on its way off the top
+    // edge still at full size — see `onExpandedChanged`.
+    property bool folding: false
+
+    // What the slab is drawn as, which lags `expanded` by one case: a notch
+    // that is being put away from the keyboard keeps its size while it
+    // slides off, and only collapses once it is out of sight.
+    readonly property bool unfolded: root.expanded || root.folding
+
+    // The pointer is on the notch, or would be if it were out. A notch that
+    // is closed without this folds all the way away in one movement rather
+    // than shrinking to a pill nobody is there to look at.
+    readonly property bool pointed: hot.hovered || hover.hovered || root.held
+
+    // How long the slab takes to slide out of, or back into, the top edge:
+    // quick for the pill, which arrives under a pointer already moving, and
+    // the unfold's own duration for the whole panel, which has further to go.
+    readonly property int slideDuration: root.unfolded ? Theme.expandDuration : Theme.revealDuration
 
     // A sub-panel is a place you went to on purpose, so stepping out of it
     // returns to the home panel rather than putting the whole notch away.
@@ -47,7 +67,7 @@ PanelWindow {
     // them — it is announced under the top edge without the notch coming out
     // to carry it. `revealed` follows this, but lagged by the timers below,
     // so a pointer crossing the top edge does not flick it in and out.
-    readonly property bool wanted: hot.hovered || hover.hovered || root.expanded
+    readonly property bool wanted: hot.hovered || hover.hovered || root.expanded || root.held
 
     // How tall a panel may make itself: enough for the unfolded notch to
     // cover half the screen, and no more. A panel with a list in it grows the
@@ -69,6 +89,42 @@ PanelWindow {
     // still steps out once whatever was being typed into has gone.
     function takeKeys(): void {
         keys.forceActiveFocus();
+    }
+
+    // Unfold straight to a panel, from wherever the notch currently is: put
+    // away, out, or already open on something else.
+    //
+    // Put away, the slab grows to full size while it is still off screen —
+    // nothing animates up there — and then the whole panel slides down out
+    // of the top edge in one movement. Out already, it unfolds in place.
+    function open(name: string): void {
+        root.panel = name;
+        root.expanded = true;
+        root.revealed = true;
+    }
+
+    // ...and the other way. Closed with the pointer on it, the slab shrinks
+    // back to the pill under the pointer. Closed from the keyboard, or by a
+    // click somewhere else, there is nobody at the top edge for a pill to
+    // wait for, so it slides off at full size and collapses once hidden.
+    onExpandedChanged: {
+        if (root.expanded) {
+            keys.forceActiveFocus();
+            return;
+        }
+
+        if (!root.pointed) {
+            root.folding = true;
+            root.revealed = false;
+            foldTimer.restart();
+        }
+    }
+
+    // Bring the pill out for a moment without opening it — a glance at the
+    // clock from the keyboard.
+    function peek(): void {
+        root.held = true;
+        peekTimer.restart();
     }
 
     screen: root.modelData
@@ -135,9 +191,6 @@ PanelWindow {
 
         Keys.onEscapePressed: root.dismiss()
     }
-
-    onExpandedChanged: if (root.expanded)
-        keys.forceActiveFocus()
 
     // ── everywhere else ───────────────────────────────────────────────────
 
@@ -219,7 +272,7 @@ PanelWindow {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Theme.revealDuration
+                duration: root.slideDuration
             }
         }
     }
@@ -229,49 +282,60 @@ PanelWindow {
 
         anchors.horizontalCenter: parent.horizontalCenter
 
+        // How far off the top edge it is, as a fraction of its own height:
+        // out is 0, put away is 1. The slide is animated on this rather
+        // than on `y` itself so that a slab changing size while it is put
+        // away stays put away — its `y` follows the new height at once,
+        // and only a change in `revealed` sets it moving.
+        property real slide: root.revealed ? 0 : 1
+
+        Behavior on slide {
+            NumberAnimation {
+                duration: root.slideDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.expandCurve
+            }
+        }
+
         // Revealed it grows out of the top edge, so the top corners are
         // square and the top border is pushed just off screen: what shows is
         // the slab's sides and bottom, and nothing else. Put away it is that
         // much further up, entirely off the screen.
-        y: root.revealed ? -border.width : -slab.height
+        y: -border.width - slab.slide * (slab.height - border.width)
 
-        Behavior on y {
-            NumberAnimation {
-                duration: Theme.revealDuration
-                easing.type: Theme.expandEasing
-            }
-        }
-
-        width: root.expanded ? Theme.expandedWidth : collapsed.implicitWidth + Theme.collapsedPadding * 2
-        height: border.width + (root.expanded ? body.height + Theme.expandedPadding * 2 : Theme.collapsedHeight)
+        width: root.unfolded ? Theme.expandedWidth : collapsed.implicitWidth + Theme.collapsedPadding * 2
+        height: border.width + (root.unfolded ? body.height + Theme.expandedPadding * 2 : Theme.collapsedHeight)
 
         topLeftRadius: 0
         topRightRadius: 0
         // capped so the corners never meet in the middle of a short notch
         bottomLeftRadius: Math.min(Theme.slabRadius, height / 2)
         bottomRightRadius: bottomLeftRadius
-        color: root.expanded ? Theme.slab : Theme.slabCollapsed
+        color: Theme.slab
 
         border.width: 1
         border.color: Theme.slabBorder
 
+        // The slab only animates its size while it is on screen. Put away,
+        // a change of size is a change nobody can see, and animating it
+        // would leave the slab mid-resize when it next slides out.
         Behavior on width {
+            enabled: root.revealed
+
             NumberAnimation {
                 duration: Theme.expandDuration
-                easing.type: Theme.expandEasing
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.expandCurve
             }
         }
 
         Behavior on height {
+            enabled: root.revealed
+
             NumberAnimation {
                 duration: Theme.expandDuration
-                easing.type: Theme.expandEasing
-            }
-        }
-
-        Behavior on color {
-            ColorAnimation {
-                duration: Theme.expandDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.expandCurve
             }
         }
 
@@ -300,12 +364,26 @@ PanelWindow {
 
             spacing: Theme.collapsedSpacing
 
-            opacity: root.expanded ? 0 : 1
+            opacity: root.unfolded ? 0 : 1
             visible: opacity > 0
 
+            // Whichever way the notch is going, the slab moves first and what
+            // it carries follows: the pill's contents leave the moment it
+            // starts to unfold, and come back only once it has closed most of
+            // the way over them again. Off screen there is no crossfade
+            // to see, so the swap is made at once and the slab slides out
+            // already carrying the right thing.
             Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.fadeDuration
+                enabled: root.revealed
+
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: root.unfolded ? 0 : Theme.staggerDelay
+                    }
+
+                    NumberAnimation {
+                        duration: Theme.fadeDuration
+                    }
                 }
             }
 
@@ -315,14 +393,52 @@ PanelWindow {
                 screen: root.modelData
             }
 
-            Mono {
+            // The clock is the only thing on the pill that is read rather
+            // than counted, and it is read at a glance from wherever you
+            // happen to be sitting: the display cut, and tabular figures so
+            // the minute turning over does not shove the dots along.
+            Num {
                 Layout.alignment: Qt.AlignVCenter
 
                 text: Time.time
                 color: Theme.text
 
+                font.family: Theme.displayFamily
                 font.pixelSize: Theme.fontClock
                 font.weight: Font.Medium
+            }
+
+            // The cover of whatever is playing, riding along on the pill so
+            // the notch says what it is playing without being opened. It
+            // comes and goes with the music, and the pill grows to fit it.
+            ClippingRectangle {
+                id: pillArt
+
+                readonly property var player: Media.playing ? Media.players.find(p => p.isPlaying) ?? null : null
+
+                Layout.alignment: Qt.AlignVCenter
+                Layout.leftMargin: -Theme.px(6)
+
+                visible: pillArt.player !== null && pillArtImage.status === Image.Ready
+
+                implicitWidth: Theme.pillArtSize
+                implicitHeight: Theme.pillArtSize
+
+                radius: Theme.px(5)
+                color: Theme.surfaceRaised
+
+                Image {
+                    id: pillArtImage
+
+                    anchors.fill: parent
+
+                    source: pillArt.player?.trackArtUrl ?? ""
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+
+                    sourceSize.width: Theme.pillArtSize
+                    sourceSize.height: Theme.pillArtSize
+                }
             }
         }
 
@@ -341,12 +457,23 @@ PanelWindow {
             width: Theme.expandedWidth - Theme.expandedPadding * 2
             height: loader.height
 
-            opacity: root.expanded ? 1 : 0
+            opacity: root.unfolded ? 1 : 0
             visible: opacity > 0
 
+            // ...and the panel is the other half of that: it waits for the
+            // slab to be most of the way open before it arrives, and is gone
+            // before the slab starts to close.
             Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.fadeDuration
+                enabled: root.revealed
+
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: root.unfolded ? Theme.staggerDelay : 0
+                    }
+
+                    NumberAnimation {
+                        duration: Theme.fadeDuration
+                    }
                 }
             }
 
@@ -363,6 +490,8 @@ PanelWindow {
                         return audioPanel;
                     case "resources":
                         return resourcesPanel;
+                    case "network":
+                        return networkPanel;
                     default:
                         return homePanel;
                     }
@@ -418,6 +547,14 @@ PanelWindow {
     // ── revealing and unfolding ───────────────────────────────────────────
 
     Timer {
+        id: peekTimer
+
+        interval: 2500
+
+        onTriggered: root.held = false
+    }
+
+    Timer {
         interval: Theme.hoverDelay
         running: root.wanted && !root.revealed
 
@@ -432,11 +569,21 @@ PanelWindow {
         onTriggered: root.revealed = false
     }
 
+    // The slab sliding off the top edge at full size; once it is gone it can
+    // collapse to the pill without anyone seeing it happen.
+    Timer {
+        id: foldTimer
+
+        interval: Theme.expandDuration
+
+        onTriggered: root.folding = false
+    }
+
     // Back to the home panel once it has folded up, not while it is folding:
     // swapping the contents mid-animation is visible.
     Timer {
         interval: Theme.expandDuration
-        running: !root.expanded && root.panel !== "home"
+        running: !root.unfolded && root.panel !== "home"
 
         onTriggered: root.panel = "home"
     }
@@ -469,6 +616,14 @@ PanelWindow {
         id: resourcesPanel
 
         ResourcesPanel {
+            notch: root
+        }
+    }
+
+    Component {
+        id: networkPanel
+
+        NetworkPanel {
             notch: root
         }
     }

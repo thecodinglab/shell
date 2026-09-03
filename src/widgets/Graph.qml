@@ -53,6 +53,9 @@ Item {
                     // a floor, so an idle cpu still draws a baseline
                     height: Math.max(Theme.px(2), root.sample(slot.index) * parent.height)
 
+                    // barely rounded: at this width a fully round cap turns a
+                    // low sample into a dash and a high one into a lozenge,
+                    // and a row of them stops reading as a bar chart
                     radius: Theme.px(1)
                     color: slot.index >= root.slots - root.recent ? root.recentColor : root.pastColor
                 }

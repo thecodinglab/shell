@@ -26,9 +26,9 @@ Rectangle {
         return name ? Quickshell.iconPath(name, true) : "";
     }
 
-    implicitHeight: layout.implicitHeight + Theme.px(11) * 2
+    implicitHeight: layout.implicitHeight + Theme.cardPadding * 2
 
-    radius: Theme.cardRadius
+    radius: Theme.toastRadius
     color: root.urgent ? Theme.slabUrgent : Theme.slab
 
     border.width: 1
@@ -44,18 +44,24 @@ Rectangle {
         id: layout
 
         anchors.fill: parent
-        anchors.margins: Theme.px(11)
+        anchors.margins: Theme.cardPadding
 
-        spacing: Theme.rowSpacing
+        spacing: Theme.px(12)
 
+        // the application's own icon on a disc, or a bell on the accent's
+        // when it has none
         Rectangle {
             Layout.alignment: Qt.AlignTop
 
-            implicitWidth: Theme.px(28)
-            implicitHeight: Theme.px(28)
+            implicitWidth: Theme.discSize
+            implicitHeight: Theme.discSize
 
-            radius: Theme.px(8)
-            color: root.urgent ? Theme.urgentSurface : Theme.accentSurface
+            radius: width / 2
+            color: {
+                if (root.urgent)
+                    return Theme.urgentSurface;
+                return root.iconSource !== "" ? Theme.surfaceRaised : Theme.accentSurface;
+            }
 
             IconImage {
                 anchors.centerIn: parent
@@ -82,6 +88,7 @@ Rectangle {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
 
             spacing: Theme.px(2)
 
@@ -96,11 +103,12 @@ Rectangle {
                     text: root.notification.summary || root.notification.appName
                     color: Theme.text
 
-                    font.weight: Font.DemiBold
+                    font.weight: Font.Medium
                 }
 
-                Mono {
+                Caption {
                     text: root.notification.appName
+                    color: Theme.textFaint
                 }
             }
 

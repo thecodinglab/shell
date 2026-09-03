@@ -2,17 +2,20 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 
-// A row in a list, or a tile in the home panel: an icon, something that grows
-// to fill the space, and a trailing figure.
+// A row in a list, or a module on the home panel: something you can press,
+// laid out left to right.
 //
-// `active` is what a connected device or the selected output gets — the
-// accent wash and the outline that goes with it.
+// Two grounds. A module (`flat: false`) sits on the slab on a wash of its
+// own, and answers the pointer by stepping a shade lighter, lighter again
+// while it is held. A row in a list (`flat: true`) has no ground at all
+// until the pointer finds it, so a list is a column of names rather than a
+// stack of boxes.
 Rectangle {
     id: root
 
     default property alias content: layout.data
 
-    property bool active: false
+    property bool flat: false
     property bool interactive: true
     property int padding: Theme.rowPadding
 
@@ -23,18 +26,17 @@ Rectangle {
     implicitWidth: layout.implicitWidth + root.padding * 2
     implicitHeight: layout.implicitHeight + root.padding * 2
 
-    radius: Theme.rowRadius
+    radius: root.flat ? Theme.rowRadius : Theme.cardRadius
 
     color: {
-        if (root.active)
-            return Theme.accentSurface;
-        if (root.interactive && mouse.containsMouse)
-            return Theme.surfaceHover;
-        return Theme.surface;
+        if (!root.interactive)
+            return root.flat ? "transparent" : Theme.surface;
+        if (mouse.pressed)
+            return root.flat ? Theme.rowPress : Theme.surfacePress;
+        if (mouse.containsMouse)
+            return root.flat ? Theme.rowHover : Theme.surfaceHover;
+        return root.flat ? "transparent" : Theme.surface;
     }
-
-    border.width: root.active ? 1 : 0
-    border.color: Theme.accentBorder
 
     Behavior on color {
         ColorAnimation {

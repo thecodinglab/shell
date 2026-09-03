@@ -54,10 +54,17 @@ Singleton {
 
     // ── typography ────────────────────────────────────────────────────────
 
-    // labels and names read better in a proportional face; numbers, glyphs
-    // and anything that has to line up column-wise stay monospaced
+    // One family carries the whole surface. Names, figures and labels are all
+    // set in the sans; the mono is here for the nerd font glyphs alone, which
+    // is the only thing on the notch that needs a particular file installed.
     readonly property string sansFamily: value("sansFamily", "Inter")
     readonly property string monoFamily: value("monoFamily", "JetBrainsMono Nerd Font Mono")
+
+    // ...and the optical size the large type is cut at. Inter ships a display
+    // cut drawn for exactly the job the clock does — read at a glance, from
+    // across a room — so a session set in Inter gets it. Anything else has
+    // one drawing and is set in it at both sizes, which is what empty means.
+    readonly property string displayFamily: value("displayFamily", root.sansFamily === "Inter" ? "Inter Display" : "")
 
     // The notch was drawn against a 10pt base. Everything in Theme is a
     // multiple of it, so raising this grows the whole surface, not just text.
