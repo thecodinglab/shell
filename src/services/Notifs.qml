@@ -19,9 +19,15 @@ Singleton {
     readonly property int visibleCount: 3
 
     function dismiss(notification: Notification): void {
+        // The same toast hangs under every monitor's notch, each with a clock
+        // of its own: the first to run out dismisses it, and the rest find it
+        // already gone. Closing it a second time is an error.
+        if (!root.toasts.includes(notification))
+            return;
+
         root.remove(notification);
         // `dismiss` reports "the user got rid of it", which is what happened
-        notification?.dismiss();
+        notification.dismiss();
     }
 
     function remove(notification: Notification): void {

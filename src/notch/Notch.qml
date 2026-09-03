@@ -164,8 +164,13 @@ PanelWindow {
             item: slab
         }
 
+        // the toasts, by what is in the stack rather than by the view, which
+        // is taller than that — see `toasts`
         Region {
-            item: toasts
+            x: toasts.x
+            y: toasts.y
+            width: toasts.width
+            height: toasts.contentHeight
         }
     }
 
@@ -254,6 +259,150 @@ PanelWindow {
             onTapped: {
                 root.revealed = true;
                 root.expanded = true;
+            }
+        }
+    }
+
+    // ── notifications ─────────────────────────────────────────────────────
+    //
+    // They hang off the bottom edge of the slab, which put away is the top of
+    // the screen: one arriving on its own drops straight out of the top edge
+    // and leaves the notch where it was. If the notch does come out while a
+    // toast is up — because the pointer went for it — they ride down ahead of
+    // it rather than being covered by it, and get out of the way entirely
+    // once the panel opens.
+    //
+    // Declared ahead of the slab, and so behind it: a toast on its way out
+    // from under the top edge passes behind the pill if the pill is out, the
+    // way it would if it really were coming out from under it.
+
+    // ── the volume, from the keyboard ─────────────────────────────────────
+    //
+    // Set from a media key, the volume is announced the way a notification
+    // is: a pill drops out from under the slab, shows the level, and goes
+    // back up. The shell root decides which monitor it drops on — see
+    // `showVolume` — and an open notch has its own slider in view, so it is
+    // never asked.
+
+    Osd {
+        id: osd
+
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        // where it rests, hanging under the slab like the toasts do; put away
+        // it is that plus its own height further up, off the top edge
+        readonly property int rest: slab.y + slab.height + Theme.toastSpacing
+        // How far the toasts have to move down to hang under it: taken from
+        // where it actually is, frame by frame, so they move in lockstep with
+        // it rather than on a curve of their own.
+        readonly property int room: Math.max(0, osd.y + osd.height + Theme.toastSpacing - osd.rest)
+
+        // whole pixels, or the text on it shimmers as it moves
+        y: Math.round(osd.rest - osd.slide * (osd.rest + osd.height))
+
+        icon: Icons.volume(Audio.volume, Audio.muted)
+        value: Audio.muted ? 0 : Audio.volume
+        // a muted output draws an empty track, and the figure has to agree
+        text: Audio.muted ? "Muted" : Fmt.percent(Audio.volume)
+    }
+
+    // A list rather than a column so that a toast can be seen leaving: the
+    // view keeps a delegate alive until its exit has played, where a column
+    // would drop it the moment it left the model.
+    ListView {
+        id: toasts
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        // slab.y is -slab.height while the notch is put away, so this is the
+        // top of the screen until the notch slides out from over it, and the
+        // volume pill pushes them further down while it is out
+        y: Math.round(slab.y + slab.height) + Theme.toastSpacing + osd.room
+
+        width: Theme.toastWidth
+        // As tall as there is screen for it: the view keeps a toast on for
+        // its exit only while it is inside the view, and a view sized to its
+        // contents has already shrunk out from under it by then. The mask
+        // takes the height of what is actually there — see `occupied`.
+        height: Theme.windowHeight
+        spacing: Theme.toastSpacing
+
+        // it is a stack, not a scroller: no flicking, no wheel
+        interactive: false
+
+        // Diffed against what is already there, so a notification arriving
+        // or leaving touches only its own toast. A plain array would rebuild
+        // every one of them — restarting their clocks, reloading their icons
+        // — each time the list changed.
+        model: ScriptModel {
+            values: root.expanded ? [] : Notifs.toasts
+        }
+
+        delegate: Toast {
+            required property var modelData
+
+            width: ListView.view.width
+            notification: modelData
+        }
+
+        // A new one drops out of the top edge — from behind the pill, if the
+        // pill is out — to where it hangs, fading in as it comes.
+        add: Transition {
+            id: arrive
+
+            NumberAnimation {
+                property: "y"
+                // Read off the transition itself: written unqualified, the
+                // attached property belongs to this animation, and the view
+                // fills in only the transition's. The item is there only once
+                // it is running; the binding is first evaluated well before.
+                from: arrive.ViewTransition.item ? arrive.ViewTransition.destination.y - arrive.ViewTransition.item.height - toasts.y : 0
+                duration: Theme.expandDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.expandCurve
+            }
+
+            NumberAnimation {
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Theme.fadeDuration
+            }
+        }
+
+        // ...and one leaving fades where it is.
+        remove: Transition {
+            NumberAnimation {
+                property: "opacity"
+                to: 0
+                duration: Theme.fadeDuration
+            }
+        }
+
+        // The rest move on the curve the slab moves on: down in step with a
+        // new one dropping in above them...
+        displaced: Transition {
+            NumberAnimation {
+                property: "y"
+                duration: Theme.expandDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.expandCurve
+            }
+        }
+
+        // ...and back up over the gap one leaving has left, but only once it
+        // has gone, rather than up through it while it is still fading.
+        removeDisplaced: Transition {
+            SequentialAnimation {
+                PauseAnimation {
+                    duration: Theme.fadeDuration
+                }
+
+                NumberAnimation {
+                    property: "y"
+                    duration: Theme.expandDuration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Theme.expandCurve
+                }
             }
         }
     }
@@ -514,74 +663,6 @@ PanelWindow {
                     to: 1
                     duration: Theme.fadeDuration
                 }
-            }
-        }
-    }
-
-    // ── notifications ─────────────────────────────────────────────────────
-    //
-    // They hang off the bottom edge of the slab, which put away is the top of
-    // the screen: one arriving on its own drops straight out of the top edge
-    // and leaves the notch where it was. If the notch does come out while a
-    // toast is up — because the pointer went for it — they ride down ahead of
-    // it rather than being covered by it, and get out of the way entirely
-    // once the panel opens.
-
-    // ── the volume, from the keyboard ─────────────────────────────────────
-    //
-    // Set from a media key, the volume is announced the way a notification
-    // is: a pill drops out from under the slab, shows the level, and goes
-    // back up. The shell root decides which monitor it drops on — see
-    // `showVolume` — and an open notch has its own slider in view, so it is
-    // never asked.
-
-    Osd {
-        id: osd
-
-        anchors.horizontalCenter: parent.horizontalCenter
-
-        // where it rests, hanging under the slab like the toasts do; put away
-        // it is that plus its own height further up, off the top edge
-        readonly property int rest: slab.y + slab.height + Theme.toastSpacing
-        // what the toasts have to move down by to hang under it; plain rather
-        // than readonly so the move can be animated
-        property int room: osd.shown ? osd.height + Theme.toastSpacing : 0
-
-        y: osd.rest - osd.slide * (osd.rest + osd.height)
-
-        icon: Icons.volume(Audio.volume, Audio.muted)
-        value: Audio.muted ? 0 : Audio.volume
-        // a muted output draws an empty track, and the figure has to agree
-        text: Audio.muted ? "Muted" : Fmt.percent(Audio.volume)
-
-        Behavior on room {
-            NumberAnimation {
-                duration: Theme.revealDuration
-                easing.type: Theme.expandEasing
-            }
-        }
-    }
-
-    Column {
-        id: toasts
-
-        anchors.horizontalCenter: parent.horizontalCenter
-        // slab.y is -slab.height while the notch is put away, so this is the
-        // top of the screen until the notch slides out from over it, and the
-        // volume pill pushes them further down while it is out
-        y: slab.y + slab.height + Theme.toastSpacing + osd.room
-
-        width: Theme.toastWidth
-        spacing: Theme.toastSpacing
-
-        Repeater {
-            model: root.expanded ? [] : Notifs.toasts
-
-            Toast {
-                required property var modelData
-
-                width: toasts.width
-                notification: modelData
             }
         }
     }

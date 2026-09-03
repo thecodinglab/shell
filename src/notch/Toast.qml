@@ -11,19 +11,48 @@ import qs.widgets
 //
 // It leaves on its own after a while, and the clock stops while the pointer
 // is on it — the one case where you are demonstrably still reading.
+//
+// The notification behind it is gone before the toast is: once it is closed
+// the server drops the object, and the toast is still on screen fading out.
+// So what it shows is bound to the notification only while there is one, and
+// held as it was the moment it closed — the card that fades is the card that
+// was being read, not a blank one.
 Rectangle {
     id: root
 
     required property var notification
 
-    readonly property bool urgent: root.notification.urgency === NotificationUrgency.Critical
+    // there is still a notification behind this toast; false once it has
+    // closed, from which point the toast is only on its way out
+    property bool live: true
 
-    readonly property string iconSource: {
-        if (root.notification.image)
-            return root.notification.image;
+    property bool urgent: root.notification?.urgency === NotificationUrgency.Critical
 
-        const name = root.notification.appIcon || root.notification.desktopEntry;
+    property string title: root.notification?.summary || root.notification?.appName || ""
+    property string appName: root.notification?.appName ?? ""
+    property string body: root.notification?.body ?? ""
+
+    property string iconSource: {
+        const n = root.notification;
+        if (!n)
+            return "";
+        if (n.image)
+            return n.image;
+
+        const name = n.appIcon || n.desktopEntry;
         return name ? Quickshell.iconPath(name, true) : "";
+    }
+
+    // Keep what it says. Assigning each property its own current value
+    // replaces the binding with that value, so nothing changes when the
+    // object the binding read from goes away.
+    function freeze(): void {
+        root.live = false;
+        root.urgent = root.urgent;
+        root.title = root.title;
+        root.appName = root.appName;
+        root.body = root.body;
+        root.iconSource = root.iconSource;
     }
 
     implicitHeight: layout.implicitHeight + Theme.cardPadding * 2
@@ -100,14 +129,14 @@ Rectangle {
                 Sans {
                     Layout.fillWidth: true
 
-                    text: root.notification.summary || root.notification.appName
+                    text: root.title
                     color: Theme.text
 
                     font.weight: Font.Medium
                 }
 
                 Caption {
-                    text: root.notification.appName
+                    text: root.appName
                     color: Theme.textFaint
                 }
             }
@@ -117,7 +146,7 @@ Rectangle {
 
                 visible: text !== ""
 
-                text: root.notification.body
+                text: root.body
                 color: Theme.textMuted
 
                 // the server advertises markup support, so bodies arrive with
@@ -134,13 +163,15 @@ Rectangle {
         id: mouse
 
         anchors.fill: parent
+        // a toast on its way out is no longer anything to click on
+        enabled: root.live
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
 
         // left invokes what the notification says it is for, middle always
         // just gets rid of it
         onClicked: event => {
-            const actions = root.notification.actions ?? [];
+            const actions = root.notification?.actions ?? [];
             const primary = actions.find(a => a.identifier === "default");
 
             if (event.button === Qt.LeftButton && primary)
@@ -153,16 +184,18 @@ Rectangle {
     Timer {
         interval: Notifs.timeout(root.notification)
         // reading it holds it there
-        running: !mouse.containsMouse
+        running: root.live && !mouse.containsMouse
 
         onTriggered: Notifs.dismiss(root.notification)
     }
 
-    // the sending application can take it back at any point
+    // Closed, whether by the clock, a click, or the sending application
+    // taking it back: hold what it shows, and leave.
     Connections {
         target: root.notification
 
         function onClosed(reason: int): void {
+            root.freeze();
             Notifs.remove(root.notification);
         }
     }
