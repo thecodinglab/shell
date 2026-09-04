@@ -131,8 +131,6 @@ Singleton {
     // to be the biggest one on it or it reads as five dots and a clock all
     // set at the same interval.
     readonly property int collapsedSpacing: root.px(18)
-    // the cover of whatever is playing, riding on the pill
-    readonly property int pillArtSize: root.px(18)
 
     // The strip along the top edge that the hidden notch listens on. It runs
     // the full width of the screen, and is the only part of it the shell

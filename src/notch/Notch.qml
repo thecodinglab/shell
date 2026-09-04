@@ -562,39 +562,6 @@ PanelWindow {
                 font.pixelSize: Theme.fontClock
                 font.weight: Font.Medium
             }
-
-            // The cover of whatever is playing, riding along on the pill so
-            // the notch says what it is playing without being opened. It
-            // comes and goes with the music, and the pill grows to fit it.
-            ClippingRectangle {
-                id: pillArt
-
-                readonly property var player: Media.playing ? Media.players.find(p => p.isPlaying) ?? null : null
-
-                Layout.alignment: Qt.AlignVCenter
-                Layout.leftMargin: -Theme.px(6)
-
-                visible: pillArt.player !== null && pillArtImage.status === Image.Ready
-
-                implicitWidth: Theme.pillArtSize
-                implicitHeight: Theme.pillArtSize
-
-                radius: Theme.px(5)
-                color: Theme.surfaceRaised
-
-                Image {
-                    id: pillArtImage
-
-                    anchors.fill: parent
-
-                    source: pillArt.player?.trackArtUrl ?? ""
-                    asynchronous: true
-                    fillMode: Image.PreserveAspectCrop
-
-                    sourceSize.width: Theme.pillArtSize
-                    sourceSize.height: Theme.pillArtSize
-                }
-            }
         }
 
         // ── expanded ──────────────────────────────────────────────────────
