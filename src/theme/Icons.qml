@@ -47,6 +47,15 @@ Singleton {
     readonly property string ethernet: "󰈀"
     readonly property string vpn: "󰖂"
 
+    // ── the session ───────────────────────────────────────────────────────
+
+    // the inhibitor: a cup, the mark every caffeine applet has taught
+    readonly property string awake: "󰅶"
+    readonly property string lock: "󰌾"
+    readonly property string sleep: "󰤄"
+    readonly property string restart: "󰜉"
+    readonly property string power: "󰐥"
+
     // ── chrome ────────────────────────────────────────────────────────────
 
     readonly property string back: "󰅁"

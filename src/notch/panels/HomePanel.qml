@@ -295,4 +295,152 @@ ColumnLayout {
             }
         }
     }
+
+    // ── the session ───────────────────────────────────────────────────────
+    // Keeping the machine up and putting it down, in one module at the foot
+    // of the panel where a control centre keeps them: five marks in a row,
+    // each a disc with its name under it, so none of them has to be
+    // recognised from its glyph alone. The first is the inhibitor — lit
+    // while the screen is being kept from locking, plain while the idle
+    // daemon is left to it — and the other four are the ways out: lock,
+    // sleep, restart, and off.
+    //
+    // The two that end the session are pressed twice. The first press lights
+    // the disc and swaps the name for the question, and a second press
+    // within a few seconds is the answer; pressing anything else, or
+    // waiting, lets it go. The notch folds before any of them runs, so it is
+    // not the last thing on the screen.
+
+    // which of the two is waiting for its second press, if either
+    property string pending: ""
+
+    Timer {
+        id: pendingTimer
+
+        interval: Theme.confirmHold
+
+        onTriggered: root.pending = ""
+    }
+
+    function press(action: string): void {
+        const wasPending = root.pending === action;
+        root.pending = "";
+        pendingTimer.stop();
+
+        switch (action) {
+        case "awake":
+            Power.awake = !Power.awake;
+            return;
+        case "lock":
+            root.notch.expanded = false;
+            Power.lock();
+            return;
+        case "suspend":
+            root.notch.expanded = false;
+            Power.suspend();
+            return;
+        }
+
+        if (!wasPending) {
+            root.pending = action;
+            pendingTimer.restart();
+            return;
+        }
+
+        root.notch.expanded = false;
+        if (action === "reboot")
+            Power.reboot();
+        else
+            Power.poweroff();
+    }
+
+    Card {
+        Layout.fillWidth: true
+
+        // the marks' hover grounds reach out to the module's edge, so the
+        // module is inset by what a row does not already give it
+        margin: Theme.cardPadding - Theme.rowPadding
+
+        RowLayout {
+            spacing: 0
+
+            Repeater {
+                model: [
+                    {
+                        action: "awake",
+                        icon: Icons.awake,
+                        label: "Stay awake"
+                    },
+                    {
+                        action: "lock",
+                        icon: Icons.lock,
+                        label: "Lock"
+                    },
+                    {
+                        action: "suspend",
+                        icon: Icons.sleep,
+                        label: "Sleep"
+                    },
+                    {
+                        action: "reboot",
+                        icon: Icons.restart,
+                        label: "Restart"
+                    },
+                    {
+                        action: "poweroff",
+                        icon: Icons.power,
+                        label: "Shut down"
+                    }
+                ]
+
+                ListRow {
+                    id: mark
+
+                    required property var modelData
+
+                    readonly property bool asking: root.pending === mark.modelData.action
+
+                    // an equal fifth each, taken from the module rather than
+                    // from the width of the word under the disc
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+
+                    flat: true
+
+                    onClicked: root.press(mark.modelData.action)
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+
+                        spacing: Theme.px(5)
+
+                        IconDisc {
+                            Layout.alignment: Qt.AlignHCenter
+
+                            icon: mark.modelData.icon
+                            // lit for the inhibitor while it is holding the
+                            // screen, and for a mark waiting on its second
+                            // press: the accent says "this is where you are"
+                            on: mark.asking || (mark.modelData.action === "awake" && Power.awake)
+                            iconColor: mark.hovered ? Theme.text : Theme.textBody
+                        }
+
+                        Caption {
+                            Layout.fillWidth: true
+
+                            text: mark.asking ? "Press again" : mark.modelData.label
+                            color: mark.asking || mark.hovered ? Theme.textBody : Theme.textDim
+
+                            horizontalAlignment: Text.AlignHCenter
+
+                            Behavior on color {
+                                ColorFade {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

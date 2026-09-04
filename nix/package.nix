@@ -6,6 +6,7 @@
   quickshell,
   coreutils,
   iproute2,
+  systemd,
   # Overrides for the defaults in src/config/Config.qml, written next to
   # shell.qml as config.json. The home-manager module fills this in from
   # stylix and the host's settings.
@@ -39,6 +40,7 @@ stdenvNoCC.mkDerivation {
         lib.makeBinPath [
           coreutils # stat, for the disk module
           iproute2 # ip, for the network module
+          systemd # loginctl and systemctl, for the power module
         ]
       }
 

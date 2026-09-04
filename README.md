@@ -33,6 +33,7 @@ by the air between them rather than by rules or frames.
 | sound | where the sound is going, and a bar to set how loud; the head of the module leads to the panel |
 | tiles | bluetooth and network, each a disc, a name and one line on how it is doing |
 | system | cpu, memory and disk as three dials |
+| session | five named discs: the inhibitor, then lock, sleep, restart and shut down |
 
 A disc lit in the accent means the thing behind it is in use — a device on
 the line, a link carrying an address. Idle is the plain disc, and the line
@@ -46,6 +47,18 @@ knob, and the speaker glyph riding inside the fill. Drag or scroll the bar to
 set it; click the glyph to mute. When the fill passes under the glyph the
 glyph swaps its ink, so a bar at nothing and a bar that is muted both still
 have their mark.
+
+The session module at the foot of the panel keeps the machine up or puts it
+down: five discs in a row, each with its name under it. The first is an idle
+inhibitor: lit, the notch holds a wayland inhibitor on its window and
+hypridle neither locks the screen nor turns it off; plain, the idle daemon is
+left to its timeouts. The other four go through logind, so a press does
+whatever the session is set up to do — lock is `loginctl lock-session`,
+which hypridle answers with hyprlock, and sleep is `systemctl suspend`, which
+it locks ahead of. Restart and shut down are pressed twice: the first press
+lights the disc and swaps its name for "Press again", a second one within a
+few seconds is the answer, and pressing anything else, or waiting, lets it
+go. The notch folds before any of them runs.
 
 Every tile is a door, and so are the clock and the head of the sound module;
 each leads to exactly one panel:

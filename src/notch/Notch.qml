@@ -193,6 +193,16 @@ PanelWindow {
     // none, and the keyboard belongs to whatever is behind it.
     WlrLayershell.keyboardFocus: root.expanded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
+    // The inhibitor lives on this window because the protocol wants a
+    // surface to hang it on, and this is one that is always mapped: the
+    // notch is put away by being masked and moved off the top edge, never by
+    // being hidden. One per monitor, which is one more than the idle daemon
+    // needs, and costs nothing.
+    IdleInhibitor {
+        window: root
+        enabled: Power.awake
+    }
+
     FocusScope {
         id: keys
 

@@ -277,6 +277,11 @@ Singleton {
     // enough to be read, short enough that it is gone before it is in the
     // way of anything. Every press starts it over.
     readonly property int osdHold: 1500
+    // How long a mark that has to be pressed twice — restart, shut down —
+    // waits for the second press before letting the first one go. Long
+    // enough to read what it is asking, short enough that a press left
+    // behind by mistake is not still armed when the notch is next opened.
+    readonly property int confirmHold: 4000
 
     // a pointer clipping the top edge on its way somewhere else should not
     // pull the notch out
