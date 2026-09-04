@@ -48,28 +48,72 @@ ColumnLayout {
             Layout.fillWidth: true
         }
 
-        ColumnLayout {
+        // The clock is the door to the notifications, the way it is on a
+        // laptop: its hover ground reaches out past the header's margin so
+        // the figures stay where they were on the grid. What is waiting is
+        // counted beside it, and the count is there only when it is not
+        // zero — a nought beside the clock is a thing to read for nothing.
+        ListRow {
+            id: clockHead
+
             Layout.alignment: Qt.AlignVCenter
+            Layout.topMargin: -Theme.rowPadding
+            Layout.bottomMargin: -Theme.rowPadding
+            Layout.rightMargin: -Theme.rowPadding
 
-            spacing: 0
+            flat: true
 
-            Num {
-                Layout.alignment: Qt.AlignRight
+            onClicked: root.notch.panel = "notifications"
 
-                text: Time.time
-                color: Theme.text
+            RowLayout {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.rightMargin: Theme.px(2)
 
-                font.family: Theme.displayFamily
-                font.pixelSize: Theme.fontDisplay
-                font.weight: Font.Medium
-                font.letterSpacing: -Theme.fontDisplay * 0.02
+                visible: Notifs.count > 0
+
+                spacing: Theme.px(4)
+
+                Glyph {
+                    Layout.alignment: Qt.AlignVCenter
+
+                    text: Icons.bell
+                    color: clockHead.hovered ? Theme.textBody : Theme.textDim
+
+                    width: implicitWidth
+                    font.pixelSize: Theme.fontSmall
+                }
+
+                Num {
+                    Layout.alignment: Qt.AlignVCenter
+
+                    text: String(Notifs.count)
+                    color: clockHead.hovered ? Theme.textBody : Theme.textDim
+                }
             }
 
-            Num {
-                Layout.alignment: Qt.AlignRight
+            ColumnLayout {
+                Layout.alignment: Qt.AlignVCenter
 
-                text: Time.date
-                color: Theme.textDim
+                spacing: 0
+
+                Num {
+                    Layout.alignment: Qt.AlignRight
+
+                    text: Time.time
+                    color: Theme.text
+
+                    font.family: Theme.displayFamily
+                    font.pixelSize: Theme.fontDisplay
+                    font.weight: Font.Medium
+                    font.letterSpacing: -Theme.fontDisplay * 0.02
+                }
+
+                Num {
+                    Layout.alignment: Qt.AlignRight
+
+                    text: Time.date
+                    color: Theme.textDim
+                }
             }
         }
     }

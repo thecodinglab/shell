@@ -1,7 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import qs.theme
 import qs.services
@@ -31,17 +29,8 @@ Rectangle {
     property string title: root.notification?.summary || root.notification?.appName || ""
     property string appName: root.notification?.appName ?? ""
     property string body: root.notification?.body ?? ""
-
-    property string iconSource: {
-        const n = root.notification;
-        if (!n)
-            return "";
-        if (n.image)
-            return n.image;
-
-        const name = n.appIcon || n.desktopEntry;
-        return name ? Quickshell.iconPath(name, true) : "";
-    }
+    property string image: root.notification?.image ?? ""
+    property string icon: root.notification?.appIcon || root.notification?.desktopEntry || ""
 
     // Keep what it says. Assigning each property its own current value
     // replaces the binding with that value, so nothing changes when the
@@ -52,7 +41,8 @@ Rectangle {
         root.title = root.title;
         root.appName = root.appName;
         root.body = root.body;
-        root.iconSource = root.iconSource;
+        root.image = root.image;
+        root.icon = root.icon;
     }
 
     implicitHeight: layout.implicitHeight + Theme.cardPadding * 2
@@ -77,42 +67,12 @@ Rectangle {
 
         spacing: Theme.px(12)
 
-        // the application's own icon on a disc, or a bell on the accent's
-        // when it has none
-        Rectangle {
+        NotifDisc {
             Layout.alignment: Qt.AlignTop
 
-            implicitWidth: Theme.discSize
-            implicitHeight: Theme.discSize
-
-            radius: width / 2
-            color: {
-                if (root.urgent)
-                    return Theme.urgentSurface;
-                return root.iconSource !== "" ? Theme.surfaceRaised : Theme.accentSurface;
-            }
-
-            IconImage {
-                anchors.centerIn: parent
-
-                visible: root.iconSource !== ""
-
-                source: root.iconSource
-                implicitSize: Theme.px(18)
-                asynchronous: true
-            }
-
-            Text {
-                anchors.centerIn: parent
-
-                visible: root.iconSource === ""
-
-                text: Icons.bell
-                color: root.urgent ? Theme.urgent : Theme.accent
-
-                font.family: Theme.monoFamily
-                font.pixelSize: Theme.fontBody
-            }
+            image: root.image
+            icon: root.icon
+            urgent: root.urgent
         }
 
         ColumnLayout {
@@ -168,8 +128,9 @@ Rectangle {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
 
-        // left invokes what the notification says it is for, middle always
-        // just gets rid of it
+        // Left invokes what the notification says it is for, middle always
+        // just gets rid of it. Either way it has been dealt with, and does
+        // not turn up in the panel afterwards.
         onClicked: event => {
             const actions = root.notification?.actions ?? [];
             const primary = actions.find(a => a.identifier === "default");
@@ -181,12 +142,13 @@ Rectangle {
         }
     }
 
+    // Out of time: off the screen, and into the panel.
     Timer {
         interval: Notifs.timeout(root.notification)
         // reading it holds it there
         running: root.live && !mouse.containsMouse
 
-        onTriggered: Notifs.dismiss(root.notification)
+        onTriggered: Notifs.expire(root.notification)
     }
 
     // Closed, whether by the clock, a click, or the sending application

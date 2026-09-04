@@ -614,6 +614,8 @@ PanelWindow {
                         return resourcesPanel;
                     case "network":
                         return networkPanel;
+                    case "notifications":
+                        return notificationsPanel;
                     default:
                         return homePanel;
                     }
@@ -714,6 +716,14 @@ PanelWindow {
         id: networkPanel
 
         NetworkPanel {
+            notch: root
+        }
+    }
+
+    Component {
+        id: notificationsPanel
+
+        NotificationsPanel {
             notch: root
         }
     }

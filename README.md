@@ -13,7 +13,9 @@ time it is not there at all: the screen belongs to the windows on it, nothing
 is reserved, and all the shell occupies is a few pixels along the top edge.
 Reach the top of the screen and the tab slides back out; leave and it puts
 itself away again. A notification drops out from under the top edge on its
-own, whether the tab is out or not, and so does the volume: set it from a
+own, whether the tab is out or not; one that goes back up unread is kept in
+the notifications panel, and one that was clicked or put away is not. So
+does the volume: set it from a
 media key and a pill drops out under the notch on the focused monitor with
 the speaker glyph, a bar and the figure, moves with every further press, and
 goes back up a moment and a half after the last one. It is not there while
@@ -26,7 +28,7 @@ by the air between them rather than by rules or frames.
 
 | | |
 | --- | --- |
-| header | the dots where they were, and the clock grown, with the date under it |
+| header | the dots where they were, and the clock grown, with the date under it and a count of what is waiting beside it; the clock leads to the notifications |
 | media | one module per mpris player: cover, title, transport, and a scrubber the width of the module |
 | sound | where the sound is going, and a bar to set how loud; the head of the module leads to the panel |
 | tiles | bluetooth and network, each a disc, a name and one line on how it is doing |
@@ -45,13 +47,31 @@ set it; click the glyph to mute. When the fill passes under the glyph the
 glyph swaps its ink, so a bar at nothing and a bar that is muted both still
 have their mark.
 
-Every tile is a door, and so is the head of the sound module; each leads to
-exactly one panel:
+Every tile is a door, and so are the clock and the head of the sound module;
+each leads to exactly one panel:
 
+- **Notifications** — what has come in and not been dealt with, newest at
+  the top, the way a laptop's notification centre keeps it. A toast that
+  ran out of time lands here; one that was clicked or put away by hand does
+  not, and neither does one the sender marked transient. Each row is the
+  toast it was, with who sent it and how long ago, and leaves two ways: by
+  the cross that turns up under the pointer, or by being clicked, which
+  does what the toast would have done — the notification's own action while
+  it is still up, and failing that the application it came from. The header
+  clears the lot. Whatever is left goes on its own after
+  `notificationRetention` seconds, a day by default, and the list is capped
+  at `notificationLimit`. The list is written to
+  `$XDG_STATE_HOME/shell/notifications.json` as it changes, so it survives
+  the shell being restarted; a notification an application updates in place
+  updates its row rather than adding one, and one the application takes
+  back is taken out.
 - **Sound** — output and input, each a module: its bar at the top with the
   figure beside it, and the devices it could be going through underneath,
   with a check beside the one it is. One click on a device makes it the
-  default. The input module also draws the last second of what the
+  default. Between them, a bar for every application that is playing, named
+  and set the same way, so a video can be turned down without turning the
+  machine down with it; the module is not there at all while nothing is
+  playing. The input module also draws the last second of what the
   microphone picked up, fed from pipewire's peak monitor.
 - **Bluetooth** — every device bluez knows about, as a list of rows with no
   ground until the pointer finds them. One click does the obvious next
@@ -84,7 +104,7 @@ The shell answers `qs ipc`, so any of it can be put on a hyprland bind:
 
 ```sh
 qs -p ~/dev/shell/src ipc call notch toggle       # open or close, on the focused monitor
-qs -p ~/dev/shell/src ipc call notch open audio   # straight to a panel: audio, bluetooth, network, resources
+qs -p ~/dev/shell/src ipc call notch open audio   # straight to a panel: notifications, audio, bluetooth, network, resources
 qs -p ~/dev/shell/src ipc call notch peek         # bring the pill out for a moment
 qs -p ~/dev/shell/src ipc call notch close        # fold every monitor's notch
 ```
@@ -140,7 +160,7 @@ src/
   services/            cpu, memory, disk, network, audio, bluetooth, mpris, notifications, workspaces
   util/                formatting, sample history, pointer bookkeeping
   widgets/             the vocabulary the panels are built from
-  notch/               the window, the collapsed pill, and the panels it unfolds into
+  notch/               the window, the collapsed pill, the toasts, and the panels it unfolds into
 ```
 
 Directories are importable as `qs.<name>`, so `import qs.theme` gets you

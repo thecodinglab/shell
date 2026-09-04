@@ -57,6 +57,21 @@ Singleton {
         return `${Math.round(seconds / 3600)}h`;
     }
 
+    // How long ago something happened, the way a list of things that happened
+    // says it: now, 5m ago, 2h ago, 3d ago. Coarse on purpose — it is read
+    // down a column, and "47 minutes ago" is a figure where "47m ago" is a
+    // glance. Both ends are milliseconds since the epoch.
+    function ago(then: real, now: real): string {
+        const seconds = Math.max(0, (now - then) / 1000);
+        if (seconds < 60)
+            return "now";
+        if (seconds < 3600)
+            return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400)
+            return `${Math.floor(seconds / 3600)}h ago`;
+        return `${Math.floor(seconds / 86400)}d ago`;
+    }
+
     // A 0..1 fraction as a whole percentage, truncated rather than rounded so
     // nothing ever reads 100% while it is still climbing.
     function percent(fraction: real): string {

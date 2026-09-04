@@ -100,4 +100,11 @@ Singleton {
     // How long a notification sits under the notch before it fades out. The
     // sender can ask for less; it can never ask for more.
     readonly property int notificationTimeout: value("notificationTimeout", 6000)
+
+    // How long a notification is kept in the panel after it has left the
+    // screen, in seconds, and how many of them are kept at most. Everything
+    // older than the one or beyond the other is dropped on its own; anything
+    // younger stays until it is dismissed.
+    readonly property int notificationRetention: value("notificationRetention", 24 * 60 * 60)
+    readonly property int notificationLimit: value("notificationLimit", 50)
 }
