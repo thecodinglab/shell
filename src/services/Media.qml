@@ -7,8 +7,7 @@ import Quickshell.Services.Mpris
 // Every player that can be controlled, whatever is playing first.
 //
 // The notch shows all of them stacked rather than picking one, so a paused
-// video does not disappear the moment music starts somewhere else. `player`
-// is only for the places that genuinely have room for a single one.
+// video does not disappear the moment music starts somewhere else.
 //
 // A player that cannot be started or stopped is left out entirely: an
 // application that registered an mpris name and then went quiet is a card of
@@ -24,30 +23,7 @@ Singleton {
         return a.uniqueId - b.uniqueId;
     })
 
-    readonly property MprisPlayer player: root.players[0] ?? null
-    readonly property bool active: root.players.length > 0
     readonly property bool playing: root.players.some(p => p.isPlaying)
-
-    function toggle(player: MprisPlayer): void {
-        if (player?.canTogglePlaying)
-            player.togglePlaying();
-    }
-
-    function next(player: MprisPlayer): void {
-        if (player?.canGoNext)
-            player.next();
-    }
-
-    function previous(player: MprisPlayer): void {
-        if (player?.canGoPrevious)
-            player.previous();
-    }
-
-    function seek(player: MprisPlayer, fraction: real): void {
-        const length = player?.lengthSupported ? player.length : 0;
-        if (player?.canSeek && length > 0)
-            player.position = Math.max(0, Math.min(1, fraction)) * length;
-    }
 
     // mpris players are not obliged to announce that the playhead moved, so
     // a position is only as fresh as the last time somebody asked for it.

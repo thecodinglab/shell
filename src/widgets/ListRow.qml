@@ -39,9 +39,7 @@ Rectangle {
     }
 
     Behavior on color {
-        ColorAnimation {
-            duration: Theme.fadeDuration
-        }
+        ColorFade {}
     }
 
     RowLayout {

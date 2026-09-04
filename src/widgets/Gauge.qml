@@ -19,28 +19,20 @@ Item {
     property string label: ""
 
     property int size: Theme.gaugeSize
-    property int thickness: Theme.gaugeThickness
-    // the ring is drawn inside the item rather than up against its edges, so
-    // a gauge keeps its distance from whatever a layout sets it beside
-    property int padding: Theme.gaugePadding
-
-    // past here the ring is not just full, it is a problem
-    property real warn: 0.9
-
-    property color trackColor: Theme.track
-    property color fillColor: root.fraction >= root.warn ? Theme.urgent : Theme.accent
 
     readonly property real fraction: Math.max(0, Math.min(1, root.value || 0))
+    // past nine tenths the ring is not just full, it is a problem
+    readonly property color fillColor: root.fraction >= 0.9 ? Theme.urgent : Theme.accent
 
-    // the wedge the ring leaves open at the bottom, in degrees, and what is
-    // left for it to draw in
+    // the wedge the ring leaves open at the bottom, in degrees
     readonly property real gap: 108
-    readonly property real sweep: 360 - root.gap
+    // degrees clockwise from three o'clock: half the gap past straight
+    // down, which is the bottom left of the ring
+    readonly property real start: 90 + root.gap / 2
 
-    // the circle the band encloses, and how much of the bottom of it the gap
-    // opens up — which is the room the label has to sit in
-    readonly property real inner: root.size / 2 - root.thickness
-    readonly property real opening: 2 * root.inner * Math.sin(root.gap / 2 * Math.PI / 180)
+    // how much of the bottom of the circle the band encloses the gap opens
+    // up, which is the room the label has to sit in
+    readonly property real opening: 2 * (root.size / 2 - Theme.gaugeThickness) * Math.sin(root.gap / 2 * Math.PI / 180)
 
     // The type inside the ring comes off the ring rather than off the panel's
     // type ramp: the ramp is a step up from the units the dial is drawn in,
@@ -49,12 +41,12 @@ Item {
     readonly property int valueSize: Math.round(root.size * 0.22)
     readonly property int labelSize: Math.round(root.size * 0.15)
 
-    implicitWidth: root.size + root.padding * 2
-    implicitHeight: root.size + root.padding * 2
+    // the ring is drawn inside the item rather than up against its edges, so
+    // a gauge keeps its distance from whatever a layout sets it beside
+    implicitWidth: root.size + Theme.gaugePadding * 2
+    implicitHeight: root.size + Theme.gaugePadding * 2
 
     Shape {
-        id: shape
-
         anchors.centerIn: parent
 
         width: root.size
@@ -65,56 +57,29 @@ Item {
         preferredRendererType: Shape.CurveRenderer
 
         // the empty ring, all the way round
-        ShapePath {
-            strokeColor: root.trackColor
-            strokeWidth: root.thickness
-            fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
-
-            PathAngleArc {
-                centerX: shape.width / 2
-                centerY: shape.height / 2
-                // the stroke straddles the path, so the band's outside edge
-                // is the item's edge only if the radius is pulled in by half
-                radiusX: (root.size - root.thickness) / 2
-                radiusY: radiusX
-
-                // degrees clockwise from three o'clock: half the gap past
-                // straight down, which is the bottom left of the ring
-                startAngle: 90 + root.gap / 2
-                sweepAngle: root.sweep
-            }
+        Arc {
+            size: root.size
+            start: root.start
+            sweep: 360 - root.gap
         }
 
         // ...and as much of it as the value fills
-        ShapePath {
+        Arc {
+            size: root.size
+            start: root.start
+            sweep: (360 - root.gap) * root.fraction
             strokeColor: root.fillColor
-            strokeWidth: root.thickness
-            fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
 
             Behavior on strokeColor {
-                ColorAnimation {
-                    duration: Theme.fadeDuration
-                }
+                ColorFade {}
             }
 
-            PathAngleArc {
-                centerX: shape.width / 2
-                centerY: shape.height / 2
-                radiusX: (root.size - root.thickness) / 2
-                radiusY: radiusX
-
-                startAngle: 90 + root.gap / 2
-                sweepAngle: root.sweep * root.fraction
-
-                // samples land every couple of seconds, so the ring is only
-                // ever caught moving between two of them
-                Behavior on sweepAngle {
-                    NumberAnimation {
-                        duration: Theme.expandDuration
-                        easing.type: Theme.expandEasing
-                    }
+            // samples land every couple of seconds, so the ring is only
+            // ever caught moving between two of them
+            Behavior on sweep {
+                NumberAnimation {
+                    duration: Theme.expandDuration
+                    easing.type: Theme.expandEasing
                 }
             }
         }
@@ -146,7 +111,6 @@ Item {
             visible: root.label !== ""
 
             text: root.label
-            color: Theme.textDim
 
             horizontalAlignment: Text.AlignHCenter
             font.pixelSize: root.labelSize

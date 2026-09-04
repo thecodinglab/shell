@@ -16,9 +16,7 @@ Rectangle {
     color: root.checked ? Theme.accent : Theme.track
 
     Behavior on color {
-        ColorAnimation {
-            duration: Theme.fadeDuration
-        }
+        ColorFade {}
     }
 
     Rectangle {
@@ -34,10 +32,7 @@ Rectangle {
         color: root.checked ? Theme.slab : Theme.textMuted
 
         Behavior on x {
-            NumberAnimation {
-                duration: Theme.fadeDuration
-                easing.type: Theme.expandEasing
-            }
+            Ease {}
         }
     }
 

@@ -24,9 +24,7 @@ Item {
     opacity: root.active ? 1 : 0.3
 
     Behavior on opacity {
-        NumberAnimation {
-            duration: Theme.fadeDuration
-        }
+        Fade {}
     }
 
     Rectangle {
@@ -47,15 +45,11 @@ Item {
         }
 
         Behavior on color {
-            ColorAnimation {
-                duration: Theme.fadeDuration
-            }
+            ColorFade {}
         }
     }
 
     Text {
-        id: label
-
         anchors.centerIn: parent
 
         text: root.icon

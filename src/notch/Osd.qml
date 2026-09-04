@@ -50,16 +50,15 @@ Rectangle {
     opacity: root.shown ? 1 : 0
     visible: opacity > 0
 
+    // it comes and goes at the pill's pace, not the panel's
     Behavior on slide {
-        NumberAnimation {
+        Slide {
             duration: Theme.revealDuration
-            easing.type: Easing.BezierSpline
-            easing.bezierCurve: Theme.expandCurve
         }
     }
 
     Behavior on opacity {
-        NumberAnimation {
+        Fade {
             duration: Theme.revealDuration
         }
     }
@@ -111,10 +110,7 @@ Rectangle {
 
                 // one press moves the fill one step; a run of them slides it
                 Behavior on width {
-                    NumberAnimation {
-                        duration: Theme.fadeDuration
-                        easing.type: Theme.expandEasing
-                    }
+                    Ease {}
                 }
             }
         }

@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell.Services.Notifications
 import qs.theme
 import qs.services
@@ -45,7 +44,7 @@ Rectangle {
         root.icon = root.icon;
     }
 
-    implicitHeight: layout.implicitHeight + Theme.cardPadding * 2
+    implicitHeight: content.implicitHeight + Theme.cardPadding * 2
 
     radius: Theme.toastRadius
     color: root.urgent ? Theme.slabUrgent : Theme.slab
@@ -59,64 +58,18 @@ Rectangle {
         radius: root.radius
     }
 
-    RowLayout {
-        id: layout
+    NotifContent {
+        id: content
 
         anchors.fill: parent
         anchors.margins: Theme.cardPadding
 
-        spacing: Theme.px(12)
-
-        NotifDisc {
-            Layout.alignment: Qt.AlignTop
-
-            image: root.image
-            icon: root.icon
-            urgent: root.urgent
-        }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-
-            spacing: Theme.px(2)
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                spacing: Theme.rowSpacing
-
-                Sans {
-                    Layout.fillWidth: true
-
-                    text: root.title
-                    color: Theme.text
-
-                    font.weight: Font.Medium
-                }
-
-                Caption {
-                    text: root.appName
-                    color: Theme.textFaint
-                }
-            }
-
-            Sans {
-                Layout.fillWidth: true
-
-                visible: text !== ""
-
-                text: root.body
-                color: Theme.textMuted
-
-                // the server advertises markup support, so bodies arrive with
-                // it in them
-                textFormat: Text.StyledText
-                wrapMode: Text.Wrap
-                maximumLineCount: 3
-                lineHeight: 1.35
-            }
-        }
+        title: root.title
+        meta: root.appName
+        body: root.body
+        image: root.image
+        icon: root.icon
+        urgent: root.urgent
     }
 
     MouseArea {

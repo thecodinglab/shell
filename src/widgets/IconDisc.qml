@@ -24,9 +24,7 @@ Rectangle {
     color: root.on ? Theme.accent : Theme.surfaceRaised
 
     Behavior on color {
-        ColorAnimation {
-            duration: Theme.fadeDuration
-        }
+        ColorFade {}
     }
 
     Text {
@@ -39,9 +37,7 @@ Rectangle {
         font.pixelSize: Math.round(root.size * 0.46)
 
         Behavior on color {
-            ColorAnimation {
-                duration: Theme.fadeDuration
-            }
+            ColorFade {}
         }
     }
 }

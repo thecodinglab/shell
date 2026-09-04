@@ -12,9 +12,8 @@ RowLayout {
 
     default property alias trailing: trailingRow.data
 
+    required property var notch
     property string title: ""
-
-    signal back
 
     spacing: Theme.px(6)
 
@@ -25,7 +24,7 @@ RowLayout {
         icon: Icons.back
         pixelSize: Theme.fontSmall
 
-        onClicked: root.back()
+        onClicked: root.notch.panel = "home"
     }
 
     Title {

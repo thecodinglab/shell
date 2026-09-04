@@ -160,25 +160,11 @@ ColumnLayout {
 
                 onClicked: root.notch.panel = "audio"
 
-                ColumnLayout {
+                Label {
                     Layout.fillWidth: true
 
-                    spacing: Theme.px(1)
-
-                    Sans {
-                        Layout.fillWidth: true
-
-                        text: "Sound"
-                        color: Theme.text
-
-                        font.weight: Font.Medium
-                    }
-
-                    Caption {
-                        Layout.fillWidth: true
-
-                        text: Audio.sink ? Audio.label(Audio.sink) : "No output"
-                    }
+                    title: "Sound"
+                    caption: Audio.sink ? Audio.label(Audio.sink) : "No output"
                 }
 
                 Glyph {
@@ -191,18 +177,13 @@ ColumnLayout {
                 }
             }
 
-            Slider {
+            // the bar alone: the figure is in the panel
+            Volume {
                 Layout.fillWidth: true
 
-                icon: Icons.volume(Audio.volume, Audio.muted)
-                // a muted device reads as silent rather than as whatever it
-                // will go back to when it is unmuted
-                value: Audio.muted ? 0 : Audio.volume
-
-                onMoved: fraction => Audio.setVolume(Audio.sink, fraction)
-                onIconClicked: Audio.toggleMute(Audio.sink)
+                node: Audio.sink
+                figure: false
             }
-
         }
     }
 
@@ -229,13 +210,13 @@ ColumnLayout {
             }
             on: Bt.primary !== null
             title: "Bluetooth"
-            subtitle: {
+            caption: {
                 if (!Bt.available)
                     return "No adapter";
                 if (!Bt.enabled)
                     return "Off";
                 if (Bt.primary)
-                    return Bt.primary.batteryAvailable ? `${Bt.label(Bt.primary)} · ${Fmt.percent(Bt.primary.battery)}` : Bt.label(Bt.primary);
+                    return [Bt.label(Bt.primary), Bt.battery(Bt.primary)].filter(part => part).join(" · ");
                 return Bt.discovering ? "Scanning" : "Not connected";
             }
 
@@ -252,7 +233,7 @@ ColumnLayout {
             // named for what it is rather than for the setting: a machine
             // on a wire is on ethernet, not on "network"
             title: root.link ? Network.kindLabel(root.link.kind) : "Network"
-            subtitle: {
+            caption: {
                 switch (Network.state) {
                 case "connected":
                     return Network.address;
@@ -262,7 +243,7 @@ ColumnLayout {
                     return "Offline";
                 }
             }
-            subtitleColor: Network.state === "connected" ? Theme.textDim : Theme.urgent
+            captionColor: Network.state === "connected" ? Theme.textDim : Theme.urgent
 
             onClicked: root.notch.panel = "network"
         }

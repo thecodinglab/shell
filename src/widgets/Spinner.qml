@@ -9,63 +9,30 @@ import qs.theme
 Item {
     id: root
 
-    property int size: Theme.spinnerSize
-    property int thickness: Theme.spinnerThickness
-    property color color: Theme.accent
-    property color trackColor: Theme.track
-
-    // how much of the ring the moving part covers, in degrees
-    property real arc: 110
-
-    implicitWidth: root.size
-    implicitHeight: root.size
+    implicitWidth: Theme.spinnerSize
+    implicitHeight: Theme.spinnerSize
 
     Shape {
-        id: shape
-
         anchors.centerIn: parent
 
-        width: root.size
-        height: root.size
+        width: Theme.spinnerSize
+        height: Theme.spinnerSize
 
         // a band this thin reads as a staircase without the curve renderer
         preferredRendererType: Shape.CurveRenderer
 
         // the ring it runs around
-        ShapePath {
-            strokeColor: root.trackColor
-            strokeWidth: root.thickness
-            fillColor: "transparent"
-
-            PathAngleArc {
-                centerX: shape.width / 2
-                centerY: shape.height / 2
-                // the stroke straddles the path, so the band's outside edge
-                // is the item's edge only if the radius is pulled in by half
-                radiusX: (root.size - root.thickness) / 2
-                radiusY: radiusX
-
-                startAngle: 0
-                sweepAngle: 360
-            }
+        Arc {
+            size: Theme.spinnerSize
+            thickness: Theme.spinnerThickness
         }
 
         // ...and the part of it that is moving
-        ShapePath {
-            strokeColor: root.color
-            strokeWidth: root.thickness
-            fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
-
-            PathAngleArc {
-                centerX: shape.width / 2
-                centerY: shape.height / 2
-                radiusX: (root.size - root.thickness) / 2
-                radiusY: radiusX
-
-                startAngle: 0
-                sweepAngle: root.arc
-            }
+        Arc {
+            size: Theme.spinnerSize
+            thickness: Theme.spinnerThickness
+            sweep: 110
+            strokeColor: Theme.accent
         }
 
         // Only while it is on screen: a panel that has been folded away still

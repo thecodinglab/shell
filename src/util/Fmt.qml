@@ -24,12 +24,6 @@ Singleton {
         return `${fraction.toFixed(1)}${prefix}B`;
     }
 
-    // Two decimals with the trailing zeros stripped: 41.76, 41.7, 41.
-    function gibibytes(kilobytes: real): string {
-        // 10485.76 = 1024^2 / 100, i.e. two decimals of a GiB
-        return String(Math.round(kilobytes / 10485.76) / 100);
-    }
-
     // Track positions, mpris style: 1:47, or 1:02:03 once it passes an hour.
     function duration(seconds: real): string {
         if (!isFinite(seconds) || seconds < 0)

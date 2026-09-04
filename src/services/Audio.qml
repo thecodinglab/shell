@@ -27,9 +27,6 @@ Singleton {
     readonly property real volume: root.sink?.audio?.volume ?? 0
     readonly property bool muted: root.sink?.audio?.muted ?? false
 
-    readonly property real inputVolume: root.source?.audio?.volume ?? 0
-    readonly property bool inputMuted: root.source?.audio?.muted ?? false
-
     // The output's volume or mute has been set, by whoever set it: a media
     // key, the notch's own slider, another application. It is the sink's
     // own change signals rather than `volume` above changing, so that the

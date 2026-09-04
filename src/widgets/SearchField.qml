@@ -33,9 +33,7 @@ Rectangle {
     color: input.activeFocus ? Theme.surfaceHover : Theme.surface
 
     Behavior on color {
-        ColorAnimation {
-            duration: Theme.fadeDuration
-        }
+        ColorFade {}
     }
 
     // Under the row, so the clear button and the caret get their clicks

@@ -69,16 +69,11 @@ Row {
             }
 
             Behavior on implicitWidth {
-                NumberAnimation {
-                    duration: Theme.fadeDuration
-                    easing.type: Theme.expandEasing
-                }
+                Ease {}
             }
 
             Behavior on color {
-                ColorAnimation {
-                    duration: Theme.fadeDuration
-                }
+                ColorFade {}
             }
 
             MouseArea {

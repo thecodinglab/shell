@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 import qs.services
-import qs.util
 import qs.widgets
 
 // Everything bluez knows about, in one list.
@@ -25,11 +24,6 @@ ColumnLayout {
 
     readonly property var matches: Bt.enabled ? Bt.search(search.text) : []
 
-    // What is left for the list once the panel has had its half of the
-    // screen: everything above the list is a fixed height, so the list gets
-    // the rest and scrolls once it runs out.
-    readonly property int listMax: Math.max(Theme.listMinHeight, root.notch.bodyMaxHeight - header.height - search.height - root.spacing * 2)
-
     spacing: Theme.expandedSpacing
 
     // The field borrows the keyboard while the panel is up; hand it back on
@@ -41,9 +35,8 @@ ColumnLayout {
 
         Layout.fillWidth: true
 
+        notch: root.notch
         title: "Bluetooth"
-
-        onBack: root.notch.panel = "home"
 
         Caption {
             visible: Bt.discovering
@@ -75,10 +68,7 @@ ColumnLayout {
         Component.onCompleted: search.take()
     }
 
-    Sans {
-        Layout.fillWidth: true
-        Layout.margins: Theme.cardPadding
-
+    Empty {
         visible: root.matches.length === 0
 
         text: {
@@ -90,117 +80,62 @@ ColumnLayout {
                 return Bt.discovering ? "Looking for devices…" : "No devices yet.";
             return `Nothing called “${search.text.trim()}”.`;
         }
-        color: Theme.textDim
     }
 
-    // The list, and the bar that turns up beside it once there is more in it
-    // than fits. The two are siblings so the bar holds still while the list
-    // scrolls under it.
-    Item {
+    ScrollList {
         Layout.fillWidth: true
-        // grows with the list until the notch would be half the screen tall
-        Layout.preferredHeight: Math.min(list.contentHeight, root.listMax)
 
         visible: root.matches.length > 0
 
-        ListView {
-            id: list
+        // what is left once the panel has had its half of the screen:
+        // everything above the list is a fixed height, so the list gets the
+        // rest and scrolls once it runs out
+        maxHeight: Math.max(Theme.listMinHeight, root.notch.bodyMaxHeight - header.height - search.height - root.spacing * 2)
 
-            anchors.fill: parent
-            // the gutter the bar needs, taken from the list only when there
-            // is going to be a bar in it
-            anchors.rightMargin: bar.overflowing ? bar.width : 0
+        values: root.matches
 
-            clip: true
-            spacing: Theme.listSpacing
-            boundsBehavior: Flickable.StopAtBounds
+        delegate: ListRow {
+            id: deviceRow
 
-            model: root.matches
+            required property var modelData
 
-            delegate: ListRow {
-                id: deviceRow
+            readonly property bool busy: Bt.busy(deviceRow.modelData)
+            readonly property bool connected: deviceRow.modelData.connected
 
-                required property var modelData
+            width: ListView.view.width
 
-                readonly property bool busy: Bt.busy(deviceRow.modelData)
-                readonly property bool connected: deviceRow.modelData.connected
+            flat: true
+            // a device mid-handshake has nothing to offer a tap: the next
+            // one could only countermand the last
+            interactive: !deviceRow.busy
 
-                width: ListView.view.width
+            onClicked: Bt.activate(deviceRow.modelData)
 
-                flat: true
-                // a device mid-handshake has nothing to offer a tap: the next
-                // one could only countermand the last
-                interactive: !deviceRow.busy
-                padding: Theme.rowPadding
+            IconDisc {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.leftMargin: Theme.px(2)
 
-                onClicked: Bt.activate(deviceRow.modelData)
-
-                IconDisc {
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.leftMargin: Theme.px(2)
-
-                    icon: Icons.device(deviceRow.modelData.icon)
-                    on: deviceRow.connected
-                    size: Theme.discSizeSmall
-                    iconColor: deviceRow.modelData.paired ? Theme.textBody : Theme.textMuted
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-
-                    spacing: Theme.px(1)
-
-                    Sans {
-                        Layout.fillWidth: true
-
-                        text: Bt.label(deviceRow.modelData)
-                        color: Theme.text
-
-                        font.weight: Font.Medium
-                    }
-
-                    Caption {
-                        Layout.fillWidth: true
-
-                        // What is happening to it, or failing that what it
-                        // is. Every paired row connects when it is clicked,
-                        // so that is not worth saying on each of them.
-                        text: {
-                            const device = deviceRow.modelData;
-
-                            switch (Bt.status(device)) {
-                            case "pairing":
-                                return "Pairing…";
-                            case "connecting":
-                                return "Connecting…";
-                            case "disconnecting":
-                                return "Disconnecting…";
-                            case "connected":
-                                return device.batteryAvailable ? `Connected · ${Fmt.percent(device.battery)}` : "Connected";
-                            case "pair":
-                                return "Not paired";
-                            default:
-                                return Bt.kind(device);
-                            }
-                        }
-                        color: deviceRow.connected || deviceRow.busy ? Theme.accent : Theme.textDim
-                    }
-                }
-
-                Spinner {
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.rightMargin: Theme.px(4)
-
-                    visible: deviceRow.busy
-                }
+                icon: Icons.device(deviceRow.modelData.icon)
+                on: deviceRow.connected
+                size: Theme.discSizeSmall
+                iconColor: deviceRow.modelData.paired ? Theme.textBody : Theme.textMuted
             }
-        }
 
-        ScrollBar {
-            id: bar
+            Label {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
 
-            flickable: list
+                title: Bt.label(deviceRow.modelData)
+                caption: Bt.status(deviceRow.modelData)
+                captionColor: deviceRow.connected || deviceRow.busy ? Theme.accent : Theme.textDim
+            }
+
+            Spinner {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.rightMargin: Theme.px(4)
+
+                visible: deviceRow.busy
+            }
         }
     }
 }

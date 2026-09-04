@@ -13,9 +13,9 @@ ListRow {
 
     property string icon: ""
     property bool on: false
-    property string title: ""
-    property string subtitle: ""
-    property color subtitleColor: Theme.textDim
+    property alias title: label.title
+    property alias caption: label.caption
+    property alias captionColor: label.captionColor
 
     padding: Theme.cardPadding
 
@@ -26,28 +26,10 @@ ListRow {
         on: root.on
     }
 
-    ColumnLayout {
+    Label {
+        id: label
+
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
-
-        spacing: Theme.px(1)
-
-        Sans {
-            Layout.fillWidth: true
-
-            text: root.title
-            color: Theme.text
-
-            font.weight: Font.Medium
-        }
-
-        Caption {
-            Layout.fillWidth: true
-
-            visible: text !== ""
-
-            text: root.subtitle
-            color: root.subtitleColor
-        }
     }
 }

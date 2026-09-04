@@ -34,19 +34,14 @@ Singleton {
 
     readonly property string bluetooth: "󰂯"
     readonly property string bluetoothOff: "󰂲"
-    readonly property string bluetoothConnected: "󰂱"
     readonly property string keyboard: "󰌌"
     readonly property string mouse: "󰍽"
     readonly property string phone: "󰄜"
     readonly property string computer: "󰌢"
     readonly property string display: "󰍹"
 
-    // ── system ────────────────────────────────────────────────────────────
+    // ── network ────────────────────────────────────────────────────────────
 
-    readonly property string cpu: ""
-    readonly property string memory: ""
-    readonly property string disk: "󰋊"
-    readonly property string network: "󰛳"
     readonly property string networkOff: "󰅛"
     readonly property string wifi: "󰖩"
     readonly property string ethernet: "󰈀"

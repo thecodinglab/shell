@@ -23,19 +23,14 @@ ColumnLayout {
     PanelHeader {
         Layout.fillWidth: true
 
+        notch: root.notch
         title: "Network"
-
-        onBack: root.notch.panel = "home"
     }
 
-    Sans {
-        Layout.fillWidth: true
-        Layout.margins: Theme.cardPadding
-
+    Empty {
         visible: Network.interfaces.length === 0
 
         text: "Not connected to anything."
-        color: Theme.textDim
     }
 
     Card {
@@ -68,26 +63,12 @@ ColumnLayout {
                         size: Theme.discSizeSmall
                     }
 
-                    ColumnLayout {
+                    Label {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
 
-                        spacing: Theme.px(1)
-
-                        Sans {
-                            Layout.fillWidth: true
-
-                            text: link.modelData.name
-                            color: Theme.text
-
-                            font.weight: Font.Medium
-                        }
-
-                        Caption {
-                            Layout.fillWidth: true
-
-                            text: Network.kindLabel(link.modelData.kind)
-                        }
+                        title: link.modelData.name
+                        caption: Network.kindLabel(link.modelData.kind)
                     }
 
                     Num {

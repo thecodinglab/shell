@@ -64,10 +64,7 @@ Item {
         clip: true
 
         Behavior on height {
-            NumberAnimation {
-                duration: Theme.fadeDuration
-                easing.type: Theme.expandEasing
-            }
+            Ease {}
         }
 
         Rectangle {
@@ -95,9 +92,7 @@ Item {
         font.pixelSize: Theme.fontTitle
 
         Behavior on color {
-            ColorAnimation {
-                duration: Theme.fadeDuration
-            }
+            ColorFade {}
         }
     }
 

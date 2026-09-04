@@ -112,7 +112,7 @@ Card {
                     icon: Icons.previous
                     active: root.player.canGoPrevious
 
-                    onClicked: Media.previous(root.player)
+                    onClicked: root.player.previous()
                 }
 
                 IconButton {
@@ -120,14 +120,14 @@ Card {
                     filled: true
                     active: root.player.canTogglePlaying
 
-                    onClicked: Media.toggle(root.player)
+                    onClicked: root.player.togglePlaying()
                 }
 
                 IconButton {
                     icon: Icons.next
                     active: root.player.canGoNext
 
-                    onClicked: Media.next(root.player)
+                    onClicked: root.player.next()
                 }
             }
         }
@@ -156,8 +156,8 @@ Card {
                 fillColor: root.player.canSeek ? Theme.fill : Theme.textDim
 
                 onMoved: fraction => {
-                    if (root.player.canSeek)
-                        Media.seek(root.player, fraction);
+                    if (root.player.canSeek && root.length > 0)
+                        root.player.position = fraction * root.length;
                 }
             }
 

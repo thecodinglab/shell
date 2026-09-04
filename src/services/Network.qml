@@ -25,7 +25,6 @@ Singleton {
     readonly property var primary: root.interfaces[0] ?? null
     readonly property string state: root.primary?.state ?? "disconnected"
     readonly property string address: root.primary?.address ?? ""
-    readonly property string name: root.primary?.name ?? Config.networkInterface
 
     function refresh(): void {
         // a refresh while one is in flight would lose the newer state

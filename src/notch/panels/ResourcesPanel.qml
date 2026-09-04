@@ -24,9 +24,8 @@ ColumnLayout {
     PanelHeader {
         Layout.fillWidth: true
 
+        notch: root.notch
         title: "System"
-
-        onBack: root.notch.panel = "home"
     }
 
     Repeater {
@@ -41,7 +40,7 @@ ColumnLayout {
             {
                 name: "Memory",
                 fraction: Memory.usage,
-                detail: `${Fmt.gibibytes(Memory.usedKb)} of ${Fmt.gibibytes(Memory.totalKb)} GiB`,
+                detail: `${Fmt.bytes(Memory.usedBytes)} of ${Fmt.bytes(Memory.totalBytes)}`,
                 history: Memory.history,
                 span: Memory.historySeconds
             },
@@ -88,27 +87,11 @@ ColumnLayout {
 
                         spacing: Theme.rowSpacing
 
-                        ColumnLayout {
+                        Label {
                             Layout.fillWidth: true
 
-                            spacing: Theme.px(1)
-
-                            Sans {
-                                Layout.fillWidth: true
-
-                                text: card.modelData.name
-                                color: Theme.text
-
-                                font.weight: Font.Medium
-                            }
-
-                            Caption {
-                                Layout.fillWidth: true
-
-                                visible: text !== ""
-
-                                text: card.modelData.detail
-                            }
+                            title: card.modelData.name
+                            caption: card.modelData.detail
                         }
 
                         // how much time the bars beside it cover, which is

@@ -7,6 +7,7 @@ import qs.theme
 import qs.services
 import qs.util
 import qs.widgets
+import qs.notch
 
 // Where the sound goes and where it comes from.
 //
@@ -22,14 +23,15 @@ ColumnLayout {
 
     required property var notch
 
+    readonly property bool inputMuted: Audio.source?.audio?.muted ?? false
+
     spacing: Theme.expandedSpacing
 
     PanelHeader {
         Layout.fillWidth: true
 
+        notch: root.notch
         title: "Sound"
-
-        onBack: root.notch.panel = "home"
     }
 
     // ── output ────────────────────────────────────────────────────────────
@@ -46,33 +48,10 @@ ColumnLayout {
                 text: "Output"
             }
 
-            RowLayout {
+            Volume {
                 Layout.fillWidth: true
 
-                spacing: Theme.rowSpacing
-
-                Slider {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-
-                    icon: Icons.volume(Audio.volume, Audio.muted)
-                    value: Audio.muted ? 0 : Audio.volume
-
-                    onMoved: fraction => Audio.setVolume(Audio.sink, fraction)
-                    onIconClicked: Audio.toggleMute(Audio.sink)
-                }
-
-                Num {
-                    Layout.preferredWidth: Theme.figureWidth
-                    Layout.alignment: Qt.AlignVCenter
-
-                    // a muted device draws an empty track, and the figure
-                    // beside it has to agree with that
-                    text: Audio.muted ? "Muted" : Fmt.percent(Audio.volume)
-                    color: Audio.muted ? Theme.textDim : Theme.textMuted
-
-                    horizontalAlignment: Text.AlignRight
-                }
+                node: Audio.sink
             }
 
             DeviceList {
@@ -112,9 +91,6 @@ ColumnLayout {
 
                     required property var modelData
 
-                    readonly property real volume: stream.modelData.audio?.volume ?? 0
-                    readonly property bool muted: stream.modelData.audio?.muted ?? false
-
                     Layout.fillWidth: true
 
                     spacing: Theme.px(4)
@@ -125,31 +101,10 @@ ColumnLayout {
                         text: Audio.app(stream.modelData)
                     }
 
-                    RowLayout {
+                    Volume {
                         Layout.fillWidth: true
 
-                        spacing: Theme.rowSpacing
-
-                        Slider {
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-
-                            icon: Icons.volume(stream.volume, stream.muted)
-                            value: stream.muted ? 0 : stream.volume
-
-                            onMoved: fraction => Audio.setVolume(stream.modelData, fraction)
-                            onIconClicked: Audio.toggleMute(stream.modelData)
-                        }
-
-                        Num {
-                            Layout.preferredWidth: Theme.figureWidth
-                            Layout.alignment: Qt.AlignVCenter
-
-                            text: stream.muted ? "Muted" : Fmt.percent(stream.volume)
-                            color: stream.muted ? Theme.textDim : Theme.textMuted
-
-                            horizontalAlignment: Text.AlignRight
-                        }
+                        node: stream.modelData
                     }
                 }
             }
@@ -172,31 +127,11 @@ ColumnLayout {
                 text: "Input"
             }
 
-            RowLayout {
+            Volume {
                 Layout.fillWidth: true
 
-                spacing: Theme.rowSpacing
-
-                Slider {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-
-                    icon: Audio.inputMuted ? Icons.microphoneMuted : Icons.microphone
-                    value: Audio.inputMuted ? 0 : Audio.inputVolume
-
-                    onMoved: fraction => Audio.setVolume(Audio.source, fraction)
-                    onIconClicked: Audio.toggleMute(Audio.source)
-                }
-
-                Num {
-                    Layout.preferredWidth: Theme.figureWidth
-                    Layout.alignment: Qt.AlignVCenter
-
-                    text: Audio.inputMuted ? "Muted" : Fmt.percent(Audio.inputVolume)
-                    color: Audio.inputMuted ? Theme.textDim : Theme.textMuted
-
-                    horizontalAlignment: Text.AlignRight
-                }
+                node: Audio.source
+                input: true
             }
 
             // the last second or so of what the microphone picked up, which
@@ -211,7 +146,7 @@ ColumnLayout {
                 recent: 0
                 implicitHeight: Theme.px(10)
 
-                pastColor: Audio.inputMuted ? Theme.track : Theme.alpha(Theme.text, 0.4)
+                pastColor: root.inputMuted ? Theme.track : Theme.alpha(Theme.text, 0.4)
             }
 
             DeviceList {
@@ -243,7 +178,7 @@ ColumnLayout {
         running: monitor.enabled
         repeat: true
 
-        onTriggered: peaks.push(Audio.inputMuted ? 0 : monitor.peak)
+        onTriggered: peaks.push(root.inputMuted ? 0 : monitor.peak)
     }
 
     // The devices a bar could be going through, with a check beside the one

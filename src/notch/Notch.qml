@@ -263,27 +263,22 @@ PanelWindow {
         }
     }
 
-    // ── notifications ─────────────────────────────────────────────────────
+    // ── under the slab ────────────────────────────────────────────────────
     //
-    // They hang off the bottom edge of the slab, which put away is the top of
-    // the screen: one arriving on its own drops straight out of the top edge
-    // and leaves the notch where it was. If the notch does come out while a
-    // toast is up — because the pointer went for it — they ride down ahead of
-    // it rather than being covered by it, and get out of the way entirely
-    // once the panel opens.
+    // The volume reading and the toasts hang off the bottom edge of the slab,
+    // which put away is the top of the screen: one arriving on its own drops
+    // straight out of the top edge and leaves the notch where it was. If the
+    // notch does come out while one is up — because the pointer went for it —
+    // they ride down ahead of it rather than being covered by it, and the
+    // toasts get out of the way entirely once the panel opens.
     //
-    // Declared ahead of the slab, and so behind it: a toast on its way out
+    // Declared ahead of the slab, and so behind it: something on its way out
     // from under the top edge passes behind the pill if the pill is out, the
     // way it would if it really were coming out from under it.
 
-    // ── the volume, from the keyboard ─────────────────────────────────────
-    //
-    // Set from a media key, the volume is announced the way a notification
-    // is: a pill drops out from under the slab, shows the level, and goes
-    // back up. The shell root decides which monitor it drops on — see
-    // `showVolume` — and an open notch has its own slider in view, so it is
-    // never asked.
-
+    // The volume, set from a media key, is announced the way a notification
+    // is. The shell root decides which monitor it drops on — see `showVolume`
+    // — and an open notch has its own slider in view, so it is never asked.
     Osd {
         id: osd
 
@@ -349,43 +344,35 @@ PanelWindow {
         add: Transition {
             id: arrive
 
-            NumberAnimation {
+            Slide {
                 property: "y"
                 // Read off the transition itself: written unqualified, the
                 // attached property belongs to this animation, and the view
                 // fills in only the transition's. The item is there only once
                 // it is running; the binding is first evaluated well before.
                 from: arrive.ViewTransition.item ? arrive.ViewTransition.destination.y - arrive.ViewTransition.item.height - toasts.y : 0
-                duration: Theme.expandDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Theme.expandCurve
             }
 
-            NumberAnimation {
+            Fade {
                 property: "opacity"
                 from: 0
                 to: 1
-                duration: Theme.fadeDuration
             }
         }
 
         // ...and one leaving fades where it is.
         remove: Transition {
-            NumberAnimation {
+            Fade {
                 property: "opacity"
                 to: 0
-                duration: Theme.fadeDuration
             }
         }
 
         // The rest move on the curve the slab moves on: down in step with a
         // new one dropping in above them...
         displaced: Transition {
-            NumberAnimation {
+            Slide {
                 property: "y"
-                duration: Theme.expandDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Theme.expandCurve
             }
         }
 
@@ -397,11 +384,8 @@ PanelWindow {
                     duration: Theme.fadeDuration
                 }
 
-                NumberAnimation {
+                Slide {
                     property: "y"
-                    duration: Theme.expandDuration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: Theme.expandCurve
                 }
             }
         }
@@ -426,7 +410,7 @@ PanelWindow {
         opacity: root.revealed ? 1 : 0
 
         Behavior on opacity {
-            NumberAnimation {
+            Fade {
                 duration: root.slideDuration
             }
         }
@@ -445,10 +429,8 @@ PanelWindow {
         property real slide: root.revealed ? 0 : 1
 
         Behavior on slide {
-            NumberAnimation {
+            Slide {
                 duration: root.slideDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Theme.expandCurve
             }
         }
 
@@ -477,21 +459,13 @@ PanelWindow {
         Behavior on width {
             enabled: root.revealed
 
-            NumberAnimation {
-                duration: Theme.expandDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Theme.expandCurve
-            }
+            Slide {}
         }
 
         Behavior on height {
             enabled: root.revealed
 
-            NumberAnimation {
-                duration: Theme.expandDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Theme.expandCurve
-            }
+            Slide {}
         }
 
         HoverHandler {
@@ -536,9 +510,7 @@ PanelWindow {
                         duration: root.unfolded ? 0 : Theme.staggerDelay
                     }
 
-                    NumberAnimation {
-                        duration: Theme.fadeDuration
-                    }
+                    Fade {}
                 }
             }
 
@@ -593,9 +565,7 @@ PanelWindow {
                         duration: root.unfolded ? Theme.staggerDelay : 0
                     }
 
-                    NumberAnimation {
-                        duration: Theme.fadeDuration
-                    }
+                    Fade {}
                 }
             }
 
@@ -604,33 +574,17 @@ PanelWindow {
 
                 width: parent.width
 
-                sourceComponent: {
-                    switch (root.panel) {
-                    case "bluetooth":
-                        return bluetoothPanel;
-                    case "audio":
-                        return audioPanel;
-                    case "resources":
-                        return resourcesPanel;
-                    case "network":
-                        return networkPanel;
-                    case "notifications":
-                        return notificationsPanel;
-                    default:
-                        return homePanel;
-                    }
-                }
+                sourceComponent: root.panels[root.panel] ?? homePanel
 
                 // the slab is already animating its height; fading the new
                 // panel in over that is what keeps the swap from snapping
                 onLoaded: swap.restart()
 
-                NumberAnimation on opacity {
+                Fade on opacity {
                     id: swap
 
                     from: 0
                     to: 1
-                    duration: Theme.fadeDuration
                 }
             }
         }
@@ -675,10 +629,23 @@ PanelWindow {
     // swapping the contents mid-animation is visible.
     Timer {
         interval: Theme.expandDuration
-        running: !root.unfolded && root.panel !== "home"
+        running: !root.unfolded && root.pinned
 
         onTriggered: root.panel = "home"
     }
+
+    // ── the panels ────────────────────────────────────────────────────────
+    //
+    // By the name `open` and the ipc call them by.
+
+    readonly property var panels: ({
+            home: homePanel,
+            notifications: notificationsPanel,
+            audio: audioPanel,
+            bluetooth: bluetoothPanel,
+            network: networkPanel,
+            resources: resourcesPanel
+        })
 
     Component {
         id: homePanel
@@ -689,9 +656,9 @@ PanelWindow {
     }
 
     Component {
-        id: bluetoothPanel
+        id: notificationsPanel
 
-        BluetoothPanel {
+        NotificationsPanel {
             notch: root
         }
     }
@@ -705,9 +672,9 @@ PanelWindow {
     }
 
     Component {
-        id: resourcesPanel
+        id: bluetoothPanel
 
-        ResourcesPanel {
+        BluetoothPanel {
             notch: root
         }
     }
@@ -721,9 +688,9 @@ PanelWindow {
     }
 
     Component {
-        id: notificationsPanel
+        id: resourcesPanel
 
-        NotificationsPanel {
+        ResourcesPanel {
             notch: root
         }
     }

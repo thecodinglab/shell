@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Bluetooth
+import qs.util
 
 // Bluez, in the shape the panel wants it.
 //
@@ -26,9 +27,8 @@ Singleton {
         return root.label(a).localeCompare(root.label(b));
     })
 
-    readonly property var connected: root.devices.filter(d => d.connected)
-    // what the collapsed tile shows, and what the icon is drawn from
-    readonly property BluetoothDevice primary: root.connected[0] ?? null
+    // what the home tile shows, and what its icon is drawn from
+    readonly property BluetoothDevice primary: root.devices.find(d => d.connected) ?? null
 
     function label(device: BluetoothDevice): string {
         return device?.name || device?.deviceName || device?.address || "unknown device";
@@ -80,22 +80,28 @@ Singleton {
         return device.pairing || device.state === BluetoothDeviceState.Connecting || device.state === BluetoothDeviceState.Disconnecting;
     }
 
-    // What the tag at the end of a row says: what is happening, or failing
-    // that, what a tap would do.
+    // The line under a device's name: what is happening to it, or failing
+    // that what it is. Every paired row connects when it is clicked, so that
+    // is not worth saying on each of them.
     function status(device: BluetoothDevice): string {
         if (!device)
             return "";
 
         if (device.pairing)
-            return "pairing";
+            return "Pairing…";
         if (device.state === BluetoothDeviceState.Connecting)
-            return "connecting";
+            return "Connecting…";
         if (device.state === BluetoothDeviceState.Disconnecting)
-            return "disconnecting";
+            return "Disconnecting…";
         if (device.connected)
-            return "connected";
+            return ["Connected", root.battery(device)].filter(part => part).join(" · ");
 
-        return device.paired ? "connect" : "pair";
+        return device.paired ? root.kind(device) : "Not paired";
+    }
+
+    // How full a device says it is, or nothing if it does not say.
+    function battery(device: BluetoothDevice): string {
+        return device?.batteryAvailable ? Fmt.percent(device.battery) : "";
     }
 
     // The devices whose name or address contains `query`, in the order they

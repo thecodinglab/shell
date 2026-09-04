@@ -70,7 +70,6 @@ Singleton {
     // where you are — position, selection, focus — so it is worth enough
     // contrast to be seen at a glance.
     readonly property color accentSurface: root.alpha(Config.base0D, 0.14)
-    readonly property color accentBorder: root.alpha(Config.base0D, 0.28)
     readonly property color urgentSurface: root.alpha(Config.base08, 0.14)
     readonly property color urgentBorder: root.alpha(Config.base08, 0.28)
 
@@ -98,11 +97,10 @@ Singleton {
     // face has no separate display cut
     readonly property string displayFamily: Config.displayFamily || Config.sansFamily
 
-    // Six sizes, spaced far enough apart to be a ramp. Hierarchy is carried
+    // Five sizes, spaced far enough apart to be a ramp. Hierarchy is carried
     // by weight and by ink as much as by size: a 1px step between two
     // neighbouring sizes is not a step anyone can see, so there is no point
     // paying for it with another name here.
-    readonly property int fontMicro: root.px(9)     // a dial's label
     readonly property int fontSmall: root.px(11)    // metadata, figures, the date
     readonly property int fontBody: root.px(12)     // row names, body copy
     readonly property int fontTitle: root.px(14)    // panel titles, track titles
