@@ -10,10 +10,13 @@ import qs.widgets
 
 // Where the sound goes and where it comes from.
 //
-// Two modules, one each way. Each has its bar at the top and the devices it
-// could be going through underneath; one tap on a device makes it the
-// default, and pipewire moves the streams that follow the default across on
-// its own.
+// A module each way. Each has its bar at the top and the devices it could be
+// going through underneath; one tap on a device makes it the default, and
+// pipewire moves the streams that follow the default across on its own.
+//
+// Between them, a bar for each application that is playing, which is the same
+// control one level down: the output bar sets what the machine is doing, and
+// these set each application's share of it.
 ColumnLayout {
     id: root
 
@@ -77,6 +80,78 @@ ColumnLayout {
                 current: Audio.sink
 
                 onPicked: node => Audio.setDefaultSink(node)
+            }
+        }
+    }
+
+    // ── the applications playing into it ──────────────────────────────────
+
+    // One bar per stream, so a video can be turned down without turning the
+    // machine down with it. Only there while something is playing: pipewire
+    // has no streams until an application opens one, and a module standing
+    // empty says less than no module at all.
+    Card {
+        Layout.fillWidth: true
+
+        visible: Audio.streams.length > 0
+
+        ColumnLayout {
+            spacing: Theme.px(10)
+
+            Caption {
+                Layout.bottomMargin: Theme.px(2)
+
+                text: "Apps"
+            }
+
+            Repeater {
+                model: Audio.streams
+
+                ColumnLayout {
+                    id: stream
+
+                    required property var modelData
+
+                    readonly property real volume: stream.modelData.audio?.volume ?? 0
+                    readonly property bool muted: stream.modelData.audio?.muted ?? false
+
+                    Layout.fillWidth: true
+
+                    spacing: Theme.px(4)
+
+                    Sans {
+                        Layout.fillWidth: true
+
+                        text: Audio.app(stream.modelData)
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        spacing: Theme.rowSpacing
+
+                        Slider {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+
+                            icon: Icons.volume(stream.volume, stream.muted)
+                            value: stream.muted ? 0 : stream.volume
+
+                            onMoved: fraction => Audio.setVolume(stream.modelData, fraction)
+                            onIconClicked: Audio.toggleMute(stream.modelData)
+                        }
+
+                        Num {
+                            Layout.preferredWidth: Theme.figureWidth
+                            Layout.alignment: Qt.AlignVCenter
+
+                            text: stream.muted ? "Muted" : Fmt.percent(stream.volume)
+                            color: stream.muted ? Theme.textDim : Theme.textMuted
+
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+                }
             }
         }
     }

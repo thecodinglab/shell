@@ -4,11 +4,12 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 
-// Pipewire, narrowed to the two questions the notch asks: what is playing
-// sound, and where is it going.
+// Pipewire, narrowed to the questions the notch asks: what is playing sound,
+// where it is going, and how loud each application playing into it is.
 //
-// Streams are left out. The panel routes the machine's audio, not each
-// application's, so only real devices show up.
+// A playback stream is a sink as far as pipewire is concerned — it is
+// somewhere audio goes — so `isStream` is the only thing telling an
+// application apart from a device, and both are listed here.
 Singleton {
     id: root
 
@@ -17,6 +18,11 @@ Singleton {
 
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
     readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)
+
+    // What is playing right now, one node per application. Recording streams
+    // are left out: a bar per microphone user is a setting nobody reaches
+    // for, and the panel already says what the microphone is hearing.
+    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isSink && n.isStream)
 
     readonly property real volume: root.sink?.audio?.volume ?? 0
     readonly property bool muted: root.sink?.audio?.muted ?? false
@@ -49,6 +55,16 @@ Singleton {
         return node?.description || node?.nickname || node?.name || "";
     }
 
+    // The application behind a stream. A stream carries no description and no
+    // nickname, so `label` would fall through to a node name that is whatever
+    // the client happened to register itself as; what the application calls
+    // itself is closer to what it is called on screen. Capitalised, because
+    // half of them introduce themselves in lower case.
+    function app(node: PwNode): string {
+        const name = node?.properties?.["application.name"] || node?.name || "";
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
     // The bus a node hangs off, which is the only thing distinguishing two
     // otherwise identically named sinks.
     function bus(node: PwNode): string {
@@ -77,8 +93,8 @@ Singleton {
     }
 
     // Volume and mute are only pushed to us while something is holding the
-    // node, and every sink in the audio panel shows its own.
+    // node, and every device and application in the audio panel shows its own.
     PwObjectTracker {
-        objects: [...root.sinks, ...root.sources]
+        objects: [...root.sinks, ...root.sources, ...root.streams]
     }
 }
