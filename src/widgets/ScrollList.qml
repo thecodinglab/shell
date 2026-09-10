@@ -33,8 +33,11 @@ Item {
         anchors.rightMargin: bar.overflowing ? bar.width : 0
 
         clip: true
-        spacing: Theme.listSpacing
         boundsBehavior: Flickable.StopAtBounds
+        // Every row is kept, not just the ones on screen, so the keyboard can
+        // tab down through a list that scrolls; the lists are capped, so the
+        // cost is bounded.
+        cacheBuffer: Theme.windowHeight * 8
 
         model: ScriptModel {
             id: entries
@@ -112,14 +115,10 @@ Item {
 
             width: Theme.scrollThickness
             // so a very long list still leaves something to aim at
-            height: Math.max(Theme.px(24), bar.height * bar.ratio)
+            height: Math.max(Theme.space6, bar.height * bar.ratio)
 
             radius: width / 2
             color: drag.pressed || drag.containsMouse ? Theme.textMuted : Theme.track
-
-            Behavior on color {
-                ColorFade {}
-            }
         }
 
         MouseArea {

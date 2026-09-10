@@ -1,15 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.theme
+import qs.util
 
-// A row you type into, on the same ground as a ListRow so it sits at the head
-// of a list without looking like it came from somewhere else.
+// A row you type into, on the raised ground, at the head of a list it
+// narrows down. The magnifier is its label; what is typed is the filter.
 Rectangle {
     id: root
 
     property alias text: input.text
     property string placeholder: "Search"
-    property int padding: Theme.px(10)
 
     readonly property bool empty: input.text.length === 0
     readonly property alias typing: input.activeFocus
@@ -26,10 +26,10 @@ Rectangle {
         input.forceActiveFocus();
     }
 
-    implicitWidth: row.implicitWidth + root.padding * 2
-    implicitHeight: row.implicitHeight + root.padding * 2
+    implicitWidth: row.implicitWidth + Theme.space2 * 2
+    implicitHeight: row.implicitHeight + Theme.space2 * 2
 
-    radius: Theme.cardRadius
+    radius: Theme.radiusMedium
     color: input.activeFocus ? Theme.surfaceHover : Theme.surface
 
     Behavior on color {
@@ -43,6 +43,7 @@ Rectangle {
 
         cursorShape: Qt.IBeamCursor
 
+        onPressed: Nav.pointer()
         onClicked: input.forceActiveFocus()
     }
 
@@ -50,16 +51,15 @@ Rectangle {
         id: row
 
         anchors.fill: parent
-        anchors.margins: root.padding
+        anchors.margins: Theme.space2
 
-        spacing: Theme.rowSpacing
+        spacing: Theme.space2
 
         Glyph {
             Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: Theme.px(2)
 
             text: Icons.search
-            color: input.activeFocus ? Theme.textBody : Theme.textMuted
+            color: input.activeFocus ? Theme.text : Theme.textMuted
         }
 
         Item {
@@ -81,6 +81,12 @@ Rectangle {
 
                 verticalAlignment: TextInput.AlignVCenter
                 clip: true
+
+                Accessible.name: root.placeholder
+
+                // typing is using the keyboard, so the ring comes on; the
+                // key itself goes on to the field
+                Keys.onPressed: Nav.key()
 
                 Keys.onEscapePressed: event => {
                     if (input.text.length > 0)
@@ -108,7 +114,8 @@ Rectangle {
             visible: !root.empty
 
             icon: Icons.close
-            size: Theme.px(20)
+            label: "Clear"
+            size: Theme.space5
             pixelSize: Theme.fontSmall
 
             onClicked: {
@@ -116,5 +123,10 @@ Rectangle {
                 input.forceActiveFocus();
             }
         }
+    }
+
+    FocusRing {
+        active: input.activeFocus
+        radius: root.radius
     }
 }

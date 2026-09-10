@@ -44,9 +44,9 @@ Rectangle {
         root.icon = root.icon;
     }
 
-    implicitHeight: content.implicitHeight + Theme.cardPadding * 2
+    implicitHeight: content.implicitHeight + Theme.toastPadding * 2
 
-    radius: Theme.toastRadius
+    radius: Theme.radiusLarge
     color: root.urgent ? Theme.slabUrgent : Theme.slab
 
     border.width: 1
@@ -62,7 +62,7 @@ Rectangle {
         id: content
 
         anchors.fill: parent
-        anchors.margins: Theme.cardPadding
+        anchors.margins: Theme.toastPadding
 
         title: root.title
         meta: root.appName
@@ -70,6 +70,7 @@ Rectangle {
         image: root.image
         icon: root.icon
         urgent: root.urgent
+        discSize: Theme.toastIconSize
     }
 
     MouseArea {

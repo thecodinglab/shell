@@ -5,6 +5,8 @@ import Quickshell.Hyprland
 import qs.config
 import qs.services
 import qs.theme
+import qs.util
+import qs.widgets
 
 // This monitor's workspaces, as dots. The active one stretches into a bar
 // instead of growing, so the row keeps its rhythm.
@@ -55,6 +57,12 @@ Row {
             // marks its own, not just the one the pointer is on
             readonly property bool active: dot.workspace?.active ?? false
 
+            // a workspace that is not open yet is created by the switch,
+            // on this monitor, because it is bound here
+            function go(): void {
+                Hyprland.dispatch(`hl.dsp.focus({ workspace = ${dot.workspaceId} })`);
+            }
+
             implicitWidth: dot.active ? Theme.dotActiveWidth : Theme.dotSize
             implicitHeight: Theme.dotSize
 
@@ -76,20 +84,40 @@ Row {
                 ColorFade {}
             }
 
+            activeFocusOnTab: true
+
+            Accessible.role: Accessible.Button
+            Accessible.name: `Workspace ${dot.workspaceId}`
+            Accessible.onPressAction: dot.go()
+
+            Keys.onPressed: event => {
+                Nav.key();
+                if (event.key !== Qt.Key_Space && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter)
+                    return;
+
+                dot.go();
+                event.accepted = true;
+            }
+
+            // a dot is too small to hold a ring: it goes round the outside
+            FocusRing {
+                inset: -Theme.space1
+                radius: height / 2
+            }
+
             MouseArea {
                 anchors.fill: parent
                 // a 6px target is not a target; reach out to the midpoint of
                 // the gap on either side and well past the dot vertically
                 anchors.leftMargin: -Theme.dotSpacing / 2
                 anchors.rightMargin: -Theme.dotSpacing / 2
-                anchors.topMargin: -Theme.px(8)
-                anchors.bottomMargin: -Theme.px(8)
+                anchors.topMargin: -Theme.space2
+                anchors.bottomMargin: -Theme.space2
 
                 cursorShape: Qt.PointingHandCursor
 
-                // a workspace that is not open yet is created by the switch,
-                // on this monitor, because it is bound here
-                onClicked: Hyprland.dispatch(`hl.dsp.focus({ workspace = ${dot.workspaceId} })`)
+                onPressed: Nav.pointer()
+                onClicked: dot.go()
             }
         }
     }

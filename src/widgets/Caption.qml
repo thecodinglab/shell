@@ -1,12 +1,9 @@
 import QtQuick
 import qs.theme
 
-// The small label over a section, or under a figure.
-//
-// Sentence case and untracked: a label is there to name the thing below it,
-// and setting it in spaced capitals makes it louder than what it names while
-// also making it slower to read. It is quiet ink instead, which is what tells
-// you it is a label.
+// The small tier: the line under a name, a date, an axis. Quiet ink in
+// sentence case — a label is there to name the thing beside it, and setting
+// it louder than what it names defeats it.
 Text {
     color: Theme.textDim
 

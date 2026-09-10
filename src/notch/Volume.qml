@@ -8,8 +8,8 @@ import qs.widgets
 
 // The bar for one pipewire node — an output, an input, or one application's
 // share of the output — with the glyph for what it sets riding in the fill
-// and the figure beside it. Drag or scroll the bar to set it; click the
-// glyph to mute.
+// and the figure beside it. Drag, scroll or arrow the bar to set it; click
+// the glyph, or press M, to mute.
 //
 // A muted node draws an empty track, and the figure agrees with it, rather
 // than showing whatever it will go back to when it is unmuted.
@@ -21,6 +21,8 @@ RowLayout {
     property bool input: false
     // the figure at the right; the home panel has no room for it
     property bool figure: true
+    // what the bar sets, in words
+    property string label: root.input ? "Microphone" : "Volume"
 
     readonly property real volume: root.node?.audio?.volume ?? 0
     readonly property bool muted: root.node?.audio?.muted ?? false
@@ -36,6 +38,7 @@ RowLayout {
                 return root.muted ? Icons.microphoneMuted : Icons.microphone;
             return Icons.volume(root.volume, root.muted);
         }
+        label: root.label
         value: root.muted ? 0 : root.volume
 
         onMoved: fraction => Audio.setVolume(root.node, fraction)

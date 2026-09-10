@@ -2,8 +2,8 @@ import QtQuick
 import qs.theme
 import qs.util
 
-// A track you can drag, click or scroll, with the glyph for what it sets
-// riding inside the fill.
+// A track you can drag, click, scroll or step with the arrow keys, with the
+// glyph for what it sets riding inside the fill.
 //
 // There is no handle: the edge of the fill is the value, and the whole track
 // is the target. A knob is a small thing to hit on a bar that is already the
@@ -25,15 +25,17 @@ Item {
     property real value: 0
     // the glyph inside the left end of the track; none for a bare scrubber
     property string icon: ""
+    // what the bar sets, in words
+    property string label: ""
     property color fillColor: Theme.fill
-    // one notch of the wheel
+    // one notch of the wheel, or one press of an arrow key
     property real step: 0.02
 
     property int trackHeight: Theme.sliderHeight
     // A scrubber is read far more often than it is dragged, so it can be
     // drawn thinner than it is aimed at — it grows to meet the pointer that
-    // is coming for it. A control that is only ever dragged is already the
-    // size of its target and stays put.
+    // is coming for it, or the focus that has landed on it. A control that is
+    // only ever dragged is already the size of its target and stays put.
     property int activeHeight: root.trackHeight
 
     signal moved(real value)
@@ -41,13 +43,48 @@ Item {
     signal iconClicked
 
     readonly property real fraction: Math.max(0, Math.min(1, root.value))
-    readonly property int railHeight: mouse.containsMouse || mouse.pressed ? root.activeHeight : root.trackHeight
+    readonly property bool focused: root.activeFocus && Nav.keyboard
+    readonly property int railHeight: mouse.containsMouse || mouse.pressed || root.focused ? root.activeHeight : root.trackHeight
     // the fill has reached past the middle of the glyph, so the glyph is
     // drawn on it rather than on the track
     readonly property bool covered: rail.width * root.fraction > root.trackHeight / 2
 
-    implicitWidth: Theme.px(120)
+    implicitWidth: Theme.sliderMinWidth
     implicitHeight: Math.max(root.trackHeight, root.activeHeight)
+
+    activeFocusOnTab: true
+
+    Accessible.role: Accessible.Slider
+    Accessible.name: root.label
+
+    Keys.onPressed: event => {
+        Nav.key();
+        switch (event.key) {
+        case Qt.Key_Left:
+        case Qt.Key_Down:
+            root.moved(Math.max(0, root.fraction - root.step));
+            break;
+        case Qt.Key_Right:
+        case Qt.Key_Up:
+            root.moved(Math.min(1, root.fraction + root.step));
+            break;
+        case Qt.Key_Home:
+            root.moved(0);
+            break;
+        case Qt.Key_End:
+            root.moved(1);
+            break;
+        // the glyph's click, from the keyboard
+        case Qt.Key_M:
+            if (root.icon !== "")
+                root.iconClicked();
+            break;
+        default:
+            return;
+        }
+
+        event.accepted = true;
+    }
 
     Rectangle {
         id: rail
@@ -96,6 +133,13 @@ Item {
         }
     }
 
+    FocusRing {
+        target: rail
+        active: root.activeFocus
+        inset: -Theme.focusWidth
+        radius: height / 2
+    }
+
     MouseArea {
         id: mouse
 
@@ -124,6 +168,7 @@ Item {
         // landed it was a click on the glyph, and if it moves it was the
         // start of a drag and is reported like one.
         onPressed: event => {
+            Nav.pointer();
             mouse.onIcon = root.icon !== "" && event.x < root.trackHeight;
             mouse.dragged = false;
 
@@ -147,7 +192,7 @@ Item {
                 root.iconClicked();
         }
 
-        onWheel: event => root.moved(root.fraction + (event.angleDelta.y > 0 ? root.step : -root.step))
+        onWheel: event => root.moved(Math.max(0, Math.min(1, root.fraction + (event.angleDelta.y > 0 ? root.step : -root.step))))
 
         // keep the notch open for as long as this drag lasts, even if it
         // wanders off the slab

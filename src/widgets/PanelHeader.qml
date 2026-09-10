@@ -2,11 +2,11 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 
-// The first row of a sub-panel: the way back, what you are looking at, and
-// whatever that panel wants on the right.
+// The first row of a page: the way back, what you are looking at, and
+// whatever that page wants on the right.
 //
-// Inset to the same margin a module sets its contents in by, so the title
-// hangs off the edge the discs and the glyphs below it hang off.
+// The back button sits in the page margin rather than in the content, so the
+// title starts on the same left edge everything under it starts on.
 RowLayout {
     id: root
 
@@ -15,14 +15,15 @@ RowLayout {
     required property var notch
     property string title: ""
 
-    spacing: Theme.px(6)
+    spacing: Theme.space2
 
     IconButton {
         Layout.alignment: Qt.AlignVCenter
-        Layout.leftMargin: Theme.px(4)
+        // reach out into the page margin, so the title stays on the grid
+        Layout.leftMargin: -(Theme.actionSize - Theme.iconWidth) / 2
 
         icon: Icons.back
-        pixelSize: Theme.fontSmall
+        label: "Back"
 
         onClicked: root.notch.panel = "home"
     }
@@ -37,7 +38,6 @@ RowLayout {
         id: trailingRow
 
         Layout.alignment: Qt.AlignVCenter
-        Layout.rightMargin: Theme.px(4)
 
         spacing: Theme.rowSpacing
     }

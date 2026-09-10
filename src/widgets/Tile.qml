@@ -2,28 +2,42 @@ import QtQuick
 import QtQuick.Layouts
 import qs.theme
 
-// A door on the home panel: a disc, what it leads to, and one line on how
-// that is doing right now.
+// A tile on the home page: a disc, what it is, and one line on how that is
+// doing right now. The whole tile is the button.
 //
-// The whole tile is the button, so it carries no chevron — a filled ground
-// that lightens under the pointer is affordance enough, and a chevron in
-// the corner of every tile is a row of them across the panel.
+// What sits at its right end says what pressing it does: a chevron for a
+// tile that is a door to a panel, or whatever the tile puts in `trailing` —
+// a switch, for one that is a setting. `disc` is what the tile can put in
+// place of its icon: a ring, for the system tile.
 ListRow {
     id: root
 
+    property alias disc: discSlot.data
+    property alias trailing: trailingSlot.data
+
     property string icon: ""
     property bool on: false
+    property bool door: false
     property alias title: label.title
     property alias caption: label.caption
     property alias captionColor: label.captionColor
 
-    padding: Theme.cardPadding
+    Item {
+        id: discSlot
 
-    IconDisc {
         Layout.alignment: Qt.AlignVCenter
 
-        icon: root.icon
-        on: root.on
+        implicitWidth: Theme.discSize
+        implicitHeight: Theme.discSize
+
+        IconDisc {
+            anchors.fill: parent
+
+            visible: root.icon !== ""
+
+            icon: root.icon
+            on: root.on
+        }
     }
 
     Label {
@@ -31,5 +45,28 @@ ListRow {
 
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
+    }
+
+    Glyph {
+        Layout.alignment: Qt.AlignVCenter
+
+        visible: root.door
+
+        text: Icons.forward
+        color: root.hovered ? Theme.textMuted : Theme.textFaint
+
+        Layout.preferredWidth: implicitWidth
+        font.pixelSize: Theme.fontSmall
+    }
+
+    Item {
+        id: trailingSlot
+
+        Layout.alignment: Qt.AlignVCenter
+
+        visible: children.length > 0
+
+        implicitWidth: childrenRect.width
+        implicitHeight: childrenRect.height
     }
 }

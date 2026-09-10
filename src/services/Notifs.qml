@@ -166,7 +166,8 @@ Singleton {
 
     // What a click on a record does: what the notification said it was for,
     // if it is still up to say so, and failing that the application it came
-    // from. Either way the record is dealt with.
+    // from. The record stays: opening something is not the same as being
+    // done with it, and the cross is there for that.
     function open(record: Record): void {
         let notification = null;
         for (const [n, r] of root.live)
@@ -178,13 +179,6 @@ Singleton {
             primary.invoke();
         else if (record.desktopEntry)
             DesktopEntries.heuristicLookup(record.desktopEntry)?.execute();
-
-        root.forget(record);
-
-        if (notification) {
-            root.remove(notification);
-            notification.dismiss();
-        }
     }
 
     // Drop whatever has been waiting longer than it is kept for.

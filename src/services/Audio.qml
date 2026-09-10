@@ -2,7 +2,9 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
+import qs.config
 
 // Pipewire, narrowed to the questions the notch asks: what is playing sound,
 // where it is going, and how loud each application playing into it is.
@@ -70,8 +72,28 @@ Singleton {
     }
 
     function setVolume(node: PwNode, value: real): void {
-        if (node?.audio)
-            node.audio.volume = Math.max(0, Math.min(1, value));
+        if (!node?.audio)
+            return;
+
+        const volume = Math.max(0, Math.min(1, value));
+        node.audio.volume = volume;
+
+        const player = root.player(node);
+        if (player)
+            player.volume = volume;
+    }
+
+    // The mpris player behind a stream, for the applications in
+    // `Config.mprisVolumeApps` that take their volume from their own slider
+    // rather than from the stream — see there. Pipewire knows the stream by
+    // the application's name and mpris knows the player by its desktop entry
+    // or what it calls itself, which agree once case is ignored.
+    function player(node: PwNode): MprisPlayer {
+        const name = (node?.properties?.["application.name"] ?? "").toLowerCase();
+        if (!node?.isStream || name === "" || !Config.mprisVolumeApps.some(app => app.toLowerCase() === name))
+            return null;
+
+        return Mpris.players.values.find(p => p.canControl && p.volumeSupported && (p.desktopEntry.toLowerCase() === name || p.identity.toLowerCase() === name)) ?? null;
     }
 
     function toggleMute(node: PwNode): void {

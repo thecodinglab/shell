@@ -74,7 +74,7 @@ PanelWindow {
     // slab until it reaches this and scrolls from there, so how much of the
     // desktop the notch is willing to take is a property of the screen it is
     // on rather than a number picked in the theme.
-    readonly property int bodyMaxHeight: Math.round(root.modelData.height / 2) - Theme.expandedPadding * 2 - slab.border.width
+    readonly property int bodyMaxHeight: Math.round(root.modelData.height / 2) - Theme.pagePadding * 2 - slab.border.width
 
     // One step back out: a sub-panel returns to the home panel, and the home
     // panel folds the notch up.
@@ -210,6 +210,9 @@ PanelWindow {
 
         focus: true
 
+        // the first key pressed after the notch opens is what turns the focus
+        // ring on; tab then walks the page from here
+        Keys.onPressed: Nav.key()
         Keys.onEscapePressed: root.dismiss()
     }
 
@@ -258,6 +261,8 @@ PanelWindow {
 
         HoverHandler {
             id: hotHover
+
+            onPointChanged: Nav.pointer()
         }
 
         // This strip is the one thing the shell occupies while it is put
@@ -451,12 +456,12 @@ PanelWindow {
         y: -border.width - slab.slide * (slab.height - border.width)
 
         width: root.unfolded ? Theme.expandedWidth : collapsed.implicitWidth + Theme.collapsedPadding * 2
-        height: border.width + (root.unfolded ? body.height + Theme.expandedPadding * 2 : Theme.collapsedHeight)
+        height: border.width + (root.unfolded ? body.height + Theme.pagePadding * 2 : Theme.collapsedHeight)
 
         topLeftRadius: 0
         topRightRadius: 0
         // capped so the corners never meet in the middle of a short notch
-        bottomLeftRadius: Math.min(Theme.slabRadius, height / 2)
+        bottomLeftRadius: Math.min(Theme.radiusLarge, height / 2)
         bottomRightRadius: bottomLeftRadius
         color: Theme.slab
 
@@ -480,6 +485,8 @@ PanelWindow {
 
         HoverHandler {
             id: hover
+
+            onPointChanged: Nav.pointer()
         }
 
         // The collapsed pill is one big button. Once it is open the taps
@@ -541,7 +548,7 @@ PanelWindow {
                 color: Theme.text
 
                 font.family: Theme.displayFamily
-                font.pixelSize: Theme.fontClock
+                font.pixelSize: Theme.fontTitle
                 font.weight: Font.Medium
             }
         }
@@ -556,9 +563,9 @@ PanelWindow {
             id: body
 
             x: (slab.width - width) / 2
-            y: slab.border.width + Theme.expandedPadding
+            y: slab.border.width + Theme.pagePadding
 
-            width: Theme.expandedWidth - Theme.expandedPadding * 2
+            width: Theme.expandedWidth - Theme.pagePadding * 2
             height: loader.height
 
             opacity: root.unfolded ? 1 : 0
@@ -598,6 +605,9 @@ PanelWindow {
                 }
             }
         }
+
+        // the one tooltip, over everything on the page
+        Tooltip {}
     }
 
     // ── revealing and unfolding ───────────────────────────────────────────

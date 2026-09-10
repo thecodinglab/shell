@@ -73,8 +73,8 @@ Rectangle {
         id: row
 
         anchors.fill: parent
-        anchors.leftMargin: Theme.osdPadding + Theme.px(4)
-        anchors.rightMargin: Theme.osdPadding + Theme.px(4)
+        anchors.leftMargin: Theme.osdPadding + Theme.space1
+        anchors.rightMargin: Theme.osdPadding + Theme.space1
         anchors.topMargin: Theme.osdPadding
         anchors.bottomMargin: Theme.osdPadding
 

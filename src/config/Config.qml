@@ -107,4 +107,19 @@ Singleton {
     // younger stays until it is dismissed.
     readonly property int notificationRetention: value("notificationRetention", 24 * 60 * 60)
     readonly property int notificationLimit: value("notificationLimit", 50)
+
+    // Applications that keep a volume of their own and put their stream back
+    // to it whenever the track changes, without ever reading the stream's
+    // volume back. Spotify is one: turn its stream down in the panel and the
+    // next song comes up at whatever its own slider says. The panel sets
+    // these through mpris as well, so the application's own volume is the
+    // one the bar was dragged to. Matched against the stream's
+    // `application.name`, case aside.
+    readonly property var mprisVolumeApps: value("mprisVolumeApps", ["spotify"])
+
+    // ── motion ────────────────────────────────────────────────────────────
+
+    // Wayland has no `prefers-reduced-motion` the shell can ask for, so this
+    // is the switch: set, everything that moves arrives instead.
+    readonly property bool reducedMotion: value("reducedMotion", false)
 }

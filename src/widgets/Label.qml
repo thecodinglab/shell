@@ -5,9 +5,9 @@ import qs.theme
 // A name, and the line under it: what a thing is, and how it is doing.
 //
 // The one arrangement of type every row and tile on the surface is built
-// around, so a device, a link, the head of a module and the card of a dial
-// all read the same way down the panel. The line is there only when there
-// is something to say on it.
+// around, so a device, a link and the head of a section all read the same
+// way down the page. The line is there only when there is something to say
+// on it.
 ColumnLayout {
     id: root
 
@@ -15,13 +15,12 @@ ColumnLayout {
     property string caption: ""
     property color captionColor: Theme.textDim
 
-    spacing: Theme.px(1)
+    spacing: Theme.lineGap
 
     Sans {
         Layout.fillWidth: true
 
         text: root.title
-        color: Theme.text
 
         font.weight: Font.Medium
     }
@@ -33,5 +32,8 @@ ColumnLayout {
 
         text: root.caption
         color: root.captionColor
+        // captions carry figures — an address, a percentage — and hold
+        // still while they tick
+        font.features: Theme.tabular
     }
 }

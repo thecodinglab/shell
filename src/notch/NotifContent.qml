@@ -25,44 +25,51 @@ RowLayout {
 
     readonly property string source: root.image || (root.icon ? Quickshell.iconPath(root.icon, true) : "")
 
-    spacing: Theme.px(12)
+    spacing: Theme.space3
 
-    // The mark at the head: the sender's own icon on a disc, or a bell on the
-    // accent's when it has none. An urgent one sits on the red instead,
-    // whatever it carries.
-    Rectangle {
+    // The mark at the head: the sender's own icon, at its own shape, or a
+    // bell on a disc of the accent when it has none. An urgent one sits on
+    // the red instead, whatever it carries.
+    Item {
         Layout.alignment: Qt.AlignTop
 
         implicitWidth: root.discSize
         implicitHeight: root.discSize
 
-        radius: width / 2
-        color: {
-            if (root.urgent)
-                return Theme.urgentSurface;
-            return root.source !== "" ? Theme.surfaceRaised : Theme.accentSurface;
-        }
-
-        IconImage {
-            anchors.centerIn: parent
+        ClippingRectangle {
+            anchors.fill: parent
 
             visible: root.source !== ""
 
-            source: root.source
-            implicitSize: Math.round(root.discSize * 0.6)
-            asynchronous: true
+            radius: Theme.radiusSmall
+            color: "transparent"
+
+            IconImage {
+                anchors.fill: parent
+
+                source: root.source
+                implicitSize: root.discSize
+                asynchronous: true
+            }
         }
 
-        Text {
-            anchors.centerIn: parent
+        Rectangle {
+            anchors.fill: parent
 
             visible: root.source === ""
 
-            text: Icons.bell
-            color: root.urgent ? Theme.urgent : Theme.accent
+            radius: width / 2
+            color: root.urgent ? Theme.urgentSurface : Theme.accentSurface
 
-            font.family: Theme.monoFamily
-            font.pixelSize: Math.round(root.discSize * 0.4)
+            Text {
+                anchors.centerIn: parent
+
+                text: Icons.bell
+                color: root.urgent ? Theme.urgent : Theme.accent
+
+                font.family: Theme.monoFamily
+                font.pixelSize: Math.round(root.discSize * 0.42)
+            }
         }
     }
 
@@ -70,7 +77,7 @@ RowLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
 
-        spacing: Theme.px(2)
+        spacing: Theme.lineGap
 
         RowLayout {
             Layout.fillWidth: true
@@ -81,14 +88,14 @@ RowLayout {
                 Layout.fillWidth: true
 
                 text: root.title
-                color: Theme.text
 
                 font.weight: Font.Medium
             }
 
             Caption {
                 text: root.meta
-                color: Theme.textFaint
+                // when, in figures that hold still as the minutes tick over
+                font.features: Theme.tabular
             }
         }
 

@@ -24,7 +24,7 @@ ColumnLayout {
 
     readonly property var matches: Bt.enabled ? Bt.search(search.text) : []
 
-    spacing: Theme.expandedSpacing
+    spacing: Theme.stackSpacing
 
     // The field borrows the keyboard while the panel is up; hand it back on
     // the way out so escape still steps out of the notch.
@@ -47,6 +47,8 @@ ColumnLayout {
 
         Toggle {
             checked: Bt.enabled
+            label: "Bluetooth"
+            enabled: Bt.available
 
             onToggled: Bt.toggle()
         }
@@ -56,6 +58,7 @@ ColumnLayout {
         id: search
 
         Layout.fillWidth: true
+        Layout.topMargin: Theme.space1
 
         visible: Bt.enabled
 
@@ -71,19 +74,25 @@ ColumnLayout {
     Empty {
         visible: root.matches.length === 0
 
+        busy: Bt.enabled && Bt.devices.length === 0 && Bt.discovering
+
         text: {
             if (!Bt.available)
-                return "No bluetooth adapter on this machine.";
+                return "No bluetooth adapter";
             if (!Bt.enabled)
-                return "Turn bluetooth on to see devices.";
+                return "Bluetooth is off";
             if (Bt.devices.length === 0)
-                return Bt.discovering ? "Looking for devices…" : "No devices yet.";
-            return `Nothing called “${search.text.trim()}”.`;
+                return Bt.discovering ? "Looking for devices" : "No devices yet";
+            return `Nothing called “${search.text.trim()}”`;
         }
     }
 
     ScrollList {
         Layout.fillWidth: true
+        // the rows reach out past the page margin so their hover ground
+        // wraps the disc rather than starting at it
+        Layout.leftMargin: -Theme.rowPadding
+        Layout.rightMargin: -Theme.rowPadding
 
         visible: root.matches.length > 0
 
@@ -98,27 +107,30 @@ ColumnLayout {
             id: deviceRow
 
             required property var modelData
+            required property int index
 
             readonly property bool busy: Bt.busy(deviceRow.modelData)
             readonly property bool connected: deviceRow.modelData.connected
 
             width: ListView.view.width
 
-            flat: true
+            rule: deviceRow.index < root.matches.length - 1
+            ruleInset: Theme.discSizeSmall + Theme.rowSpacing
             // a device mid-handshake has nothing to offer a tap: the next
             // one could only countermand the last
             interactive: !deviceRow.busy
+
+            Accessible.name: Bt.label(deviceRow.modelData)
 
             onClicked: Bt.activate(deviceRow.modelData)
 
             IconDisc {
                 Layout.alignment: Qt.AlignVCenter
-                Layout.leftMargin: Theme.px(2)
 
                 icon: Icons.device(deviceRow.modelData.icon)
                 on: deviceRow.connected
                 size: Theme.discSizeSmall
-                iconColor: deviceRow.modelData.paired ? Theme.textBody : Theme.textMuted
+                iconColor: deviceRow.modelData.paired ? Theme.textMuted : Theme.textDim
             }
 
             Label {
@@ -132,7 +144,7 @@ ColumnLayout {
 
             Spinner {
                 Layout.alignment: Qt.AlignVCenter
-                Layout.rightMargin: Theme.px(4)
+                Layout.rightMargin: Theme.space1
 
                 visible: deviceRow.busy
             }

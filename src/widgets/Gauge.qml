@@ -6,8 +6,7 @@ import qs.theme
 // it stands for sitting in the gap.
 //
 // The ring is a fixed size centred in whatever width it is given, so a row of
-// gauges holds still while the numbers inside it change. Three abreast in the
-// home tile, one to a card in the resources panel.
+// gauges holds still while the numbers inside it change.
 Item {
     id: root
 
@@ -15,8 +14,6 @@ Item {
     property real value: 0
     // the figure the ring is standing in for, in the middle of it
     property string text: ""
-    // ...and what is being measured, under that
-    property string label: ""
 
     property int size: Theme.gaugeSize
 
@@ -29,17 +26,6 @@ Item {
     // degrees clockwise from three o'clock: half the gap past straight
     // down, which is the bottom left of the ring
     readonly property real start: 90 + root.gap / 2
-
-    // how much of the bottom of the circle the band encloses the gap opens
-    // up, which is the room the label has to sit in
-    readonly property real opening: 2 * (root.size / 2 - Theme.gaugeThickness) * Math.sin(root.gap / 2 * Math.PI / 180)
-
-    // The type inside the ring comes off the ring rather than off the panel's
-    // type ramp: the ramp is a step up from the units the dial is drawn in,
-    // so a figure taken from it runs into the band. Taken from the diameter
-    // instead, the figure and its label keep their distance at any size.
-    readonly property int valueSize: Math.round(root.size * 0.22)
-    readonly property int labelSize: Math.round(root.size * 0.15)
 
     // the ring is drawn inside the item rather than up against its edges, so
     // a gauge keeps its distance from whatever a layout sets it beside
@@ -85,35 +71,13 @@ Item {
         }
     }
 
-    Column {
+    Num {
         anchors.centerIn: parent
 
-        spacing: Math.round(root.size * 0.02)
+        text: root.text
+        color: Theme.text
 
-        Num {
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            text: root.text
-            color: Theme.text
-
-            font.pixelSize: root.valueSize
-            font.weight: Font.Medium
-        }
-
-        Caption {
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            // a label the ring has no room for is cut rather than drawn
-            // through the band
-            width: Math.min(implicitWidth, root.opening)
-
-            // a dial with a name beside it does not repeat it inside
-            visible: root.label !== ""
-
-            text: root.label
-
-            horizontalAlignment: Text.AlignHCenter
-            font.pixelSize: root.labelSize
-        }
+        font.pixelSize: Theme.fontTitle
+        font.weight: Font.Medium
     }
 }

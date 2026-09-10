@@ -18,7 +18,7 @@ ColumnLayout {
 
     required property var notch
 
-    spacing: Theme.expandedSpacing
+    spacing: Theme.stackSpacing
 
     PanelHeader {
         Layout.fillWidth: true
@@ -30,55 +30,57 @@ ColumnLayout {
     Empty {
         visible: Network.interfaces.length === 0
 
-        text: "Not connected to anything."
+        text: "Offline"
     }
 
-    Card {
+    ColumnLayout {
         Layout.fillWidth: true
 
         visible: Network.interfaces.length > 0
 
-        ColumnLayout {
-            spacing: Theme.px(10)
+        spacing: 0
 
-            Repeater {
-                model: Network.interfaces
+        Repeater {
+            model: Network.interfaces
 
-                RowLayout {
-                    id: link
+            ListRow {
+                id: link
 
-                    required property var modelData
+                required property var modelData
+                required property int index
 
-                    readonly property bool up: link.modelData.state === "connected"
+                readonly property bool up: link.modelData.state === "connected"
 
+                Layout.fillWidth: true
+
+                bleed: true
+                interactive: false
+                rule: link.index < Network.interfaces.length - 1
+                ruleInset: Theme.discSizeSmall + Theme.rowSpacing
+
+                IconDisc {
+                    Layout.alignment: Qt.AlignVCenter
+
+                    icon: Icons.link(link.modelData.kind)
+                    on: link.up
+                    size: Theme.discSizeSmall
+                }
+
+                Label {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
 
-                    spacing: Theme.rowSpacing
+                    title: link.modelData.name
+                    caption: Network.kindLabel(link.modelData.kind)
+                }
 
-                    IconDisc {
-                        Layout.alignment: Qt.AlignVCenter
+                Num {
+                    Layout.alignment: Qt.AlignVCenter
 
-                        icon: Icons.link(link.modelData.kind)
-                        on: link.up
-                        size: Theme.discSizeSmall
-                    }
+                    text: link.up ? link.modelData.address : "No address"
+                    color: link.up ? Theme.textMuted : Theme.urgent
 
-                    Label {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-
-                        title: link.modelData.name
-                        caption: Network.kindLabel(link.modelData.kind)
-                    }
-
-                    Num {
-                        Layout.alignment: Qt.AlignVCenter
-
-                        text: link.up ? link.modelData.address : "No address"
-                        color: link.up ? Theme.textMuted : Theme.urgent
-
-                        font.pixelSize: Theme.fontBody
-                    }
+                    font.pixelSize: Theme.fontBody
                 }
             }
         }
