@@ -121,6 +121,40 @@ The dots are the workspaces hyprland's rules bind to that monitor
 own and a click on any dot switches to it. A monitor without such rules shows
 the first `workspaceCount` instead.
 
+## The launcher
+
+The one page the notch opens from a keybind rather than from the home page:
+`shell ipc call launcher toggle` unfolds it on the focused monitor, or puts
+it away again if it is already out there. It is what an application launcher
+is — a field with the caret already in it, and under it everything that can
+be started from the keyboard — drawn as the rest of the notch is drawn: rows
+with a hairline between them, the application's own icon at the head of each,
+its name, and its generic name or comment under that.
+
+What is on the list is every desktop entry the session knows about that does
+not ask to be hidden, and alongside them the notch's own pages — Sound,
+Bluetooth, Network, System, Notifications — and the two ways out of the
+session that are safe to press once, lock and sleep. Restart and shut down
+want their second press and stay on the home page where they get it.
+
+Typing narrows the list. A query is matched against the name first — the
+start of it, then the start of a word in it, then anywhere in it — and only
+then against what the entry says about itself, so `spot` puts Spotify ahead
+of anything that merely mentions it, and `1pas` finds 1Password. Every word
+of a query has to land somewhere. Ties go to what gets used: every pick is
+counted, weighted toward lately — a launch a fortnight ago is worth half of
+one today — and written to `$XDG_STATE_HOME/shell/launches.json`. Blank, the
+list is everything, the things that get used at the top and the rest in
+alphabetical order under it.
+
+The row Return will pick is lit the way a row under the pointer is, with the
+return mark at its right; the arrows, or `C-n`/`C-p` and `C-j`/`C-k`, step it
+without leaving the field, and a click picks a row directly. Picking an
+application folds the notch and launches it; picking a page turns the notch
+to that page; escape clears the field, and on an empty field puts the notch
+away. A console application — one whose entry asks for a terminal — is run
+in `terminal`, as `<terminal> -e <command>`, when one is configured.
+
 ## From the keyboard
 
 The shell answers `qs ipc`, so any of it can be put on a hyprland bind:
@@ -130,6 +164,7 @@ qs -p ~/dev/shell/src ipc call notch toggle       # open or close, on the focuse
 qs -p ~/dev/shell/src ipc call notch open audio   # straight to a panel: notifications, audio, bluetooth, network, resources
 qs -p ~/dev/shell/src ipc call notch peek         # bring the pill out for a moment
 qs -p ~/dev/shell/src ipc call notch close        # fold every monitor's notch
+qs -p ~/dev/shell/src ipc call launcher toggle    # the launcher, on the focused monitor
 ```
 
 For the packaged build, `-p` is the store path the service runs from; the
@@ -171,6 +206,7 @@ nix run .
   custom.shell.settings = {
     diskPath = "/";
     networkInterface = "enp13s0";
+    terminal = "ghostty";
   };
 }
 ```

@@ -65,6 +65,15 @@ Singleton {
     readonly property string search: "󰍉"
     readonly property string check: "󰄬"
 
+    // ── the launcher ──────────────────────────────────────────────────────
+
+    // an application with no icon of its own
+    readonly property string app: "󰀻"
+    // the key that picks what is under the caret
+    readonly property string enter: "󰌑"
+    // the door to the system page, which on the home page is a dial
+    readonly property string gauge: "󰓅"
+
     // The `icon` bluez hands out is a freedesktop icon name; map the ones
     // that actually show up and fall back to a plain bluetooth mark.
     function device(icon: string): string {

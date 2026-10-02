@@ -117,6 +117,11 @@ Singleton {
     // `application.name`, case aside.
     readonly property var mprisVolumeApps: value("mprisVolumeApps", ["spotify"])
 
+    // The terminal the launcher runs a console application in — `htop`,
+    // `nvim` — as `<terminal> -e <command>`. Empty runs the application as
+    // it is, which for most of those means nothing you can see happens.
+    readonly property string terminal: value("terminal", "")
+
     // ── motion ────────────────────────────────────────────────────────────
 
     // Wayland has no `prefers-reduced-motion` the shell can ask for, so this

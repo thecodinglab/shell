@@ -90,4 +90,26 @@ ShellRoot {
             root.focused()?.peek();
         }
     }
+
+    // The launcher, for the keybind that used to run a launcher of its own:
+    //
+    //     qs -p ~/dev/shell/src ipc call launcher toggle
+    //
+    // Opens it on the focused monitor, and puts the notch away again if the
+    // launcher is what it is already showing there. A notch open on some
+    // other page is turned to the launcher rather than closed.
+    IpcHandler {
+        target: "launcher"
+
+        function toggle(): void {
+            const notch = root.focused();
+            if (!notch)
+                return;
+
+            if (notch.expanded && notch.panel === "launcher")
+                notch.expanded = false;
+            else
+                notch.open("launcher");
+        }
+    }
 }

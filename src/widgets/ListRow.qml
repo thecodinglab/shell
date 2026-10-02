@@ -28,8 +28,11 @@ Rectangle {
     // something inside the row — a button of its own — has the pointer, and
     // the row keeps its ground while it does
     property bool held: false
+    // the row a field above the list has stepped to: what Return will press
+    property bool selected: false
 
-    readonly property bool hovered: mouse.containsMouse || root.held
+    // the row is lit, whichever of the three lit it
+    readonly property bool hovered: mouse.containsMouse || root.held || root.selected
 
     signal clicked
 

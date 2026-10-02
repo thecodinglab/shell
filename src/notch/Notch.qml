@@ -60,7 +60,9 @@ PanelWindow {
 
     // A sub-panel is a place you went to on purpose, so stepping out of it
     // returns to the home panel rather than putting the whole notch away.
-    readonly property bool pinned: root.panel !== "home"
+    // The launcher is not one: it is opened from a keybind in its own right,
+    // never from the home page, and stepping out of it is putting it away.
+    readonly property bool pinned: root.panel !== "home" && root.panel !== "launcher"
 
     // The notch has a reason to be on screen: the pointer is at the top edge
     // or on the notch itself, or it is open. A notification is not one of
@@ -97,9 +99,13 @@ PanelWindow {
     // Put away, the slab grows to full size while it is still off screen —
     // nothing animates up there — and then the whole panel slides down out
     // of the top edge in one movement. Out already, it unfolds in place.
+    //
+    // Unfolded before the page is set: unfolding takes the keyboard for the
+    // notch itself — see `onExpandedChanged` — and a page with a field of
+    // its own takes it from there as it is built, not the other way round.
     function open(name: string): void {
-        root.panel = name;
         root.expanded = true;
+        root.panel = name;
         root.revealed = true;
     }
 
@@ -649,7 +655,7 @@ PanelWindow {
     // swapping the contents mid-animation is visible.
     Timer {
         interval: Theme.expandDuration
-        running: !root.unfolded && root.pinned
+        running: !root.unfolded && root.panel !== "home"
 
         onTriggered: root.panel = "home"
     }
@@ -664,7 +670,8 @@ PanelWindow {
             audio: audioPanel,
             bluetooth: bluetoothPanel,
             network: networkPanel,
-            resources: resourcesPanel
+            resources: resourcesPanel,
+            launcher: launcherPanel
         })
 
     Component {
@@ -711,6 +718,14 @@ PanelWindow {
         id: resourcesPanel
 
         ResourcesPanel {
+            notch: root
+        }
+    }
+
+    Component {
+        id: launcherPanel
+
+        LauncherPanel {
             notch: root
         }
     }

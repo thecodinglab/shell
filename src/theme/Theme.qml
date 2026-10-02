@@ -190,6 +190,10 @@ Singleton {
     // screen — see `Notch.bodyMaxHeight` — and scrolls from there. This is the
     // floor under that: a list you cannot see two rows of is not a list.
     readonly property int listMinHeight: root.px(120)
+    // ...except the launcher, which is opened and put away a hundred times a
+    // day and is capped lower than that: enough rows to pick from, not a
+    // page of them.
+    readonly property int launcherHeight: root.px(360)
 
     // one soft shadow, under the floating surfaces only
     readonly property int shadowBlur: root.space8

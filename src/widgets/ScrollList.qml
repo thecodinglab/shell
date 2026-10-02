@@ -26,6 +26,12 @@ Item {
 
     implicitHeight: Math.min(list.contentHeight, root.maxHeight)
 
+    // bring a row into view, for a list that is stepped through from a
+    // field above it rather than tabbed through
+    function reveal(index: int): void {
+        list.positionViewAtIndex(index, ListView.Contain);
+    }
+
     ListView {
         id: list
 

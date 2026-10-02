@@ -18,6 +18,13 @@ Rectangle {
     // back out of, so whoever owns the field gets to decide what is
     signal cancelled
 
+    // Return, and the arrows: a field at the head of a list of things to
+    // pick from lets the keyboard pick from it without leaving the field.
+    // Whoever owns the field decides what is picked and what is stepped
+    // over; a field with nothing to pick from ignores them.
+    signal accepted
+    signal stepped(int delta)
+
     function clear(): void {
         input.text = "";
     }
@@ -85,8 +92,42 @@ Rectangle {
                 Accessible.name: root.placeholder
 
                 // typing is using the keyboard, so the ring comes on; the
-                // key itself goes on to the field
-                Keys.onPressed: Nav.key()
+                // key itself goes on to the field, unless it is one of the
+                // few that are about the list under it rather than the text
+                Keys.onPressed: event => {
+                    Nav.key();
+
+                    const ctrl = event.modifiers & Qt.ControlModifier;
+                    switch (event.key) {
+                    case Qt.Key_Return:
+                    case Qt.Key_Enter:
+                        root.accepted();
+                        break;
+                    case Qt.Key_Down:
+                        root.stepped(1);
+                        break;
+                    case Qt.Key_Up:
+                        root.stepped(-1);
+                        break;
+                    // the emacs and vi pairs, for hands that never leave home row
+                    case Qt.Key_N:
+                    case Qt.Key_J:
+                        if (!ctrl)
+                            return;
+                        root.stepped(1);
+                        break;
+                    case Qt.Key_P:
+                    case Qt.Key_K:
+                        if (!ctrl)
+                            return;
+                        root.stepped(-1);
+                        break;
+                    default:
+                        return;
+                    }
+
+                    event.accepted = true;
+                }
 
                 Keys.onEscapePressed: event => {
                     if (input.text.length > 0)
