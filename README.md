@@ -155,6 +155,10 @@ to that page; escape clears the field, and on an empty field puts the notch
 away. A console application — one whose entry asks for a terminal — is run
 in `terminal`, as `<terminal> -e <command>`, when one is configured.
 
+Every application is started in a systemd scope of its own under `app.slice`
+(via `systemd-run --user --scope`) rather than as a child of the shell, so it
+keeps running when the shell's service is restarted or stopped.
+
 ## From the keyboard
 
 The shell answers `qs ipc`, so any of it can be put on a hyprland bind:

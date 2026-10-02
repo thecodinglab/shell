@@ -178,7 +178,7 @@ Singleton {
         if (primary)
             primary.invoke();
         else if (record.desktopEntry)
-            DesktopEntries.heuristicLookup(record.desktopEntry)?.execute();
+            Apps.start(DesktopEntries.heuristicLookup(record.desktopEntry));
     }
 
     // Drop whatever has been waiting longer than it is kept for.

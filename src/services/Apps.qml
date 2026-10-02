@@ -84,16 +84,33 @@ Singleton {
         if (!entry)
             return;
 
-        if (entry.runInTerminal && Config.terminal !== "") {
-            Quickshell.execDetached({
-                command: [Config.terminal, "-e", ...entry.command],
-                workingDirectory: entry.workingDirectory
-            });
-        } else {
-            entry.execute();
-        }
-
+        root.start(entry);
         root.use(entry.id);
+    }
+
+    // Run it without counting it, for whatever else opens an application —
+    // a notification without a default action, say.
+    //
+    // Forking is not enough for it to outlive the shell: run as a user
+    // service, the shell's cgroup is killed whole when the service stops or
+    // restarts, and everything started from it with it. So each one is
+    // started in a scope of its own under `app.slice`, named the way the
+    // desktop entry spec asks, and from then on belongs to the session
+    // rather than to the shell.
+    function start(entry: DesktopEntry): void {
+        if (!entry)
+            return;
+
+        const command = entry.runInTerminal && Config.terminal !== "" ? [Config.terminal, "-e", ...entry.command] : entry.command;
+
+        // unit names only take [A-Za-z0-9:_.-]
+        const id = entry.id.replace(/[^A-Za-z0-9:_.]/g, "_");
+        const nonce = Math.floor(Math.random() * 0xffffffff).toString(16);
+
+        Quickshell.execDetached({
+            command: ["systemd-run", "--user", "--scope", "--quiet", "--collect", "--slice=app.slice", `--unit=app-shell-${id}-${nonce}.scope`, "--", ...command],
+            workingDirectory: entry.workingDirectory
+        });
     }
 
     // one more pick of `key`, now
