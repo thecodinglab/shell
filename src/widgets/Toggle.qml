@@ -44,7 +44,7 @@ Rectangle {
     }
 
     Rectangle {
-        x: root.checked ? root.width - width - Theme.switchInset : Theme.switchInset
+        x: Math.round(knob.value)
         anchors.verticalCenter: parent.verticalCenter
 
         width: root.height - Theme.switchInset * 2
@@ -58,8 +58,11 @@ Rectangle {
             return root.checked ? Theme.onAccent : Theme.textMuted;
         }
 
-        Behavior on x {
-            Ease {}
+        // flicked back before it has got there, it turns round mid-way
+        Spring {
+            id: knob
+
+            to: root.checked ? root.width - (root.height - Theme.switchInset * 2) - Theme.switchInset : Theme.switchInset
         }
     }
 

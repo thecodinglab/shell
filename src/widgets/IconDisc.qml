@@ -15,6 +15,8 @@ Rectangle {
     property string icon: ""
     property bool on: false
     property bool danger: false
+    // the row the disc heads is held down, and the disc sinks under it
+    property bool pressed: false
     property int size: Theme.discSize
     // ink for the glyph while the disc is not lit
     property color iconColor: Theme.textMuted
@@ -31,6 +33,14 @@ Rectangle {
 
     Behavior on color {
         ColorFade {}
+    }
+
+    scale: press.value
+
+    Spring {
+        id: press
+
+        to: root.pressed ? Theme.pressScale : 1
     }
 
     Text {

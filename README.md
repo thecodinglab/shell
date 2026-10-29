@@ -286,8 +286,8 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   it, and only while the keyboard is what is being used — see `Nav`.
 - **Reduced motion.** There is no `prefers-reduced-motion` on wayland for
   the shell to ask about, so `reducedMotion` in the config is the switch.
-  Every duration comes from `Theme.motion`, so with it set everything
-  arrives instead of moving; the spinner still turns, because a spinner that
+  Every duration and every spring goes through `Theme.motion`, so with it
+  set everything arrives instead of moving; the spinner still turns, because a spinner that
   has stopped means something else.
 - **Input.** The window is as tall as the tallest thing it can ever show, and
   masked down to the slab, its notifications, and the strip along the top edge
@@ -305,11 +305,49 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   a layout takes its measurements from. A percentage written out is a
   different width at 7% than at 100%, and a row of them nudges its neighbours
   along every time it ticks.
-- **Motion.** The slab moves first and what it carries follows: the panel
-  waits for the slab to be most of the way open before it fades in, and is
-  gone before the slab starts to close. The slab itself grows on a curve that
-  covers nearly all of the distance in the first third and settles from
-  there, so it arrives as fast as it can without stopping dead. Opened or
-  closed with no pointer on it — from a keybind, or by a click somewhere
-  else — the whole panel slides out of, or back into, the top edge at full
-  size in one movement, and only changes size while it is out of sight.
+- **Motion.** The notch moves the way hyprland moves the windows around it,
+  and is set up the same way: `curves` in the config names beziers by their
+  two control points and springs by their stiffness, dampening and mass, and
+  `animations` gives each kind of movement one of them, by hyprland's name
+  for the nearest thing it animates and with a speed in tenths of a second.
+  The defaults are the hyprland config the notch was drawn against, so the
+  same values can be handed to both — see below.
+  - Anything that can be sent somewhere new while it is still on its way is
+    on a spring, solved exactly for however long each frame took, the way
+    hyprland's are: the slab coming out of the top edge and growing into
+    the sheet, the volume reading, a knob, a dot, a fill, a dial, a press.
+    Reached for and abandoned, opened and closed again, pressed and let go,
+    it turns round with the speed it already had instead of stopping dead
+    and setting off again. The rest — a toast or a row arriving, the others
+    making room, a ground or an ink changing — is on hyprland's beziers.
+  - The slab moves first and what it carries follows it, by how far it is
+    open rather than on a clock of its own: the pill's contents are gone by
+    the time it is a fifth of the way unfolded, the page is all there by two
+    thirds, and wherever the slab turns round they are exactly as far in or
+    out as it is. Opened or closed with no pointer on it — from a keybind,
+    or by a click somewhere else — the whole panel slides out of, or back
+    into, the top edge at full size in one movement, and only changes size
+    while it is out of sight.
+  - Unfolded in place from the pill, the page comes in a section at a time,
+    each rising into place a beat after the one above it, so it is read top
+    to bottom as it arrives; coming out of the top edge it rides down
+    already there. Stepping into a panel and back is a change of workspace:
+    the page being left slides a fifth of the way out and fades while the
+    one stepped to slides in after it — from the right going in, from the
+    left coming back.
+  - A ground under the pointer comes up and goes the way a border takes the
+    focus, a disc or a button sinks a little while it is held down, a cover
+    develops out of its block once it has loaded, and the count on the bell
+    pops out of its corner and is knocked each time something new arrives.
+  - Everything that moves lands on whole pixels, so text riding on it holds
+    still rather than shimmering.
+
+  To have one set of curves drive both, give the shell the same ones the
+  hyprland config is written from:
+
+  ```nix
+  custom.shell.settings = {
+    curves.soft = { type = "spring"; stiffness = 200; dampening = 24; mass = 1; };
+    animations.windows = { curve = "soft"; };
+  };
+  ```

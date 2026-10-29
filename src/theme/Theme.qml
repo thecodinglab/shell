@@ -288,26 +288,74 @@ Singleton {
     readonly property int pulseDuration: 700
 
     // ── motion ────────────────────────────────────────────────────────────
+    //
+    // Made the way hyprland makes its own — see `Config.curves` and
+    // `Config.animations` — so the notch moves like the windows around it.
+    // Everything that moves says which animation it is, by hyprland's name
+    // for it, and reads its curve and its length from here: a spring, for
+    // anything that can be sent somewhere new while it is still on its way
+    // (see Spring), and a bezier for the rest.
 
     // Everything that moves is scaled by this; with reduced motion on it is
     // nought, and everything arrives instead.
     readonly property real motion: Config.reducedMotion ? 0 : 1
 
-    // the sheet unfolding, and the crossfade between what it held before and
-    // what it holds now
-    readonly property int expandDuration: 240 * root.motion
-    readonly property int fadeDuration: 150 * root.motion
-    readonly property int expandEasing: Easing.OutCubic
-    // The curve the sheet itself grows on: nearly all of the distance is
-    // covered in the first third and it settles from there, so the notch
-    // arrives as fast as it can without stopping dead.
-    readonly property var expandCurve: [0.32, 0.72, 0, 1, 1, 1]
-    // the hidden notch sliding back out of the top edge; quicker than the
-    // unfold, because it happens under a pointer that is already moving
-    readonly property int revealDuration: 180 * root.motion
-    // what the page waits before fading in, so the sheet is already most of
-    // the way open underneath it
-    readonly property int staggerDelay: 90 * root.motion
+    // the curve an animation is made on, or null for one nobody has defined
+    function curveOf(leaf: string): var {
+        const animation = Config.animations[leaf];
+        return animation ? Config.curves[animation.curve] ?? null : null;
+    }
+
+    // the spring an animation is made on, or null if it is not one
+    function spring(leaf: string): var {
+        const curve = root.curveOf(leaf);
+        return curve?.type === "spring" ? curve : null;
+    }
+
+    // How long an animation runs, in milliseconds: a bezier's speed in tenths
+    // of a second, as hyprland counts it, and a spring's time to come to
+    // rest — for something that has to wait for one, or a transition that
+    // can only be drawn on a bezier.
+    function duration(leaf: string): int {
+        const spring = root.spring(leaf);
+        if (!spring)
+            return Math.round((Config.animations[leaf]?.speed ?? 0) * 100 * root.motion);
+
+        // The swing dies away as e^(-rate·t), at the slower of its two rates
+        // when it is overdamped, and it is at rest once it is within a
+        // thousandth of the way it had to go — where hyprland stops it.
+        const mass = Math.max(spring.mass ?? 1, 0.0001);
+        const omega = Math.sqrt(Math.max(spring.stiffness, 0.0001) / mass);
+        const gamma = Math.max(spring.dampening, 0) / (2 * mass);
+        const rate = gamma <= omega ? gamma : gamma - Math.sqrt(gamma * gamma - omega * omega);
+        return rate > 0 ? Math.round(Math.log(1000) / rate * 1000 * root.motion) : 0;
+    }
+
+    // ...and its curve, as Qt's easing takes one: the two control points and
+    // the end. A spring asked for where only a bezier will do is drawn as
+    // the ease-out it most looks like.
+    function bezier(leaf: string): var {
+        const curve = root.curveOf(leaf);
+        if (curve?.type !== "bezier")
+            return [0.23, 1, 0.32, 1, 1, 1];
+
+        const p = curve.points;
+        return [p[0][0], p[0][1], p[1][0], p[1][1], 1, 1];
+    }
+
+    // The page comes in a section at a time as the sheet unfolds, each a beat
+    // after the one above it, rising into place from this far below where it
+    // rests — see `Notch.cascade`.
+    readonly property int cascadeStep: 30 * root.motion
+    readonly property int riseDistance: root.space3
+    // How far a page travels when you step into a panel, or back out of one:
+    // a fifth of the sheet, the way hyprland slides one workspace out and the
+    // next one in. In from the right going in and from the left coming back,
+    // so the two read as one movement and its return.
+    readonly property int stepDistance: Math.round(root.expandedWidth / 5)
+    // what a control is drawn at while it is held down, so a press is felt
+    // as well as seen
+    readonly property real pressScale: 0.92
     // one turn of a spinner: not scaled, a spinner that does not spin is a
     // spinner that has stopped
     readonly property int spinDuration: 900
@@ -335,6 +383,14 @@ Singleton {
         const x = Qt.color(a);
         const y = Qt.color(b);
         return Qt.rgba(x.r + (y.r - x.r) * t, x.g + (y.g - x.g) * t, x.b + (y.b - x.b) * t, x.a + (y.a - x.a) * t);
+    }
+
+    // `c` with none of it showing: what a ground that only appears under the
+    // pointer is while it is not there, so that it fades in as itself rather
+    // than out of a transparent black
+    function clear(c: color): color {
+        const q = Qt.color(c);
+        return Qt.rgba(q.r, q.g, q.b, 0);
     }
 
     // relative luminance, the way the contrast rules measure it

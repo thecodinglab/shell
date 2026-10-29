@@ -28,6 +28,16 @@ Item {
     implicitWidth: root.size
     implicitHeight: root.size
 
+    // held down it sinks a little, and let go of quickly it comes back up
+    // from wherever it had got to rather than from the bottom
+    scale: press.value
+
+    Spring {
+        id: press
+
+        to: mouse.pressed ? Theme.pressScale : 1
+    }
+
     activeFocusOnTab: root.enabled
 
     Accessible.role: Accessible.Button
@@ -54,12 +64,16 @@ Item {
             if (root.filled)
                 return !root.enabled ? Theme.surface : mouse.containsMouse ? Theme.textMuted : Theme.fill;
             if (!root.enabled)
-                return "transparent";
+                return Theme.clear(Theme.surfaceHover);
             if (mouse.pressed)
                 return Theme.surfacePress;
             if (mouse.containsMouse)
                 return Theme.surfaceHover;
-            return "transparent";
+            return Theme.clear(Theme.surfaceHover);
+        }
+
+        Behavior on color {
+            ColorFade {}
         }
     }
 
@@ -73,6 +87,10 @@ Item {
             if (root.filled)
                 return Theme.onFill;
             return mouse.containsMouse ? Theme.text : Theme.textMuted;
+        }
+
+        Behavior on color {
+            ColorFade {}
         }
 
         font.family: Theme.monoFamily

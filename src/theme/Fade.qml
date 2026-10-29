@@ -1,8 +1,11 @@
 import QtQuick
 
-// A crossfade: the one duration everything small on the surface changes in.
-// Every duration comes from Theme, so reduced motion turns all of them off
-// at once.
+// Something fading in — or, as `Fade { leaf: "fadeOut" }`, out — on the
+// curve and at the speed hyprland fades its windows with.
 NumberAnimation {
-    duration: Theme.fadeDuration
+    property string leaf: "fadeIn"
+
+    duration: Theme.duration(leaf)
+    easing.type: Easing.BezierSpline
+    easing.bezierCurve: Theme.bezier(leaf)
 }

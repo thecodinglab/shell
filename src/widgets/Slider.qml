@@ -92,7 +92,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         width: parent.width
-        height: root.railHeight
+        height: Math.round(thickening.value)
 
         radius: height / 2
         color: Theme.track
@@ -100,8 +100,10 @@ Item {
         // rather than drawing a second pair of them part way along it
         clip: true
 
-        Behavior on height {
-            Ease {}
+        Spring {
+            id: thickening
+
+            to: root.railHeight
         }
 
         Rectangle {

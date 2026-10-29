@@ -53,11 +53,6 @@ PanelWindow {
     // than shrinking to a pill nobody is there to look at.
     readonly property bool pointed: hot.hovered || hover.hovered || root.held
 
-    // How long the slab takes to slide out of, or back into, the top edge:
-    // quick for the pill, which arrives under a pointer already moving, and
-    // the unfold's own duration for the whole panel, which has further to go.
-    readonly property int slideDuration: root.unfolded ? Theme.expandDuration : Theme.revealDuration
-
     // A sub-panel is a place you went to on purpose, so stepping out of it
     // returns to the home panel rather than putting the whole notch away.
     // The launcher is not one: it is opened from a keybind in its own right,
@@ -115,15 +110,88 @@ PanelWindow {
     // wait for, so it slides off at full size and collapses once hidden.
     onExpandedChanged: {
         if (root.expanded) {
+            // opened again on its way off the top edge: it is not folding any more
+            root.folding = false;
             keys.forceActiveFocus();
+            // Unfolding in place from the pill, the page cascades in under
+            // it, once the page it is opening on has been chosen — see
+            // `open`. Coming out of the top edge, it rides down already
+            // there, as part of the one movement.
+            if (slab.slide < 0.5)
+                Qt.callLater(root.cascade);
             return;
         }
 
+        // it collapses once it is out of sight — see `sliding`
         if (!root.pointed) {
             root.folding = true;
             root.revealed = false;
-            foldTimer.restart();
         }
+    }
+
+    onPanelChanged: root.turn()
+
+    // Show the page `panel` names. On a sheet that is all there the old page
+    // is seen going as the new one comes in — see `pageTurn`; anywhere else
+    // there is nothing to see go, and the page is swapped where it is.
+    function turn(): void {
+        // a turn still under way is finished first, so two never share a page
+        pageTurn.complete();
+
+        const component = root.panels[root.panel] ?? homePanel;
+        const leaving = body.page;
+        if (body.opacity < 1 || !leaving.item) {
+            leaving.sourceComponent = component;
+            return;
+        }
+
+        // the page on its way out takes no more clicks, and gives up the
+        // keyboard before the one coming in takes it
+        leaving.enabled = false;
+        body.front = 1 - body.front;
+        const arriving = body.page;
+        arriving.enabled = true;
+        arriving.sourceComponent = component;
+
+        pageTurn.leaving = leaving;
+        pageTurn.arriving = arriving;
+        pageTurn.direction = root.panel === "home" ? -1 : 1;
+        pageTurn.restart();
+    }
+
+    // The page arriving under a sheet that has just begun to unfold: each
+    // section rises into place a beat after the one above it, so the page is
+    // read top to bottom as it comes in rather than appearing all at once.
+    // Whatever is still rising from the last time is put in place first, so
+    // two runs never fight over a section.
+    property var rising: []
+
+    function cascade(): void {
+        for (const running of root.rising)
+            running?.complete();
+        root.rising = [];
+
+        const page = body.page.item;
+        if (!page || Theme.motion === 0)
+            return;
+
+        let turn = 0;
+        for (const section of page.children) {
+            // a repeater, a timer, a section with nothing in it right now
+            if (!section.visible || section.width <= 0 || section.height <= 0)
+                continue;
+
+            root.rising.push(rise.createObject(section, {
+                section: section,
+                delay: Theme.cascadeStep * turn++
+            }));
+        }
+    }
+
+    Component {
+        id: rise
+
+        Rise {}
     }
 
     // Bring the pill out for a moment without opening it — a glance at the
@@ -384,15 +452,17 @@ PanelWindow {
         // ...and one leaving fades where it is.
         remove: Transition {
             Fade {
+                leaf: "fadeOut"
                 property: "opacity"
                 to: 0
             }
         }
 
-        // The rest move on the curve the slab moves on: down in step with a
+        // The rest move the way hyprland moves a layer: down in step with a
         // new one dropping in above them...
         displaced: Transition {
             Slide {
+                leaf: "layers"
                 property: "y"
             }
         }
@@ -402,10 +472,11 @@ PanelWindow {
         removeDisplaced: Transition {
             SequentialAnimation {
                 PauseAnimation {
-                    duration: Theme.fadeDuration
+                    duration: Theme.duration("fadeOut")
                 }
 
                 Slide {
+                    leaf: "layers"
                     property: "y"
                 }
             }
@@ -428,13 +499,7 @@ PanelWindow {
         // Put away, the slab's bottom edge is exactly the top of the screen
         // and its shadow would stay behind as a band across it, so it fades
         // out over the slide instead of following it up.
-        opacity: root.revealed ? 1 : 0
-
-        Behavior on opacity {
-            Fade {
-                duration: root.slideDuration
-            }
-        }
+        opacity: Math.max(0, Math.min(1, 1 - slab.slide))
     }
 
     ClippingRectangle {
@@ -447,22 +512,64 @@ PanelWindow {
         // than on `y` itself so that a slab changing size while it is put
         // away stays put away — its `y` follows the new height at once,
         // and only a change in `revealed` sets it moving.
-        property real slide: root.revealed ? 0 : 1
+        readonly property alias slide: sliding.value
 
-        Behavior on slide {
-            Slide {
-                duration: root.slideDuration
+        // The pill's width, which the unfold is measured from.
+        readonly property int pillWidth: collapsed.implicitWidth + Theme.collapsedPadding * 2
+        // How far the slab has unfolded, from the pill at 0 to the sheet at
+        // 1, by its width — which, unlike its height, is the same whatever
+        // page it is unfolding to. What the slab carries is faded on this
+        // rather than on a clock of its own, so it follows the slab wherever
+        // the slab is: reached for and abandoned half way, the pill and the
+        // page are each exactly as far in or out as the slab is open.
+        readonly property real unfold: Math.max(0, Math.min(1, (slab.width - slab.pillWidth) / (Theme.expandedWidth - slab.pillWidth)))
+
+        // Coming out and going back the way hyprland moves a window, and
+        // growing and shrinking the way it opens one. Sent the other way
+        // half way there — reached for and left, opened and closed again —
+        // it turns round with the speed it had rather than stopping dead.
+        //
+        // The slab only changes size on a spring while it is on screen. Put
+        // away, a change of size is a change nobody can see, and animating it
+        // would leave the slab mid-resize when it next slides out.
+        Spring {
+            id: sliding
+
+            to: root.revealed ? 0 : 1
+
+            // gone off the top edge at full size; it can collapse to the pill
+            // now without anyone seeing it happen
+            onArrived: {
+                if (!root.revealed)
+                    root.folding = false;
             }
+        }
+
+        Spring {
+            id: widening
+
+            leaf: "windows"
+            enabled: root.revealed
+            to: root.unfolded ? Theme.expandedWidth : slab.pillWidth
+        }
+
+        Spring {
+            id: deepening
+
+            leaf: "windows"
+            enabled: root.revealed
+            to: slab.border.width + (root.unfolded ? body.height + Theme.pagePadding * 2 : Theme.collapsedHeight)
         }
 
         // Revealed it grows out of the top edge, so the top corners are
         // square and the top border is pushed just off screen: what shows is
         // the slab's sides and bottom, and nothing else. Put away it is that
-        // much further up, entirely off the screen.
-        y: -border.width - slab.slide * (slab.height - border.width)
+        // much further up, entirely off the screen. In whole pixels, all of
+        // it, or its edge and the text on it shimmer as it moves.
+        y: Math.round(-border.width - slab.slide * (slab.height - border.width))
 
-        width: root.unfolded ? Theme.expandedWidth : collapsed.implicitWidth + Theme.collapsedPadding * 2
-        height: border.width + (root.unfolded ? body.height + Theme.pagePadding * 2 : Theme.collapsedHeight)
+        width: Math.round(widening.value)
+        height: Math.round(deepening.value)
 
         topLeftRadius: 0
         topRightRadius: 0
@@ -473,21 +580,6 @@ PanelWindow {
 
         border.width: 1
         border.color: Theme.slabBorder
-
-        // The slab only animates its size while it is on screen. Put away,
-        // a change of size is a change nobody can see, and animating it
-        // would leave the slab mid-resize when it next slides out.
-        Behavior on width {
-            enabled: root.revealed
-
-            Slide {}
-        }
-
-        Behavior on height {
-            enabled: root.revealed
-
-            Slide {}
-        }
 
         HoverHandler {
             id: hover
@@ -516,26 +608,13 @@ PanelWindow {
 
             spacing: Theme.collapsedSpacing
 
-            opacity: root.unfolded ? 0 : 1
-            visible: opacity > 0
-
             // Whichever way the notch is going, the slab moves first and what
-            // it carries follows: the pill's contents leave the moment it
-            // starts to unfold, and come back only once it has closed most of
-            // the way over them again. Off screen there is no crossfade
-            // to see, so the swap is made at once and the slab slides out
-            // already carrying the right thing.
-            Behavior on opacity {
-                enabled: root.revealed
-
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: root.unfolded ? 0 : Theme.staggerDelay
-                    }
-
-                    Fade {}
-                }
-            }
+            // it carries follows: the pill's contents are gone by the time it
+            // is a fifth of the way open, and come back only once it has
+            // closed that far over them again. Off screen the slab changes
+            // size at once, so it slides out already carrying the right thing.
+            opacity: Math.max(0, 1 - slab.unfold * 5)
+            visible: opacity > 0
 
             Dots {
                 Layout.alignment: Qt.AlignVCenter
@@ -568,47 +647,111 @@ PanelWindow {
         Item {
             id: body
 
-            x: (slab.width - width) / 2
+            // Two pages, so that the one being left can be seen going while
+            // the one stepped to comes in — see `turn`. `front` is the one
+            // showing `panel`, and the sheet is as tall as it is.
+            property int front: 0
+            readonly property Loader page: body.front === 0 ? first : second
+
+            // whole pixels, or the text on it shimmers as the slab grows
+            x: Math.round((slab.width - width) / 2)
             y: slab.border.width + Theme.pagePadding
 
             width: Theme.expandedWidth - Theme.pagePadding * 2
-            height: loader.height
+            height: body.page.height
 
-            opacity: root.unfolded ? 1 : 0
-            visible: opacity > 0
+            // ...and the page is the other half of that: it arrives once the
+            // slab is a fifth of the way open, and is all there by two thirds,
+            // so it is never seen squeezed; and going, it is gone by then.
+            opacity: Math.max(0, Math.min(1, (slab.unfold - 0.2) / 0.45))
+            // There from the moment the sheet starts to unfold rather than
+            // from the first frame of the fade, so the cascade can tell the
+            // sections that are hidden from the ones that are only waiting
+            // to be shown.
+            visible: root.unfolded || opacity > 0
 
-            // ...and the panel is the other half of that: it waits for the
-            // slab to be most of the way open before it arrives, and is gone
-            // before the slab starts to close.
-            Behavior on opacity {
-                enabled: root.revealed
+            Loader {
+                id: first
 
-                SequentialAnimation {
-                    PauseAnimation {
-                        duration: root.unfolded ? Theme.staggerDelay : 0
-                    }
+                // how far to the side it is on its way in or out, put on
+                // whole pixels so the text on it holds still
+                property real shift: 0
 
-                    Fade {}
-                }
+                x: Math.round(shift)
+                width: parent.width
+
+                sourceComponent: homePanel
             }
 
             Loader {
-                id: loader
+                id: second
 
+                property real shift: 0
+
+                x: Math.round(shift)
                 width: parent.width
+            }
+        }
 
-                sourceComponent: root.panels[root.panel] ?? homePanel
+        // Stepping from one page to another on a sheet that is all there:
+        // the way hyprland changes workspace, the page being left slides a
+        // fifth of the way out and fades, while the one stepped to slides in
+        // after it and comes up — from the right into a panel, and from the
+        // left back home.
+        ParallelAnimation {
+            id: pageTurn
 
-                // the slab is already animating its height; fading the new
-                // panel in over that is what keeps the swap from snapping
-                onLoaded: swap.restart()
+            property Loader leaving: null
+            property Loader arriving: null
+            // 1 forward into a panel, -1 back home
+            property int direction: 1
 
-                Fade on opacity {
-                    id: swap
+            // the page left behind goes, and gives up its place
+            onStopped: {
+                const leaving = pageTurn.leaving;
+                pageTurn.leaving = null;
+                if (!leaving || leaving === body.page)
+                    return;
 
-                    from: 0
-                    to: 1
-                }
+                // A page with a field hands the keyboard back to the notch as
+                // it goes — see `takeKeys` — which by now is after the page
+                // coming in has taken it; it gets it back.
+                const keys = body.page.activeFocus;
+                leaving.sourceComponent = undefined;
+                leaving.shift = 0;
+                leaving.opacity = 1;
+                if (keys)
+                    body.page.forceActiveFocus();
+            }
+
+            Slide {
+                leaf: "workspaces"
+                target: pageTurn.leaving
+                property: "shift"
+                from: 0
+                to: -pageTurn.direction * Theme.stepDistance
+            }
+
+            Fade {
+                leaf: "fadeOut"
+                target: pageTurn.leaving
+                property: "opacity"
+                to: 0
+            }
+
+            Slide {
+                leaf: "workspaces"
+                target: pageTurn.arriving
+                property: "shift"
+                from: pageTurn.direction * Theme.stepDistance
+                to: 0
+            }
+
+            Fade {
+                target: pageTurn.arriving
+                property: "opacity"
+                from: 0
+                to: 1
             }
         }
 
@@ -641,20 +784,10 @@ PanelWindow {
         onTriggered: root.revealed = false
     }
 
-    // The slab sliding off the top edge at full size; once it is gone it can
-    // collapse to the pill without anyone seeing it happen.
-    Timer {
-        id: foldTimer
-
-        interval: Theme.expandDuration
-
-        onTriggered: root.folding = false
-    }
-
     // Back to the home panel once it has folded up, not while it is folding:
     // swapping the contents mid-animation is visible.
     Timer {
-        interval: Theme.expandDuration
+        interval: Theme.duration("windows")
         running: !root.unfolded && root.panel !== "home"
 
         onTriggered: root.panel = "home"

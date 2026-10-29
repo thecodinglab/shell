@@ -33,6 +33,9 @@ Rectangle {
 
     // the row is lit, whichever of the three lit it
     readonly property bool hovered: mouse.containsMouse || root.held || root.selected
+    // held down by the pointer, for a disc at the head of the row to sink
+    // under — see IconDisc
+    readonly property bool pressed: mouse.pressed
 
     signal clicked
 
@@ -51,7 +54,13 @@ Rectangle {
             return Theme.rowPress;
         if (root.hovered)
             return Theme.rowHover;
-        return "transparent";
+        return Theme.clear(Theme.rowHover);
+    }
+
+    // the ground comes up under the pointer and goes as it leaves, so
+    // running down a list leaves a short wake rather than a flicker
+    Behavior on color {
+        ColorFade {}
     }
 
     activeFocusOnTab: root.interactive

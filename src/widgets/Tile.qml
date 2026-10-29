@@ -37,6 +37,7 @@ ListRow {
 
             icon: root.icon
             on: root.on
+            pressed: root.pressed
         }
     }
 

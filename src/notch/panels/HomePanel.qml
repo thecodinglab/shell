@@ -322,16 +322,17 @@ ColumnLayout {
                         size: ring.size
                         thickness: Theme.ringThickness
                         start: -90
-                        sweep: 360 * system.load
+                        sweep: load.value
                         strokeColor: system.load >= 0.9 ? Theme.urgent : Theme.accent
-
-                        Behavior on sweep {
-                            NumberAnimation {
-                                duration: Theme.expandDuration
-                                easing.type: Theme.expandEasing
-                            }
-                        }
                     }
+                }
+
+                // out here rather than on the arc, which is a path and takes
+                // nothing but the pieces of one
+                Spring {
+                    id: load
+
+                    to: 360 * system.load
                 }
             }
         }
@@ -447,6 +448,7 @@ ColumnLayout {
                         size: Theme.discSizeLarge
                         // red for a mark waiting on its second press
                         danger: mark.asking
+                        pressed: mark.pressed
                     }
 
                     Caption {

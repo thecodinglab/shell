@@ -63,7 +63,7 @@ Row {
                 Hyprland.dispatch(`hl.dsp.focus({ workspace = ${dot.workspaceId} })`);
             }
 
-            implicitWidth: dot.active ? Theme.dotActiveWidth : Theme.dotSize
+            implicitWidth: Math.round(stretch.value)
             implicitHeight: Theme.dotSize
 
             radius: height / 2
@@ -76,8 +76,12 @@ Row {
                 return dot.workspace ? Theme.dotOccupied : Theme.dotEmpty;
             }
 
-            Behavior on implicitWidth {
-                Ease {}
+            // switched away from before it has finished stretching, it
+            // shrinks back from as far as it got
+            Spring {
+                id: stretch
+
+                to: dot.active ? Theme.dotActiveWidth : Theme.dotSize
             }
 
             Behavior on color {

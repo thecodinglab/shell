@@ -31,7 +31,7 @@ Rectangle {
     // How far off the top edge it is, as a fraction of its own height: out
     // is 0, put away is 1. Animated on this rather than on `y`, so it can
     // ride under the slab without lagging it — see the slab itself.
-    property real slide: root.shown ? 0 : 1
+    readonly property alias slide: sliding.value
 
     // Bring it out, or keep it out: every call restarts the clock.
     function show(): void {
@@ -47,20 +47,16 @@ Rectangle {
     border.width: 1
     border.color: Theme.slabBorder
 
-    opacity: root.shown ? 1 : 0
+    // fading as it goes up into the top edge, rather than on a clock of its
+    // own, so a key pressed while it is going catches it wherever it is
+    opacity: Math.max(0, Math.min(1, 1 - root.slide))
     visible: opacity > 0
 
-    // it comes and goes at the pill's pace, not the panel's
-    Behavior on slide {
-        Slide {
-            duration: Theme.revealDuration
-        }
-    }
+    // it comes and goes the way the slab does
+    Spring {
+        id: sliding
 
-    Behavior on opacity {
-        Fade {
-            duration: Theme.revealDuration
-        }
+        to: root.shown ? 0 : 1
     }
 
     // it hangs over the desktop on its own, so it casts its own shadow
@@ -92,6 +88,8 @@ Rectangle {
         // the track from the slider, read-only and thin: there is no pointer
         // here to aim it at
         Rectangle {
+            id: track
+
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
 
@@ -102,15 +100,19 @@ Rectangle {
             clip: true
 
             Rectangle {
-                width: parent.width * Math.max(0, Math.min(1, root.value))
+                width: Math.round(filling.value)
                 height: parent.height
 
                 radius: height / 2
                 color: Theme.fill
 
-                // one press moves the fill one step; a run of them slides it
-                Behavior on width {
-                    Ease {}
+                // One press moves the fill one step; a run of them slides it,
+                // and each press adds to the way it is already going rather
+                // than starting it again.
+                Spring {
+                    id: filling
+
+                    to: track.width * Math.max(0, Math.min(1, root.value))
                 }
             }
         }

@@ -59,12 +59,14 @@ Item {
 
         displaced: Transition {
             Slide {
+                leaf: "layers"
                 property: "y"
             }
         }
 
         remove: Transition {
             Fade {
+                leaf: "fadeOut"
                 property: "opacity"
                 to: 0
             }
@@ -73,10 +75,11 @@ Item {
         removeDisplaced: Transition {
             SequentialAnimation {
                 PauseAnimation {
-                    duration: Theme.fadeDuration
+                    duration: Theme.duration("fadeOut")
                 }
 
                 Slide {
+                    leaf: "layers"
                     property: "y"
                 }
             }

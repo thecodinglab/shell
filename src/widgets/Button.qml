@@ -31,6 +31,20 @@ Rectangle {
         return Theme.surface;
     }
 
+    Behavior on color {
+        ColorFade {}
+    }
+
+    // held down it sinks a little, and let go of quickly it comes back up
+    // from wherever it had got to rather than from the bottom
+    scale: press.value
+
+    Spring {
+        id: press
+
+        to: mouse.pressed ? Theme.pressScale : 1
+    }
+
     activeFocusOnTab: root.enabled
 
     Accessible.role: Accessible.Button

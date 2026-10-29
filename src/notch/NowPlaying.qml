@@ -51,6 +51,14 @@ ColumnLayout {
 
                 sourceSize.width: Theme.artSize
                 sourceSize.height: Theme.artSize
+
+                // a new cover develops out of the ground under it rather
+                // than landing on it
+                opacity: art.status === Image.Ready ? 1 : 0
+
+                Behavior on opacity {
+                    Fade {}
+                }
             }
 
             Skeleton {

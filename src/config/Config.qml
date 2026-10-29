@@ -127,4 +127,94 @@ Singleton {
     // Wayland has no `prefers-reduced-motion` the shell can ask for, so this
     // is the switch: set, everything that moves arrives instead.
     readonly property bool reducedMotion: value("reducedMotion", false)
+
+    // The curves the shell moves on, named and written the way hyprland's
+    // are, so one set of them can be handed to both: a bezier by its two
+    // control points, and a spring by its stiffness, dampening and mass. The
+    // defaults are the ones in the hyprland config the notch was drawn
+    // against. Given here, a curve is added to these or replaces the one of
+    // the same name.
+    readonly property var curves: Object.assign({
+        easeOutQuint: {
+            type: "bezier",
+            points: [[0.23, 1], [0.32, 1]]
+        },
+        easeOutExpo: {
+            type: "bezier",
+            points: [[0.16, 1], [0.3, 1]]
+        },
+        almostLinear: {
+            type: "bezier",
+            points: [[0.5, 0.5], [0.75, 1]]
+        },
+        linear: {
+            type: "bezier",
+            points: [[0, 0], [1, 1]]
+        },
+        quick: {
+            type: "bezier",
+            points: [[0.15, 0], [0.1, 1]]
+        },
+        // slightly underdamped: settles with a soft overshoot
+        soft: {
+            type: "spring",
+            stiffness: 200,
+            dampening: 24,
+            mass: 1
+        },
+        // close to critically damped
+        snappy: {
+            type: "spring",
+            stiffness: 320,
+            dampening: 34,
+            mass: 1
+        }
+    }, value("curves", {}))
+
+    // ...and which of them each kind of movement is made on, by hyprland's
+    // name for the nearest thing it animates, with a speed in tenths of a
+    // second the way hyprland counts it. A spring has no speed: it takes as
+    // long as it takes to settle. Given here, an animation replaces the one
+    // of the same name.
+    readonly property var animations: Object.assign({
+        // the notch growing and shrinking
+        windows: {
+            curve: "soft"
+        },
+        // anything going from one place to another: the notch and the
+        // volume coming out of the top edge, a knob, a dot, a fill, a control
+        // giving under a press
+        windowsMove: {
+            curve: "snappy"
+        },
+        // a ground or an ink changing, the way a border takes the focus
+        border: {
+            curve: "easeOutQuint",
+            speed: 5
+        },
+        // something fading in, and out
+        fadeIn: {
+            curve: "almostLinear",
+            speed: 1.7
+        },
+        fadeOut: {
+            curve: "almostLinear",
+            speed: 1.5
+        },
+        // a toast, a row or a section of a page arriving, and the rest
+        // making room for it
+        layersIn: {
+            curve: "easeOutQuint",
+            speed: 4
+        },
+        layers: {
+            curve: "easeOutQuint",
+            speed: 3.8
+        },
+        // one page making way for another
+        workspaces: {
+            curve: "easeOutExpo",
+            speed: 4
+        }
+    }, value("animations", {}))
 }

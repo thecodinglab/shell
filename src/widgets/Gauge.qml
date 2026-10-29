@@ -53,22 +53,22 @@ Item {
         Arc {
             size: root.size
             start: root.start
-            sweep: (360 - root.gap) * root.fraction
+            sweep: filling.value
             strokeColor: root.fillColor
 
             Behavior on strokeColor {
                 ColorFade {}
             }
-
-            // samples land every couple of seconds, so the ring is only
-            // ever caught moving between two of them
-            Behavior on sweep {
-                NumberAnimation {
-                    duration: Theme.expandDuration
-                    easing.type: Theme.expandEasing
-                }
-            }
         }
+    }
+
+    // Samples land every couple of seconds, so the ring is only ever caught
+    // moving between two of them. Out here rather than on the arc, which is
+    // a path and takes nothing but the pieces of one.
+    Spring {
+        id: filling
+
+        to: (360 - root.gap) * root.fraction
     }
 
     Num {
