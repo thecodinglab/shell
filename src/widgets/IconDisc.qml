@@ -40,6 +40,7 @@ Rectangle {
     Spring {
         id: press
 
+        visible: root.visible
         to: root.pressed ? Theme.pressScale : 1
     }
 

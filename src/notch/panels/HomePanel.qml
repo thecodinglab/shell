@@ -332,6 +332,7 @@ ColumnLayout {
                 Spring {
                     id: load
 
+                    visible: ring.visible
                     to: 360 * system.load
                 }
             }

@@ -23,10 +23,12 @@ import qs.notch.panels
 // when it is it opens over whatever is underneath rather than pushing it
 // down, so it never reflows the windows behind it.
 //
-// The window itself is as tall as the tallest thing it can ever show and
-// masked down to the slab and the strip it listens on, so every pixel the
-// notch is not currently using belongs to the desktop. Open, it takes the
-// whole screen instead — it has to, to hear the click that closes it.
+// The window itself covers the whole screen and is masked down to the slab
+// and the strip it listens on, so every pixel the notch is not currently
+// using belongs to the desktop. Open, the mask takes the whole screen
+// instead — it has to, to hear the click that closes it. The window never
+// changes size: a resize is a round trip to the compositor and a new buffer,
+// and it would land on the first frame of every unfold and every fold.
 PanelWindow {
     id: root
 
@@ -213,13 +215,9 @@ PanelWindow {
         top: true
         left: true
         right: true
-        // An open notch has to hear a click anywhere on the screen to know it
-        // has been dismissed, so it takes the whole screen while it is open
-        // and shrinks back to the strip along the top when it folds up.
-        bottom: root.expanded
+        bottom: true
     }
 
-    implicitHeight: Theme.windowHeight
     // the notch is transient, so it takes none of the screen away from the
     // windows underneath it — not even the height of the collapsed pill
     exclusiveZone: 0
@@ -614,7 +612,9 @@ PanelWindow {
             // closed that far over them again. Off screen the slab changes
             // size at once, so it slides out already carrying the right thing.
             opacity: Math.max(0, 1 - slab.unfold * 5)
-            visible: opacity > 0
+            // Put away all the way, nothing on it can be seen either, and the
+            // dots changing workspace are not to be animated up there.
+            visible: opacity > 0 && slab.slide < 1
 
             Dots {
                 Layout.alignment: Qt.AlignVCenter

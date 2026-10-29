@@ -183,8 +183,9 @@ Singleton {
     // Narrow, for a notch: a control centre is a column read top to bottom,
     // not a dashboard read across.
     readonly property int expandedWidth: root.px(440)
-    // The window has to be tall enough for the tallest thing it can show, and
-    // it is masked down to the sheet, so being generous costs nothing.
+    // How far down the screen the toasts may stack. The view has to be tall
+    // enough to keep one on through its exit — see `Notch.toasts` — and the
+    // window is masked down to what is in it, so being generous costs nothing.
     readonly property int windowHeight: root.px(640)
     // A list grows the sheet until the notch would be taller than half the
     // screen — see `Notch.bodyMaxHeight` — and scrolls from there. This is the

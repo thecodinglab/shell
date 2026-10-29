@@ -289,10 +289,15 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   Every duration and every spring goes through `Theme.motion`, so with it
   set everything arrives instead of moving; the spinner still turns, because a spinner that
   has stopped means something else.
-- **Input.** The window is as tall as the tallest thing it can ever show, and
-  masked down to the slab, its notifications, and the strip along the top edge
-  it listens on while it is put away, so every pixel the notch is not using
-  belongs to the desktop.
+- **Input.** The window covers the whole screen and never changes size, so
+  no unfold waits on the compositor for a new buffer. It is masked down to
+  the slab, its notifications, and the strip along the top edge it listens on
+  while it is put away, so every pixel the notch is not using belongs to the
+  desktop.
+- **Frames.** Nothing that cannot be seen moves. A spring on a page that is
+  folded away, or on a pill that is off the top edge, goes straight to where
+  it is headed, so a closed notch draws no frames for a cpu sample or a
+  workspace change.
 - **Layout.** The panel is laid out at the full expanded width from the start
   and revealed by the slab growing over it, rather than reflowing on every
   frame of the animation.

@@ -62,6 +62,7 @@ Rectangle {
         Spring {
             id: knob
 
+            visible: root.visible
             to: root.checked ? root.width - (root.height - Theme.switchInset * 2) - Theme.switchInset : Theme.switchInset
         }
     }

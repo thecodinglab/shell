@@ -103,6 +103,7 @@ Item {
         Spring {
             id: thickening
 
+            visible: root.visible
             to: root.railHeight
         }
 

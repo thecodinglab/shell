@@ -112,6 +112,7 @@ Rectangle {
                 Spring {
                     id: filling
 
+                    visible: root.visible
                     to: track.width * Math.max(0, Math.min(1, root.value))
                 }
             }

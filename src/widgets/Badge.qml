@@ -37,6 +37,7 @@ Rectangle {
         id: grow
 
         leaf: "windows"
+        visible: root.parent?.visible ?? true
         to: root.count > 0 ? 1 : 0
     }
 
@@ -46,6 +47,7 @@ Rectangle {
         id: start
 
         leaf: "windows"
+        visible: root.parent?.visible ?? true
         to: 1
     }
 

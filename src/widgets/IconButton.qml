@@ -35,6 +35,7 @@ Item {
     Spring {
         id: press
 
+        visible: root.visible
         to: mouse.pressed ? Theme.pressScale : 1
     }
 

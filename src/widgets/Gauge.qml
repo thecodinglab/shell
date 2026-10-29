@@ -68,6 +68,7 @@ Item {
     Spring {
         id: filling
 
+        visible: root.visible
         to: (360 - root.gap) * root.fraction
     }
 

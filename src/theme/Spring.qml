@@ -19,12 +19,18 @@ import QtQuick
 // `leaf` is the animation it is, by the name it has in `Config.animations`.
 // With reduced motion it goes straight to `to`, and so does a new `to` while
 // `enabled` is unset; a run already under way when it is unset is finished.
+//
+// `visible` is whether anybody can see what it moves, bound to the item it
+// is moving. Unseen it goes straight to `to`, and a run under way when it is
+// hidden stops where it was headed: a spring on a page nobody is looking at
+// is a window drawing frames for nothing, and on every monitor at once.
 QtObject {
     id: root
 
     property real to: 0
     property string leaf: "windowsMove"
     property bool enabled: true
+    property bool visible: true
 
     // Where it is, and how fast it is going, in units a second. Read them;
     // only the spring writes them.
@@ -56,7 +62,7 @@ QtObject {
     // it is going: it swings out and springs back. Knocked again on the way,
     // the two add up.
     function nudge(speed: real): void {
-        if (!root.enabled || Theme.motion === 0 || !Theme.spring(root.leaf))
+        if (!root.enabled || !root.visible || Theme.motion === 0 || !Theme.spring(root.leaf))
             return;
 
         root.velocity += speed;
@@ -124,7 +130,7 @@ QtObject {
     }
 
     onToChanged: {
-        if (!root.enabled || Theme.motion === 0 || !Theme.spring(root.leaf)) {
+        if (!root.enabled || !root.visible || Theme.motion === 0 || !Theme.spring(root.leaf)) {
             root.jump();
             return;
         }
@@ -134,6 +140,11 @@ QtObject {
         root.span = Math.abs(root.to - root.value) || root.span || 1;
         if (!root.frames.running)
             root.frames.start();
+    }
+
+    onVisibleChanged: {
+        if (!root.visible && root.frames.running)
+            root.jump();
     }
 
     Component.onCompleted: {

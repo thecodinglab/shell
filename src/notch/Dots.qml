@@ -81,6 +81,7 @@ Row {
             Spring {
                 id: stretch
 
+                visible: dot.visible
                 to: dot.active ? Theme.dotActiveWidth : Theme.dotSize
             }
 
