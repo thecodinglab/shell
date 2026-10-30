@@ -57,9 +57,7 @@ PanelWindow {
 
     // A sub-panel is a place you went to on purpose, so stepping out of it
     // returns to the home panel rather than putting the whole notch away.
-    // The launcher is not one: it is opened from a keybind in its own right,
-    // never from the home page, and stepping out of it is putting it away.
-    readonly property bool pinned: root.panel !== "home" && root.panel !== "launcher"
+    readonly property bool pinned: root.panel !== "home"
 
     // The notch has a reason to be on screen: the pointer is at the top edge
     // or on the notch itself, or it is open. A notification is not one of
@@ -73,7 +71,7 @@ PanelWindow {
     // slab until it reaches this and scrolls from there, so how much of the
     // desktop the notch is willing to take is a property of the screen it is
     // on rather than a number picked in the theme.
-    readonly property int bodyMaxHeight: Math.round(root.modelData.height / 2) - Theme.pagePadding * 2 - slab.border.width
+    readonly property int bodyMaxHeight: Math.round(root.modelData.height / 2) - Theme.pagePadding * 2
 
     // One step back out: a sub-panel returns to the home panel, and the home
     // panel folds the notch up.
@@ -556,28 +554,28 @@ PanelWindow {
 
             leaf: "windows"
             enabled: root.revealed
-            to: slab.border.width + (root.unfolded ? body.height + Theme.pagePadding * 2 : Theme.collapsedHeight)
+            to: root.unfolded ? body.height + Theme.pagePadding * 2 : Theme.collapsedHeight
         }
 
         // Revealed it grows out of the top edge, so the top corners are
-        // square and the top border is pushed just off screen: what shows is
-        // the slab's sides and bottom, and nothing else. Put away it is that
-        // much further up, entirely off the screen. In whole pixels, all of
+        // square and stand on the edge itself: what shows is the slab's sides
+        // and bottom, and the ears either side of it. Put away it is its own
+        // height further up, entirely off the screen. In whole pixels, all of
         // it, or its edge and the text on it shimmer as it moves.
-        y: Math.round(-border.width - slab.slide * (slab.height - border.width))
+        y: Math.round(-slab.slide * slab.height)
 
         width: Math.round(widening.value)
         height: Math.round(deepening.value)
 
         topLeftRadius: 0
         topRightRadius: 0
-        // capped so the corners never meet in the middle of a short notch
-        bottomLeftRadius: Math.min(Theme.radiusLarge, height / 2)
+        // The hardware notch's corners while it is the pill, rounding out
+        // into the island's as it unfolds, on the same measure everything it
+        // carries is faded on; capped so the corners never meet in the middle
+        // of a short notch.
+        bottomLeftRadius: Math.min(Theme.notchRadius + (Theme.notchRadiusOpen - Theme.notchRadius) * slab.unfold, height / 2)
         bottomRightRadius: bottomLeftRadius
         color: Theme.slab
-
-        border.width: 1
-        border.color: Theme.slabBorder
 
         HoverHandler {
             id: hover
@@ -600,9 +598,7 @@ PanelWindow {
         RowLayout {
             id: collapsed
 
-            // centred in the visible part, not counting the hidden top border
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: slab.border.width / 2
 
             spacing: Theme.collapsedSpacing
 
@@ -636,6 +632,16 @@ PanelWindow {
                 font.pixelSize: Theme.fontTitle
                 font.weight: Font.Medium
             }
+
+            // Something playing widens the pill by the bars at its trailing
+            // end, the way a live activity widens the island, and the slab
+            // grows to take them on its spring.
+            Wave {
+                Layout.alignment: Qt.AlignVCenter
+
+                visible: Media.playing
+                playing: Media.playing && collapsed.visible
+            }
         }
 
         // ── expanded ──────────────────────────────────────────────────────
@@ -655,7 +661,7 @@ PanelWindow {
 
             // whole pixels, or the text on it shimmers as the slab grows
             x: Math.round((slab.width - width) / 2)
-            y: slab.border.width + Theme.pagePadding
+            y: Theme.pagePadding
 
             width: Theme.expandedWidth - Theme.pagePadding * 2
             height: body.page.height
@@ -759,6 +765,33 @@ PanelWindow {
         Tooltip {}
     }
 
+    // The ears either side of the slab, flaring its sides out into the top
+    // edge. They stand on the edge itself, against the straight part of the
+    // slab's sides, and shrink with what is left of that as the slab slides
+    // away. Once only its rounded bottom corners are still below the edge,
+    // its sides curve in away from where an ear would stand, so by then the
+    // ears are gone rather than left beside a gap with the desktop in it.
+    readonly property int earReach: Math.max(0, Math.min(Theme.earRadius, slab.y + slab.height - slab.bottomLeftRadius))
+
+    Ear {
+        x: slab.x - root.earReach
+        y: 0
+        width: root.earReach
+        height: root.earReach
+
+        visible: root.earReach > 0
+    }
+
+    Ear {
+        x: slab.x + slab.width
+        y: 0
+        width: root.earReach
+        height: root.earReach
+
+        visible: root.earReach > 0
+        mirror: true
+    }
+
     // ── revealing and unfolding ───────────────────────────────────────────
 
     Timer {
@@ -803,8 +836,7 @@ PanelWindow {
             audio: audioPanel,
             bluetooth: bluetoothPanel,
             network: networkPanel,
-            resources: resourcesPanel,
-            launcher: launcherPanel
+            resources: resourcesPanel
         })
 
     Component {
@@ -851,14 +883,6 @@ PanelWindow {
         id: resourcesPanel
 
         ResourcesPanel {
-            notch: root
-        }
-    }
-
-    Component {
-        id: launcherPanel
-
-        LauncherPanel {
             notch: root
         }
     }

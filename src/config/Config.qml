@@ -77,6 +77,12 @@ Singleton {
     // the drawing at the size it was drawn.
     readonly property real scale: value("scale", 1.25)
 
+    // How much of Spotlight's pane is its own ground rather than what is
+    // behind it. Near opaque by default, so it reads over anything; with a
+    // blur layer rule on `shell-spotlight` in the compositor, lower it — 0.75
+    // or so — to let the frosted desktop through.
+    readonly property real glassOpacity: value("glassOpacity", 0.94)
+
     // Locale used for the clock and the date. Empty means "whatever the
     // session is set to".
     readonly property string locale: value("locale", "")

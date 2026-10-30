@@ -30,6 +30,9 @@ Rectangle {
     property bool held: false
     // the row a field above the list has stepped to: what Return will press
     property bool selected: false
+    // A module rather than a row: it stands on a ground of its own, the way
+    // the blocks of a control centre do, which the pointer only lightens.
+    property bool raised: false
 
     // the row is lit, whichever of the three lit it
     readonly property bool hovered: mouse.containsMouse || root.held || root.selected
@@ -50,6 +53,8 @@ Rectangle {
     color: {
         if (!root.interactive)
             return "transparent";
+        if (root.raised)
+            return mouse.pressed ? Theme.modulePress : root.hovered ? Theme.moduleHover : Theme.module;
         if (mouse.pressed)
             return Theme.rowPress;
         if (root.hovered)

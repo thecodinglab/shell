@@ -1,29 +1,34 @@
 # shell
 
-A [quickshell](https://quickshell.org) system shell for hyprland. One notch at
-the top of every monitor that comes out when you reach for it and unfolds when
-you click it.
+A [quickshell](https://quickshell.org) system shell for hyprland, drawn after
+the notch and Spotlight on a mac. One notch at the top of every monitor that
+comes out when you reach for it and unfolds when you click it, and a
+Spotlight pane that floats over the middle of the screen from a keybind.
 
 ## The notch
 
-Revealed it is a 32px tab hanging from the top edge of the screen, square on
-top and rounded at the bottom like the notch on a macbook, carrying the
-workspace dots, the clock, and the cover of whatever is playing. Most of the
-time it is not there at all: the screen belongs to the windows on it, nothing
-is reserved, and all the shell occupies is a few pixels along the top edge.
-Reach the top of the screen and the tab slides back out; leave and it puts
-itself away again. A notification drops out from under the top edge on its
-own, whether the tab is out or not; one that goes back up unread is kept in
-the notifications panel, and one that was clicked or put away is not. So
-does the volume: set it from a
-media key and a pill drops out under the notch on the focused monitor with
-the speaker glyph, a bar and the figure, moves with every further press, and
+Revealed it is a 32px tab hanging from the top edge of the screen, drawn the
+way the notch on a macbook is: the palette's ground pushed most of the way to
+black, no frame, its bottom corners only softened, and its sides flaring out
+into the top edge where they meet it rather than standing on it at a right
+angle. It carries the workspace dots and the clock, and while something is
+playing it widens by four bars moving at its trailing end, the way a live
+activity widens the island. Most of the time it is not there at all: the
+screen belongs to the windows on it, nothing is reserved, and all the shell
+occupies is a few pixels along the top edge. Reach the top of the screen and
+the tab slides back out; leave and it puts itself away again. A notification
+drops out from under the top edge on its own, whether the tab is out or not;
+one that goes back up unread is kept in the notifications panel, and one
+that was clicked or put away is not. So does the volume: set it from a media
+key and a pill drops out under the notch on the focused monitor with the
+speaker glyph, a bar and the figure, moves with every further press, and
 goes back up a moment and a half after the last one. It is not there while
 the notch is open, where the slider already is.
 
 Clicking the tab grows the same slab into a 440px sheet — over the windows,
-so opening the notch never reflows what is behind it. It is laid out as a
-page rather than as a stack of boxes: the clock is its title, set large at
+so opening the notch never reflows what is behind it — and its corners round
+out as it grows, from the hardware notch's into the island's. It is laid out
+as a page rather than as a stack of boxes: the clock is its title, set large at
 the top left, and the sections follow down the page with nothing between
 them but air. Only the things that can be pressed have a ground of their
 own, and a list is a column of names with a hairline between them.
@@ -33,7 +38,7 @@ own, and a list is a column of names with a hairline between them.
 | head | the clock grown into the title with the date under it; at the right the dots where they were, and a bell with a count of what is waiting, which leads to the notifications |
 | now playing | one section per mpris player: cover, title, transport, and a scrubber the width of the page |
 | sound | the name of the section, where the sound is going, and a bar to set how loud; the head of the section leads to the panel |
-| tiles | two rows of two with a hairline between them: bluetooth, network, stay awake and system, each a disc, a name and one line on how it is doing; a chevron at the right says the tile leads to a panel, a switch says it is a setting |
+| tiles | two rows of two modules, each on a ground of its own the way the blocks of a control centre are: bluetooth, network, stay awake and system, each a disc, a name and one line on how it is doing; a chevron at the right says the tile leads to a panel, a switch says it is a setting |
 | session | four discs at the foot: lock, sleep, restart and shut down |
 
 A disc lit in the accent means the thing behind it is in use — a device on
@@ -121,39 +126,57 @@ The dots are the workspaces hyprland's rules bind to that monitor
 own and a click on any dot switches to it. A monitor without such rules shows
 the first `workspaceCount` instead.
 
-## The launcher
+## Spotlight
 
-The one page the notch opens from a keybind rather than from the home page:
-`shell ipc call launcher toggle` unfolds it on the focused monitor, or puts
-it away again if it is already out there. It is what an application launcher
-is — a field with the caret already in it, and under it everything that can
-be started from the keyboard — drawn as the rest of the notch is drawn: rows
-with a hairline between them, the application's own icon at the head of each,
-its name, and its generic name or comment under that.
+The one thing the shell opens from a keybind rather than from the notch:
+`shell ipc call spotlight toggle` brings it out on the focused monitor, or
+puts it away again if it is already out there. It is drawn after the one on
+a mac: a pane of its own floating a little above the middle of the screen,
+where the eye already is, with a large field at its head — the magnifier and
+the caret, and nothing else — and the results under a hairline below it.
 
-What is on the list is every desktop entry the session knows about that does
-not ask to be hidden, and alongside them the notch's own pages — Sound,
-Bluetooth, Network, System, Notifications — and the two ways out of the
-session that are safe to press once, lock and sleep. Restart and shut down
-want their second press and stay on the home page where they get it.
+Blank, it offers the few things that get used most, under *Recents*, and if
+nothing has been used yet it is the field alone. Typing narrows everything
+that can be started down to what fits, and files it the way Spotlight does:
+the best fit on its own as the *Top Hit*, larger, with what it is under its
+name; then the rest of the *Applications*; then the rest of the *Shell* —
+the notch's own pages, Sound, Bluetooth, Network, System and Notifications,
+and the two ways out of the session that are safe to press once, lock and
+sleep. Restart and shut down want their second press and stay on the
+notch's home page where they get it. `shell ipc call spotlight search
+<text>` brings it out with the text already typed.
 
-Typing narrows the list. A query is matched against the name first — the
-start of it, then the start of a word in it, then anywhere in it — and only
-then against what the entry says about itself, so `spot` puts Spotify ahead
-of anything that merely mentions it, and `1pas` finds 1Password. Every word
-of a query has to land somewhere. Ties go to what gets used: every pick is
-counted, weighted toward lately — a launch a fortnight ago is worth half of
-one today — and written to `$XDG_STATE_HOME/shell/launches.json`. Blank, the
-list is everything, the things that get used at the top and the rest in
-alphabetical order under it.
+A query is matched against the name first — the start of it, then the start
+of a word in it, then anywhere in it — and only then against what the entry
+says about itself, so `spot` puts Spotify ahead of anything that merely
+mentions it, and `1pas` finds 1Password. Every word of a query has to land
+somewhere. Ties go to what gets used: every pick is counted, weighted toward
+lately — a launch a fortnight ago is worth half of one today — and written
+to `$XDG_STATE_HOME/shell/launches.json`.
 
-The row Return will pick is lit the way a row under the pointer is, with the
-return mark at its right; the arrows, or `C-n`/`C-p` and `C-j`/`C-k`, step it
-without leaving the field, and a click picks a row directly. Picking an
-application folds the notch and launches it; picking a page turns the notch
-to that page; escape clears the field, and on an empty field puts the notch
-away. A console application — one whose entry asks for a terminal — is run
-in `terminal`, as `<terminal> -e <command>`, when one is configured.
+The row Return will open is filled in the accent, with the return mark at
+its right; the arrows, or `C-n`/`C-p` and `C-j`/`C-k`, step it without
+leaving the field, and a click opens a row directly. Opening an application
+puts the pane away and launches it; opening a page turns the notch on the
+same monitor to it; escape clears the field, and on an empty field puts the
+pane away, as does a click anywhere else. A console application — one whose
+entry asks for a terminal — is run in `terminal`, as `<terminal> -e
+<command>`, when one is configured.
+
+The pane is frosted glass on a mac. Here its ground is near opaque by
+default, so it reads over anything; give the compositor a blur rule for its
+layer and lower `glassOpacity` to let the frosted desktop through:
+
+```lua
+hl.layer_rule({ name = "spotlight-blur", match = { namespace = "^shell-spotlight$" }, blur = true, ignore_alpha = 0.5 })
+```
+
+```nix
+custom.shell.settings.glassOpacity = 0.75;
+```
+
+`ignore_alpha` keeps the blur to the pane itself and off the fainter shadow
+around it.
 
 Every application is started in a systemd scope of its own under `app.slice`
 (via `systemd-run --user --scope`) rather than as a child of the shell, so it
@@ -168,11 +191,14 @@ qs -p ~/dev/shell/src ipc call notch toggle       # open or close, on the focuse
 qs -p ~/dev/shell/src ipc call notch open audio   # straight to a panel: notifications, audio, bluetooth, network, resources
 qs -p ~/dev/shell/src ipc call notch peek         # bring the pill out for a moment
 qs -p ~/dev/shell/src ipc call notch close        # fold every monitor's notch
-qs -p ~/dev/shell/src ipc call launcher toggle    # the launcher, on the focused monitor
+qs -p ~/dev/shell/src ipc call spotlight toggle   # spotlight, on the focused monitor
+qs -p ~/dev/shell/src ipc call spotlight search x # ...with x already typed into it
 ```
 
 For the packaged build, `-p` is the store path the service runs from; the
-same calls work against it.
+same calls work against it. `launcher toggle` is kept as another name for
+`spotlight toggle`, for binds written when the launcher was a page of the
+notch.
 
 Once it is open, the notch is the keyboard's. Tab walks everything on the
 page that can be pressed — the dots, the bell, the transport, the bars, the
@@ -231,6 +257,7 @@ src/
   util/                formatting, sample history, pointer bookkeeping
   widgets/             the vocabulary the panels are built from
   notch/               the window, the collapsed pill, the toasts, and the panels it unfolds into
+  spotlight/           the floating search pane, and its rows
 ```
 
 Directories are importable as `qs.<name>`, so `import qs.theme` gets you
@@ -244,8 +271,11 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   knob, for sizing the notch independently of the font the rest of the session
   is set in.
 - **Colour.** One neutral scale, one accent, one red. Only `base00`, `base05`,
-  `base08` and `base0D` are read from the palette; `Theme.neutral` is twelve
-  steps between the first two, and every ground and every tier of ink on the
+  `base08` and `base0D` are read from the palette. On a dark palette the
+  ground is `base00` pushed most of the way to black, the way the notch is
+  the black of the bezel round it, keeping the palette's tint; a light
+  palette's ground is left as it is. `Theme.neutral` is twelve steps between
+  that ground and `base05`, and every ground and every tier of ink on the
   surface is one of those steps by name — the sheet, the wash a row shows
   under the pointer, the disc, the hairline, and the four inks from disabled
   to full. Light and dark are told apart by the ground's luminance and are
@@ -259,13 +289,20 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   sheet and is told apart by the air around it; nothing has a ground of its
   own until the pointer, or the keyboard, finds it, except a disc, a switch,
   a bar and a button, which are raised because they are the things you set.
-  The one line the surface draws is the hairline between two rows of a list
-  or two sections of a page. The floating surfaces — the slab, a toast, the
-  volume reading — cast one soft shadow; nothing on them casts any. Three
-  radii: small for anything on the sheet, medium for a field, large for the
-  surfaces themselves.
+  The tiles on the home page are the exception the way a control centre's
+  blocks are: modules, each on a ground of its own. The one line the surface
+  draws is the hairline between two rows of a list or two sections of a
+  page. The floating surfaces — the slab, Spotlight, a toast, the volume
+  reading — cast one soft shadow; nothing on them casts any. The slab has
+  no frame, because it hangs from the edge of the screen rather than
+  floating over it; the rest carry a hairline so they hold their edge
+  against a window of their own colour. Three radii: small for anything on
+  the sheet, medium for a field or a module, large for the surfaces
+  themselves — and the slab's own, which goes from the hardware notch's to
+  the island's as it unfolds.
 - **Type.** One family in four sizes: small for metadata and figures, body
-  for everything read, title for the name of a page, display for the clock.
+  for everything read, title for the name of a page, display for the clock;
+  and Spotlight's field, which is the whole of its pane and is set larger.
   Weight and ink carry the hierarchy before size does. The mono is there for
   the nerd font glyphs alone, and no glyph stands on its own: each sits
   beside a name or on a button that says in words what it does, which is
@@ -303,8 +340,8 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   frame of the animation.
 - **Margin.** Everything hangs off one left margin — the page's — so the
   clock, the artwork, the headings and the discs line up down the page,
-  while the tiles and the rows bleed out past it to their own edges by their
-  own padding.
+  while the rows bleed out past it to their own edges by their own padding,
+  and the modules stand on it.
 - **Figures.** Anything that changes on a timer is drawn at a fixed size — a
   dial, a bar, or a right-aligned column of a set width — never as free text
   a layout takes its measurements from. A percentage written out is a

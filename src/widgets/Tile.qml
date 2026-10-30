@@ -3,7 +3,8 @@ import QtQuick.Layouts
 import qs.theme
 
 // A tile on the home page: a disc, what it is, and one line on how that is
-// doing right now. The whole tile is the button.
+// doing right now. The whole tile is the button, and stands on a ground of
+// its own, a module the way the blocks of a control centre are.
 //
 // What sits at its right end says what pressing it does: a chevron for a
 // tile that is a door to a panel, or whatever the tile puts in `trailing` —
@@ -11,6 +12,10 @@ import qs.theme
 // place of its icon: a ring, for the system tile.
 ListRow {
     id: root
+
+    raised: true
+    padding: Theme.space3
+    radius: Theme.radiusMedium
 
     property alias disc: discSlot.data
     property alias trailing: trailingSlot.data

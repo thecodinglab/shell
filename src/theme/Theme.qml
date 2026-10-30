@@ -27,7 +27,14 @@ Singleton {
 
     // ── neutral scale ─────────────────────────────────────────────────────
 
-    // Twelve steps from the ground (base00) to the ink (base05). The two
+    // The ground the scale starts from. Dark, it is the palette's pushed most
+    // of the way to black, the way the notch on a macbook is the black of the
+    // bezel around it rather than a grey laid over the windows; it keeps the
+    // palette's tint, so the shell still belongs to the scheme it is set in.
+    // Light, the palette's own ground is left as it is.
+    readonly property color ground: root.light ? Config.base00 : root.mix(Config.base00, "#000000", 0.55)
+
+    // Twelve steps from the ground to the ink (base05). The two
     // modes are spaced differently: on a dark ground the eye needs bigger
     // steps low down, where the grounds are, and on a light one the ink has
     // to be pushed further toward full strength before it reads as text.
@@ -39,24 +46,37 @@ Singleton {
     //   8      disabled ink, the last tier that still passes as large text
     //   9..11  the three tiers of text: dim, muted, and full
     readonly property var steps: root.light ? [0, 0.04, 0.07, 0.10, 0.13, 0.17, 0.24, 0.36, 0.62, 0.84, 0.92, 1] : [0, 0.045, 0.08, 0.12, 0.16, 0.22, 0.30, 0.40, 0.50, 0.62, 0.74, 1]
-    readonly property var neutral: root.steps.map(t => root.mix(Config.base00, Config.base05, t))
+    readonly property var neutral: root.steps.map(t => root.mix(root.ground, Config.base05, t))
 
     // ── grounds ───────────────────────────────────────────────────────────
 
-    // The sheet, and the pill it collapses to. Dark, it is lifted one step
-    // off the palette's ground so it reads as a material over the windows it
-    // opens on top of; light, it is the ground itself and the shadow does
-    // that job.
-    readonly property color slab: root.neutral[root.light ? 0 : 1]
-    // the hairline along its edge, for when it opens over a window of the
-    // same colour
-    readonly property color slabBorder: root.neutral[root.light ? 4 : 3]
+    // The sheet, and the pill it collapses to: the ground itself. Hanging
+    // from the top edge it has no frame of its own, the way a notch has none;
+    // the shadow is what lifts it off the window it opens over.
+    readonly property color slab: root.neutral[0]
+    // the hairline round a surface floating free of the top edge — a toast,
+    // the volume reading — for when it lands on a window of its own colour
+    readonly property color slabBorder: root.neutral[root.light ? 4 : 2]
     // the sheet pushed toward the red an urgent notification warns with
     readonly property color slabUrgent: root.mix(root.slab, root.urgent, 0.10)
+
+    // A frosted pane: the ground, as much of it as `Config.glassOpacity`
+    // says, for the compositor to blur what is behind it through — see
+    // `Spotlight` — with a hairline of the ink catching its edge the way the
+    // rim of a sheet of glass does.
+    readonly property color glass: Qt.rgba(root.slab.r, root.slab.g, root.slab.b, Config.glassOpacity)
+    readonly property color glassEdge: Qt.rgba(Qt.color(Config.base05).r, Qt.color(Config.base05).g, Qt.color(Config.base05).b, root.light ? 0.10 : 0.14)
 
     // a row on the sheet has no ground until the pointer finds it
     readonly property color rowHover: root.neutral[2]
     readonly property color rowPress: root.neutral[3]
+
+    // A module: a tile on the home page, standing on a ground of its own the
+    // way the blocks of a control centre do, and the two steps it takes
+    // under the pointer.
+    readonly property color module: root.neutral[root.light ? 2 : 1]
+    readonly property color moduleHover: root.neutral[root.light ? 3 : 2]
+    readonly property color modulePress: root.neutral[root.light ? 4 : 3]
 
     // the ground under a disc, a button, an empty track — something raised
     // off the sheet — and the two steps it takes under the pointer
@@ -95,6 +115,11 @@ Singleton {
     readonly property color accent: Config.base0D
     readonly property color onAccent: Config.base00
     readonly property color accentSurface: root.mix(root.slab, root.accent, 0.16)
+    // the row Spotlight's Return will open: filled in the accent, the way a
+    // selection is, and its words in the ground
+    readonly property color selection: root.accent
+    readonly property color onSelection: root.onAccent
+    readonly property color onSelectionMuted: root.mix(root.accent, root.onAccent, 0.72)
 
     // The palette's red, pulled a little toward the ink so it warns without
     // shouting, and the wash and hairline an urgent surface is drawn with.
@@ -115,13 +140,16 @@ Singleton {
     // face has no separate display cut
     readonly property string displayFamily: Config.displayFamily || Config.sansFamily
 
-    // Four sizes. Small for metadata and figures, body for everything read,
+    // Four sizes, and Spotlight's field. Small for metadata and figures, body for everything read,
     // title for the name of a page and the clock on the pill, display for the
     // clock at the head of the page.
     readonly property int fontSmall: root.px(11)
     readonly property int fontBody: root.px(12)
     readonly property int fontTitle: root.px(15)
     readonly property int fontDisplay: root.px(28)
+    // ...and one more, for what is typed into Spotlight: the field is the
+    // whole of it, and is set as large as a title would be on a page
+    readonly property int fontSearch: root.px(22)
 
     // Tabular figures, for anything that changes on a timer: a proportional
     // 1 is narrower than a proportional 4, so a clock ticking over would
@@ -147,7 +175,7 @@ Singleton {
 
     // The page margin: everything on the sheet hangs off it, and the rows
     // that bleed past it do so by their own padding.
-    readonly property int pagePadding: root.space4
+    readonly property int pagePadding: root.space5
     // between the sections of a page, and between the things in one
     readonly property int sectionSpacing: root.space5
     readonly property int stackSpacing: root.space2
@@ -163,14 +191,35 @@ Singleton {
     // Three. Small for anything on the sheet — a row's hover ground, a piece
     // of artwork, a tooltip; medium for a field; large for the floating
     // surfaces themselves, the slab and a toast. Anything round is a pill.
-    readonly property int radiusSmall: root.px(6)
-    readonly property int radiusMedium: root.px(12)
-    readonly property int radiusLarge: root.px(24)
+    readonly property int radiusSmall: root.px(8)
+    readonly property int radiusMedium: root.px(14)
+    readonly property int radiusLarge: root.px(26)
 
     // ── the notch ─────────────────────────────────────────────────────────
 
     readonly property int collapsedHeight: root.space8
-    readonly property int collapsedPadding: root.space3
+    readonly property int collapsedPadding: root.space4
+
+    // The corners. Folded, the notch is the hardware one: a slot with its
+    // bottom corners only softened. It rounds out as it unfolds, until the
+    // sheet is the island it grew into, as round as its corners can be
+    // without the page inside losing its own.
+    readonly property int notchRadius: root.px(12)
+    readonly property int notchRadiusOpen: root.px(34)
+    // Where its sides meet the top edge they flare out into it rather than
+    // standing on it at a right angle: a quarter of a circle cut out of the
+    // corner either side, so the notch reads as part of the edge it hangs
+    // from rather than as something stuck under it.
+    readonly property int earRadius: root.px(10)
+
+    // the bars that move on the pill while something is playing
+    readonly property int waveBarWidth: root.px(3)
+    readonly property int waveBarGap: root.px(2)
+    readonly property int waveHeight: root.px(14)
+    // how long one bar takes to rise and fall, the shortest of them; the
+    // others are a little slower each, so the four never fall into step
+    readonly property int waveDuration: 420
+    readonly property int waveStagger: 70
     // between the workspace dots and the clock: wider than the padding around
     // them, so the pill reads as two things rather than six at one interval
     readonly property int collapsedSpacing: root.space5
@@ -191,10 +240,28 @@ Singleton {
     // screen — see `Notch.bodyMaxHeight` — and scrolls from there. This is the
     // floor under that: a list you cannot see two rows of is not a list.
     readonly property int listMinHeight: root.px(120)
-    // ...except the launcher, which is opened and put away a hundred times a
-    // day and is capped lower than that: enough rows to pick from, not a
-    // page of them.
-    readonly property int launcherHeight: root.px(360)
+
+    // ── spotlight ─────────────────────────────────────────────────────────
+
+    // A pane of its own rather than a page of the notch, floating over the
+    // middle of the screen a little above its centre, where the eye already
+    // is: wider than the notch, because what it carries is one long line of
+    // type and a list read across.
+    readonly property int spotlightWidth: root.px(640)
+    // how far down the screen its top edge sits, as a share of the height
+    readonly property real spotlightTop: 0.22
+    // between the pane's edge and the rows inside it
+    readonly property int spotlightPadding: root.space2
+    // the icon at the head of a result, and the larger one of the top hit
+    readonly property int spotlightIconSize: root.space6
+    readonly property int spotlightHitIconSize: root.px(40)
+    // Enough rows to pick from, not a page of them: it is opened and put
+    // away a hundred times a day.
+    readonly property int spotlightListHeight: root.px(400)
+    // What the blank field offers: the things that get used, up to this many.
+    readonly property int spotlightRecents: 6
+    // the size it opens from, and fades up out of
+    readonly property real spotlightScale: 0.96
 
     // one soft shadow, under the floating surfaces only
     readonly property int shadowBlur: root.space8

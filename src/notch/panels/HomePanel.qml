@@ -173,18 +173,15 @@ ColumnLayout {
     }
 
     // ── four tiles ────────────────────────────────────────────────────────
-    // Two rows of two with a hairline between them. A lit disc means the
+    // Two rows of two modules, each on a ground of its own. A lit disc means the
     // thing is in use: a device on the line, a link carrying an address.
     // A chevron means the tile is a door; a switch means it is a setting.
 
     GridLayout {
         Layout.fillWidth: true
-        // the tiles' hover grounds reach out to the page's edges
-        Layout.leftMargin: -Theme.rowPadding
-        Layout.rightMargin: -Theme.rowPadding
 
         columns: 2
-        rowSpacing: 0
+        rowSpacing: Theme.space2
         columnSpacing: Theme.space2
 
         Tile {
@@ -200,7 +197,6 @@ ColumnLayout {
             }
             on: Bt.primary !== null
             door: true
-            rule: true
             title: "Bluetooth"
             caption: {
                 if (!Bt.available)
@@ -225,7 +221,6 @@ ColumnLayout {
             icon: root.link ? Icons.link(root.link.kind) : Icons.networkOff
             on: Network.state === "connected"
             door: true
-            rule: true
             // named for what it is rather than for the setting: a machine
             // on a wire is on ethernet, not on "network"
             title: root.link ? Network.kindLabel(root.link.kind) : "Network"

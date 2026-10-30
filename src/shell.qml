@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import qs.services
 import qs.notch
+import qs.spotlight
 
 ShellRoot {
     id: root
@@ -15,7 +16,30 @@ ShellRoot {
 
         model: Quickshell.screens
 
-        Notch {}
+        // a notch unfolding, however it was asked to, takes the keyboard, and
+        // Spotlight goes so the two never both want it
+        Notch {
+            id: notch
+
+            onExpandedChanged: {
+                if (notch.expanded)
+                    root.closeSpotlights();
+            }
+        }
+    }
+
+    // Spotlight on every monitor, put away until it is asked for. A page of
+    // the notch picked from it is opened by the notch on the same monitor.
+    Variants {
+        id: spotlights
+
+        model: Quickshell.screens
+
+        Spotlight {
+            id: spotlight
+
+            onPanelRequested: name => root.notchOn(spotlight.modelData)?.open(name)
+        }
     }
 
     // The notch on whichever monitor has focus, which is where anything asked
@@ -23,6 +47,34 @@ ShellRoot {
     function focused(): var {
         const notch = notches.instances.find(n => Hyprland.monitorFor(n.modelData) === Hyprland.focusedMonitor);
         return notch ?? notches.instances[0] ?? null;
+    }
+
+    function notchOn(screen: var): var {
+        return notches.instances.find(n => n.modelData === screen) ?? null;
+    }
+
+    function closeSpotlights(): void {
+        for (const spotlight of spotlights.instances)
+            spotlight.open = false;
+    }
+
+    // The focused monitor's Spotlight, once everything that could be in its
+    // way has been put away: the other monitors' Spotlight, and every notch.
+    function clearForSpotlight(): var {
+        const notch = root.focused();
+        const spotlight = notch ? spotlights.instances.find(s => s.modelData === notch.modelData) : null;
+        for (const other of spotlights.instances)
+            if (other !== spotlight)
+                other.open = false;
+        for (const other of notches.instances)
+            other.expanded = false;
+        return spotlight ?? null;
+    }
+
+    function toggleSpotlight(): void {
+        const spotlight = root.clearForSpotlight();
+        if (spotlight)
+            spotlight.toggle();
     }
 
     // ── the volume, from the keyboard ─────────────────────────────────────
@@ -71,6 +123,7 @@ ShellRoot {
             if (!notch)
                 return;
 
+            root.closeSpotlights();
             if (notch.expanded)
                 notch.expanded = false;
             else
@@ -78,10 +131,12 @@ ShellRoot {
         }
 
         function open(panel: string): void {
+            root.closeSpotlights();
             root.focused()?.open(panel);
         }
 
         function close(): void {
+            root.closeSpotlights();
             for (const notch of notches.instances)
                 notch.expanded = false;
         }
@@ -91,25 +146,33 @@ ShellRoot {
         }
     }
 
-    // The launcher, for the keybind that used to run a launcher of its own:
+    // Spotlight, for the keybind that used to run a launcher of its own:
     //
-    //     qs -p ~/dev/shell/src ipc call launcher toggle
+    //     qs -p ~/dev/shell/src ipc call spotlight toggle
     //
-    // Opens it on the focused monitor, and puts the notch away again if the
-    // launcher is what it is already showing there. A notch open on some
-    // other page is turned to the launcher rather than closed.
+    // Opens it on the focused monitor, or puts it away if it is already out
+    // there. The two never both have the keyboard, so any notch open
+    // anywhere folds first. `launcher` is the same call under the name it
+    // had when it was a page of the notch, so a bind written for that still
+    // works.
+    IpcHandler {
+        target: "spotlight"
+
+        function toggle(): void {
+            root.toggleSpotlight();
+        }
+
+        // out on the focused monitor with `text` already typed into it
+        function search(text: string): void {
+            root.clearForSpotlight()?.search(text);
+        }
+    }
+
     IpcHandler {
         target: "launcher"
 
         function toggle(): void {
-            const notch = root.focused();
-            if (!notch)
-                return;
-
-            if (notch.expanded && notch.panel === "launcher")
-                notch.expanded = false;
-            else
-                notch.open("launcher");
+            root.toggleSpotlight();
         }
     }
 }

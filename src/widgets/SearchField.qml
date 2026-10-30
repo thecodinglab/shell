@@ -10,6 +10,12 @@ Rectangle {
 
     property alias text: input.text
     property string placeholder: "Search"
+    // The size of what is typed, and of the magnifier with it. `bare` is the
+    // field drawn as the head of a pane rather than as a control on a page:
+    // no ground, no ring and no clear button, because the pane is the field.
+    property int pixelSize: Theme.fontBody
+    property bool bare: false
+    property int padding: Theme.space2
 
     readonly property bool empty: input.text.length === 0
     readonly property alias typing: input.activeFocus
@@ -33,11 +39,15 @@ Rectangle {
         input.forceActiveFocus();
     }
 
-    implicitWidth: row.implicitWidth + Theme.space2 * 2
-    implicitHeight: row.implicitHeight + Theme.space2 * 2
+    implicitWidth: row.implicitWidth + root.padding * 2
+    implicitHeight: row.implicitHeight + root.padding * 2
 
     radius: Theme.radiusMedium
-    color: input.activeFocus ? Theme.surfaceHover : Theme.surface
+    color: {
+        if (root.bare)
+            return "transparent";
+        return input.activeFocus ? Theme.surfaceHover : Theme.surface;
+    }
 
     Behavior on color {
         ColorFade {}
@@ -58,15 +68,21 @@ Rectangle {
         id: row
 
         anchors.fill: parent
-        anchors.margins: Theme.space2
+        anchors.margins: root.padding
 
-        spacing: Theme.space2
+        spacing: root.bare ? Theme.space3 : Theme.space2
 
         Glyph {
             Layout.alignment: Qt.AlignVCenter
 
             text: Icons.search
-            color: input.activeFocus ? Theme.text : Theme.textMuted
+            color: {
+                if (root.bare)
+                    return Theme.textDim;
+                return input.activeFocus ? Theme.text : Theme.textMuted;
+            }
+
+            font.pixelSize: root.pixelSize
         }
 
         Item {
@@ -84,7 +100,7 @@ Rectangle {
                 selectedTextColor: Theme.text
 
                 font.family: Theme.sansFamily
-                font.pixelSize: Theme.fontBody
+                font.pixelSize: root.pixelSize
 
                 verticalAlignment: TextInput.AlignVCenter
                 clip: true
@@ -146,13 +162,15 @@ Rectangle {
 
                 text: root.placeholder
                 color: Theme.textDim
+
+                font.pixelSize: root.pixelSize
             }
         }
 
         IconButton {
             Layout.alignment: Qt.AlignVCenter
 
-            visible: !root.empty
+            visible: !root.empty && !root.bare
 
             icon: Icons.close
             label: "Clear"
@@ -167,7 +185,7 @@ Rectangle {
     }
 
     FocusRing {
-        active: input.activeFocus
+        active: input.activeFocus && !root.bare
         radius: root.radius
     }
 }
