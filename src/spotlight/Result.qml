@@ -39,7 +39,9 @@ Rectangle {
     }
 
     Accessible.role: Accessible.Button
-    Accessible.name: root.item.title
+    // what the row is read out as, when its name alone would not say it:
+    // an answer, or a window among others with the same title
+    Accessible.name: root.item.label ?? root.item.title
     Accessible.onPressAction: root.clicked()
 
     MouseArea {

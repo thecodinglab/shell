@@ -43,6 +43,17 @@ in
       description = "Run the shell as a user service tied to the graphical session.";
     };
 
+    # Spotlight's clipboard history is cliphist's: the shell only reads it,
+    # so something has to be writing it down.
+    clipboard.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Record the clipboard history Spotlight shows, by turning on
+        home-manager's `services.cliphist`.
+      '';
+    };
+
     settings = lib.mkOption {
       type = lib.types.attrsOf lib.types.anything;
       default = { };
@@ -81,6 +92,9 @@ in
 
         Install.WantedBy = [ config.wayland.systemd.target ];
       };
+
+      # a default, so a config that sets up cliphist its own way wins
+      services.cliphist.enable = lib.mkIf cfg.clipboard.enable (lib.mkDefault true);
     }
   );
 }

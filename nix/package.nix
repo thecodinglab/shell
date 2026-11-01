@@ -7,6 +7,8 @@
   coreutils,
   iproute2,
   systemd,
+  cliphist,
+  wl-clipboard,
   # Overrides for the defaults in src/config/Config.qml, written next to
   # shell.qml as config.json. The home-manager module fills this in from
   # stylix and the host's settings.
@@ -41,6 +43,8 @@ stdenvNoCC.mkDerivation {
           coreutils # stat, for the disk module
           iproute2 # ip, for the network module
           systemd # loginctl and systemctl, for the power module
+          cliphist # the clipboard history, for spotlight
+          wl-clipboard # wl-copy, for putting things back on the clipboard
         ]
       }
 

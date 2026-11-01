@@ -166,6 +166,12 @@ ShellRoot {
         function search(text: string): void {
             root.clearForSpotlight()?.search(text);
         }
+
+        // out on the focused monitor on the clipboard history, for a bind
+        // of its own
+        function clipboard(): void {
+            root.clearForSpotlight()?.clipboard();
+        }
     }
 
     IpcHandler {

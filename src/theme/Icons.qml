@@ -74,6 +74,17 @@ Singleton {
     // the door to the system page, which on the home page is a dial
     readonly property string gauge: "󰓅"
 
+    // ── spotlight's other sources ─────────────────────────────────────────
+
+    // a sum, worked out
+    readonly property string calculator: "󰃬"
+    // a window that is already open, with no icon of its own
+    readonly property string window: "󰖲"
+    // the clipboard history, and a text entry in it
+    readonly property string clipboard: "󰅌"
+    // an entry in it that is a picture
+    readonly property string image: "󰋩"
+
     // The `icon` bluez hands out is a freedesktop icon name; map the ones
     // that actually show up and fall back to a plain bluetooth mark.
     function device(icon: string): string {
