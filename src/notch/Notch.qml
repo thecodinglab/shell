@@ -260,8 +260,10 @@ PanelWindow {
 
     // Only an unfolded notch listens for keys, and then it takes them all, so
     // escape lands here no matter where the pointer went. Folded up it takes
-    // none, and the keyboard belongs to whatever is behind it.
-    WlrLayershell.keyboardFocus: root.expanded ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    // none, and the keyboard belongs to whatever is behind it. While a
+    // password is being asked for the keyboard is the polkit pane's, and a
+    // notch unfolded with the pointer meanwhile waits for it to be done.
+    WlrLayershell.keyboardFocus: root.expanded && !Polkit.flow ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     // The inhibitor lives on this window because the protocol wants a
     // surface to hang it on, and this is one that is always mapped: the

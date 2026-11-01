@@ -61,7 +61,12 @@ ShellRoot {
 
     // The focused monitor's Spotlight, once everything that could be in its
     // way has been put away: the other monitors' Spotlight, and every notch.
+    // None while a password is being asked for: it would take the keyboard
+    // from the pane that is asking.
     function clearForSpotlight(): var {
+        if (root.authenticating)
+            return null;
+
         const notch = root.focused();
         const spotlight = notch ? spotlights.instances.find(s => s.modelData === notch.modelData) : null;
         for (const other of spotlights.instances)
@@ -84,6 +89,13 @@ ShellRoot {
     // monitor that has focus when something asks for a password. It takes
     // the keyboard while it is out, so whatever had it is put away first:
     // Spotlight closes and every notch folds.
+    //
+    // It keeps the keyboard for as long as the request is being answered,
+    // not only as it arrives: nothing asked for from the keyboard while it
+    // is out comes out over it, and a notch unfolded with the pointer
+    // leaves the keyboard where it is — see Notch.
+    readonly property bool authenticating: Polkit.flow !== null
+
     Prompt {
         focusedScreen: root.focused()?.modelData ?? null
 
@@ -132,6 +144,8 @@ ShellRoot {
     //     qs -p ~/dev/shell/src ipc call notch peek
     //
     // Whichever monitor has focus gets it; `close` folds every one of them.
+    // While a password is being asked for, nothing opens: a keybind is
+    // the keyboard asking, and the keyboard is the polkit pane's.
     IpcHandler {
         target: "notch"
 
@@ -143,11 +157,14 @@ ShellRoot {
             root.closeSpotlights();
             if (notch.expanded)
                 notch.expanded = false;
-            else
+            else if (!root.authenticating)
                 notch.open("home");
         }
 
         function open(panel: string): void {
+            if (root.authenticating)
+                return;
+
             root.closeSpotlights();
             root.focused()?.open(panel);
         }
