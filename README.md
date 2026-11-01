@@ -230,18 +230,22 @@ keeps running when the shell's service is restarted or stopped.
 
 The shell is the session's polkit agent, so when something wants to do what
 it needs a password for — restart a service, install a package, mount a
-disk — the shell is what asks. A pane of Spotlight's glass comes out on the
-focused monitor, a little above the middle, and while it is out it has the
-keyboard: Spotlight closes and every notch folds as it arrives. At its head
-is the application's own icon, or a shield when it brought none, and what
-polkit says is being asked, with the action it is asked for under it. Under
-that, who is being asked: the person whose password it wants, and when
-polkit would take any of several — another user, anyone in a group — the
-row opens into the list of them, the one in use checked, and picking
-another starts over for them. Then the field, which asks whatever PAM asks
-and shows dots unless it is told the answer may be seen, and under it a
-line for whatever PAM has to say: a fingerprint reader waiting, an account
-locked. Return answers and escape gives up. A wrong answer shakes the pane,
+disk — the shell is what asks, in a pane drawn after the password prompt on
+a mac. It comes out of Spotlight's glass on the focused monitor, a little
+above the middle, narrow and centred down one column, and while it is out
+it has the keyboard: Spotlight closes and every notch folds as it arrives.
+At its head is the application's own icon with a padlock on its shoulder,
+or the padlock alone when it brought none; under it, in bold, what polkit
+says is being asked, and what it wants for it — "Enter your password to
+allow this." Then two fields, one above the other. The first says who is
+being asked, where a mac has the user name, and when polkit would take any
+of several — another user, anyone in a group — it opens into the list of
+them, the one in use checked, and picking another starts over for them.
+The second asks whatever PAM asks and shows dots unless it is told the
+answer may be seen; under it comes a line for whatever PAM has to say — a
+fingerprint reader waiting, an account locked — when it has anything to
+say. At the foot are Cancel and OK, as wide as each other, OK in the
+accent. Return answers and escape gives up. A wrong answer shakes the pane,
 says so, and leaves the field empty for another go.
 
 What is typed goes from the field to polkit and nowhere else: it is never

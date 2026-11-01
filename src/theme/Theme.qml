@@ -115,6 +115,8 @@ Singleton {
     readonly property color accent: Config.base0D
     readonly property color onAccent: Config.base00
     readonly property color accentSurface: root.mix(root.slab, root.accent, 0.16)
+    // the default button — the one Return presses — under the pointer
+    readonly property color accentHover: root.mix(root.accent, root.text, 0.14)
     // the row Spotlight's Return will open: filled in the accent, the way a
     // selection is, and its words in the ground
     readonly property color selection: root.accent
@@ -357,14 +359,21 @@ Singleton {
 
     // ── authentication ────────────────────────────────────────────────────
 
-    // The polkit pane: Spotlight's material at the width of a question
-    // rather than of a list, and a little further down the screen than
-    // Spotlight sits, because it is read before it is typed into.
-    readonly property int polkitWidth: root.px(400)
+    // The polkit pane, drawn after the password prompt on a mac: Spotlight's
+    // material at the width of a question rather than of a list, everything
+    // on it centred down one column, and a little further down the screen
+    // than Spotlight sits, because it is read before it is typed into.
+    readonly property int polkitWidth: root.px(280)
     // how far down the screen its top edge sits, as a share of the height
     readonly property real polkitTop: 0.28
-    // the requesting application's icon, or the shield, at its head
-    readonly property int polkitIconSize: root.px(40)
+    // the requesting application's icon, or the padlock, at its head...
+    readonly property int polkitIconSize: root.px(64)
+    // ...and the padlock on the shoulder of an application's own, cut out
+    // of the sheet by a rim so it stands clear of the icon under it
+    readonly property int polkitBadgeSize: root.space6
+    readonly property int polkitBadgeRim: root.px(2)
+    // a field: who is asked, and the answer
+    readonly property int polkitFieldHeight: root.space8
     // the size it opens from, and fades up out of
     readonly property real polkitScale: 0.96
     // How hard a wrong answer knocks the pane sideways, in pixels a second:

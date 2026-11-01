@@ -1,13 +1,12 @@
 import QtQuick
-import QtQuick.Layouts
 import qs.theme
 import qs.util
 import qs.widgets
 
-// The line a polkit prompt is answered on: a field on the raised ground,
-// with the key at its head the way the magnifier heads a search, and the
-// prompt the conversation asked with — "Password", most of the time — as
-// the words in it until something is typed.
+// The line a polkit prompt is answered on: a field on the raised ground, the
+// way a mac draws the password field of its prompt, with the prompt the
+// conversation asked with — "Password", most of the time — as the words in
+// it until something is typed.
 //
 // What is typed is held by the field and by nothing else. Nothing reads or
 // binds to it; `handOver()` gives it up in one movement, keeping none of it,
@@ -50,16 +49,12 @@ Rectangle {
         return response;
     }
 
-    implicitHeight: row.implicitHeight + Theme.space2 * 2
+    implicitHeight: Theme.polkitFieldHeight
 
-    radius: Theme.radiusMedium
-    color: input.activeFocus ? Theme.surfaceHover : Theme.surface
+    radius: Theme.radiusSmall
+    color: Theme.surface
 
-    Behavior on color {
-        ColorFade {}
-    }
-
-    // Under the row: anywhere on the field puts the caret in it.
+    // Under the words: anywhere on the field puts the caret in it.
     MouseArea {
         anchors.fill: parent
 
@@ -69,80 +64,69 @@ Rectangle {
         onClicked: input.forceActiveFocus()
     }
 
-    RowLayout {
-        id: row
-
+    Item {
         anchors.fill: parent
-        anchors.margins: Theme.space2
+        anchors.leftMargin: Theme.space3
+        anchors.rightMargin: Theme.space3
 
-        spacing: Theme.space2
+        TextInput {
+            id: input
 
-        Glyph {
-            Layout.alignment: Qt.AlignVCenter
+            anchors.fill: parent
 
-            text: Icons.key
-            color: input.activeFocus ? Theme.text : Theme.textMuted
+            // a field is somewhere tab goes, which a bare TextInput is not
+            activeFocusOnTab: true
+            readOnly: !root.ready
+            echoMode: root.echo ? TextInput.Normal : TextInput.Password
+            inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | (root.echo ? 0 : Qt.ImhHiddenText)
+            persistentSelection: false
+
+            color: root.ready ? Theme.text : Theme.textFaint
+            selectionColor: Theme.accentSurface
+            selectedTextColor: Theme.text
+
+            font.family: Theme.sansFamily
+            font.pixelSize: Theme.fontBody
+
+            verticalAlignment: TextInput.AlignVCenter
+            clip: true
+
+            Accessible.role: Accessible.EditableText
+            Accessible.name: root.placeholder
+            Accessible.passwordEdit: !root.echo
+
+            onTextEdited: root.edited()
+
+            // typing is using the keyboard, so the ring comes on; escape
+            // is not the field's, and goes on to the pane
+            Keys.onPressed: event => {
+                Nav.key();
+                if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter)
+                    return;
+
+                if (root.ready)
+                    root.accepted();
+                event.accepted = true;
+            }
         }
 
-        Item {
-            Layout.fillWidth: true
+        Sans {
+            anchors.fill: parent
 
-            implicitHeight: input.implicitHeight
+            visible: root.empty
 
-            TextInput {
-                id: input
-
-                anchors.fill: parent
-
-                // a field is somewhere tab goes, which a bare TextInput is not
-                activeFocusOnTab: true
-                readOnly: !root.ready
-                echoMode: root.echo ? TextInput.Normal : TextInput.Password
-                inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | (root.echo ? 0 : Qt.ImhHiddenText)
-                persistentSelection: false
-
-                color: root.ready ? Theme.text : Theme.textFaint
-                selectionColor: Theme.accentSurface
-                selectedTextColor: Theme.text
-
-                font.family: Theme.sansFamily
-                font.pixelSize: Theme.fontBody
-
-                verticalAlignment: TextInput.AlignVCenter
-                clip: true
-
-                Accessible.role: Accessible.EditableText
-                Accessible.name: root.placeholder
-                Accessible.passwordEdit: !root.echo
-
-                onTextEdited: root.edited()
-
-                // typing is using the keyboard, so the ring comes on; escape
-                // is not the field's, and goes on to the pane
-                Keys.onPressed: event => {
-                    Nav.key();
-                    if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter)
-                        return;
-
-                    if (root.ready)
-                        root.accepted();
-                    event.accepted = true;
-                }
-            }
-
-            Sans {
-                anchors.fill: parent
-
-                visible: root.empty
-
-                text: root.placeholder
-                color: Theme.textDim
-            }
+            text: root.placeholder
+            color: Theme.textDim
         }
     }
 
+    // The ring says where what is typed goes, so it is round the field for
+    // as long as the caret is in it, whether or not the keyboard has been
+    // touched yet: the pane comes out with the field waiting, the way a
+    // mac's does.
     FocusRing {
         active: input.activeFocus
+        visible: input.activeFocus
         radius: root.radius
     }
 }

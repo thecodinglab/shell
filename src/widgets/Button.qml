@@ -5,8 +5,10 @@ import qs.util
 
 // A word you can press, on a pill of the raised ground.
 //
-// `primary` is the one that matters on its page, and is filled with the ink
-// instead. Disabled, it keeps its shape and loses its ink.
+// `primary` is the default one, the one Return presses, and is filled with
+// the accent instead, the way a mac fills the default button of a dialog:
+// which button Return will press is state, which is what the accent is
+// spent on. Disabled, it keeps its shape and loses its ink.
 Rectangle {
     id: root
 
@@ -23,7 +25,7 @@ Rectangle {
 
     color: {
         if (root.primary)
-            return !root.enabled ? Theme.surface : mouse.containsMouse ? Theme.textMuted : Theme.fill;
+            return !root.enabled ? Theme.surface : mouse.containsMouse ? Theme.accentHover : Theme.accent;
         if (mouse.pressed)
             return Theme.surfacePress;
         if (mouse.containsMouse)
@@ -89,7 +91,7 @@ Rectangle {
             color: {
                 if (!root.enabled)
                     return Theme.textFaint;
-                return root.primary ? Theme.onFill : Theme.text;
+                return root.primary ? Theme.onAccent : Theme.text;
             }
 
             font.pixelSize: Theme.fontSmall
@@ -97,8 +99,11 @@ Rectangle {
         }
     }
 
+    // the accent would be lost on a button filled with it, so on the default
+    // button the ring stands just clear of its edge instead
     FocusRing {
-        radius: root.radius
+        inset: root.primary ? -Theme.focusWidth * 2 : 0
+        radius: root.radius - inset
     }
 
     MouseArea {

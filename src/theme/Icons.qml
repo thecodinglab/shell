@@ -87,15 +87,11 @@ Singleton {
 
     // ── authentication ────────────────────────────────────────────────────
 
-    // the head of the polkit pane, when the request brings no icon of its own
-    readonly property string shield: "󰦝"
-    // who is being authenticated: one person, or anyone in a group
-    readonly property string user: "󰀄"
-    readonly property string group: "󰡉"
-    // the head of the field the password goes in
-    readonly property string key: "󰌆"
-    // a row that opens into a list of what else it could be
-    readonly property string expand: "󰅀"
+    // The polkit pane is headed by the session's padlock, `lock`: on its own
+    // when the request brings no icon, on the icon's shoulder when it does.
+    // A field that opens into a list of who else could answer, with the
+    // pair of chevrons a mac puts on a pop-up button.
+    readonly property string choose: "󰕏"
 
     // ── privacy ───────────────────────────────────────────────────────────
 

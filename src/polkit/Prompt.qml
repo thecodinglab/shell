@@ -15,17 +15,20 @@ import qs.widgets
 // focus when the request arrives, since that is where whoever set it off is
 // looking.
 //
-// It is made the way Spotlight is, out of the same glass: a pane floating a
-// little above the middle of the screen, with the shadow and the hairline
-// round it and the large radius. At its head the application's own icon, or
-// the shield when it brought none, and what polkit says is being asked —
-// "Authentication is required to manage system services or other units" —
-// with the action it is asked for under it. Then who is being asked: the
-// person whose password it wants, and when polkit would take any of several,
-// a row that opens into the list of them. Then the field, which asks whatever
-// the conversation asks and hides what is typed unless it is told the
-// answer may be seen, and the line under it for what PAM has to say. At the
-// foot, Cancel and Authenticate.
+// It is drawn after the password prompt on a mac, out of Spotlight's glass:
+// a narrow pane floating a little above the middle of the screen, with the
+// shadow and the hairline round it and the large radius, and everything on
+// it centred down one column. At its head the application's own icon with
+// the padlock on its shoulder, or the padlock alone when it brought none;
+// under it, in bold, what polkit says is being asked — "Authentication is
+// required to manage system services or other units" — and what it wants
+// for it: "Enter your password to allow this." Then two fields, one above
+// the other: who is being asked, where a mac has the user name, which opens
+// into the list of them when polkit would take any of several; and the
+// answer, which asks whatever the conversation asks and hides what is typed
+// unless it is told the answer may be seen. Under them a line for what PAM
+// has to say, and at the foot Cancel and OK, side by side and as wide as
+// each other, OK in the accent because it is what Return presses.
 //
 // Return answers and Escape gives up; a wrong answer shakes the pane, says
 // so, and leaves the field empty for another go. While it is out it has the
@@ -52,7 +55,6 @@ PanelWindow {
     // What the request said, kept for the pane to fade out with once the
     // flow it came from has gone.
     property string message: ""
-    property string action: ""
     property string image: ""
 
     // the last answer was wrong, and nothing has been typed since
@@ -73,6 +75,11 @@ PanelWindow {
     readonly property var identities: root.flow?.identities ?? []
     readonly property var identity: root.flow?.selectedIdentity ?? null
     readonly property bool ready: root.flow?.isResponseRequired ?? false
+
+    // What the conversation wants, taken into the middle of a sentence the
+    // way a mac asks for it: the field's "Password", in "Enter your password
+    // to allow this." A word in capitals, a PIN, is left as it is.
+    readonly property string wanted: /^[A-Z][a-z]/.test(response.placeholder) ? response.placeholder[0].toLowerCase() + response.placeholder.slice(1) : response.placeholder
 
     // everything one conversation knew, let go of before the next
     function forget(): void {
@@ -95,7 +102,6 @@ PanelWindow {
         }
 
         root.message = root.flow.message;
-        root.action = root.flow.actionId;
         root.image = root.flow.iconName ? Quickshell.iconPath(root.flow.iconName, true) : "";
         // anything PAM said before the pane was listening
         root.said = root.flow.supplementaryMessage;
@@ -283,116 +289,179 @@ PanelWindow {
                 anchors.top: parent.top
                 anchors.margins: Theme.pagePadding
 
-                spacing: Theme.stackSpacing
+                spacing: 0
 
                 // ── what is asked ─────────────────────────────────────────
 
-                RowLayout {
+                // The application's own icon with the padlock on its
+                // shoulder, or the padlock alone when it brought none.
+                Item {
+                    Layout.alignment: Qt.AlignHCenter
+
+                    implicitWidth: Theme.polkitIconSize
+                    implicitHeight: Theme.polkitIconSize
+
+                    IconImage {
+                        anchors.fill: parent
+
+                        visible: root.image !== ""
+
+                        source: root.image
+                        implicitSize: Theme.polkitIconSize
+                        asynchronous: true
+                    }
+
+                    IconDisc {
+                        anchors.fill: parent
+
+                        visible: root.image === ""
+
+                        icon: Icons.lock
+                        size: Theme.polkitIconSize
+                    }
+
+                    // cut out of the sheet by a rim of the pane's ground,
+                    // so it reads as laid on the icon rather than part of it
+                    IconDisc {
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.margins: -Theme.polkitBadgeRim
+
+                        visible: root.image !== ""
+
+                        icon: Icons.lock
+                        iconColor: Theme.text
+                        size: Theme.polkitBadgeSize + Theme.polkitBadgeRim * 2
+
+                        border.width: Theme.polkitBadgeRim
+                        border.color: Theme.slab
+                    }
+                }
+
+                Sans {
                     Layout.fillWidth: true
-                    Layout.bottomMargin: Theme.sectionSpacing - Theme.stackSpacing
+                    Layout.topMargin: Theme.space3
 
-                    spacing: Theme.rowSpacing
+                    text: root.message || "Authentication is required."
 
-                    Item {
-                        Layout.alignment: Qt.AlignTop
+                    font.weight: Font.Bold
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
+                }
 
-                        implicitWidth: Theme.polkitIconSize
-                        implicitHeight: Theme.polkitIconSize
+                Caption {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Theme.space1
 
-                        IconImage {
-                            anchors.fill: parent
+                    text: `Enter ${root.whose(root.identity)} ${root.wanted} to allow this.`
 
-                            visible: root.image !== ""
-
-                            source: root.image
-                            implicitSize: Theme.polkitIconSize
-                            asynchronous: true
-                        }
-
-                        IconDisc {
-                            anchors.fill: parent
-
-                            visible: root.image === ""
-
-                            icon: Icons.shield
-                            size: Theme.polkitIconSize
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-
-                        spacing: Theme.lineGap
-
-                        Title {
-                            Layout.fillWidth: true
-
-                            text: root.message || "Authentication is required"
-
-                            wrapMode: Text.Wrap
-                            elide: Text.ElideNone
-                        }
-
-                        // the action, by the name polkit knows it by, which
-                        // is the nearest it says to who is asking
-                        Caption {
-                            Layout.fillWidth: true
-
-                            visible: text !== ""
-
-                            text: root.action
-                            elide: Text.ElideMiddle
-                        }
-                    }
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideNone
                 }
 
                 // ── who is asked ──────────────────────────────────────────
 
-                // The one whose password it wants. Polkit offering several,
-                // the row opens into the list of them, in its place, with
-                // the keyboard on the one in use; offering one, it is only a
-                // line saying who.
-                ListRow {
+                // The one whose password it wants, where a mac has the
+                // user name. Polkit offering several, the field opens into
+                // the list of them, in its place, with the keyboard on the
+                // one in use; offering one, it only says who.
+                Rectangle {
+                    id: who
+
+                    readonly property bool choosable: root.identities.length > 1
+
                     Layout.fillWidth: true
+                    Layout.topMargin: Theme.space4
 
                     visible: !root.choosing
 
-                    bleed: true
-                    interactive: root.identities.length > 1
+                    implicitHeight: Theme.polkitFieldHeight
 
-                    Accessible.name: root.identities.length > 1 ? `Authenticating as ${root.nameOf(root.identity)}, choose someone else` : `Authenticating as ${root.nameOf(root.identity)}`
-
-                    onClicked: root.choosing = !root.choosing
-
-                    IconDisc {
-                        Layout.alignment: Qt.AlignVCenter
-
-                        icon: root.identity?.isGroup ? Icons.group : Icons.user
-                        size: Theme.discSizeSmall
+                    radius: Theme.radiusSmall
+                    color: {
+                        if (!who.choosable)
+                            return Theme.surface;
+                        if (whoMouse.pressed)
+                            return Theme.surfacePress;
+                        return whoMouse.containsMouse ? Theme.surfaceHover : Theme.surface;
                     }
 
-                    Label {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-
-                        title: root.nameOf(root.identity)
-                        caption: root.aboutOf(root.identity)
+                    Behavior on color {
+                        ColorFade {}
                     }
 
-                    Glyph {
-                        Layout.alignment: Qt.AlignVCenter
+                    activeFocusOnTab: who.choosable
 
-                        visible: root.identities.length > 1
+                    Accessible.role: who.choosable ? Accessible.ComboBox : Accessible.StaticText
+                    Accessible.name: who.choosable ? `Authenticating as ${root.nameOf(root.identity)}, choose someone else` : `Authenticating as ${root.nameOf(root.identity)}`
+                    Accessible.onPressAction: root.choosing = true
 
-                        text: Icons.expand
+                    Keys.onPressed: event => {
+                        Nav.key();
+                        if (event.key !== Qt.Key_Space && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter)
+                            return;
+
+                        root.choosing = true;
+                        event.accepted = true;
+                    }
+
+                    MouseArea {
+                        id: whoMouse
+
+                        anchors.fill: parent
+
+                        enabled: who.choosable
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+
+                        onPressed: Nav.pointer()
+                        onClicked: root.choosing = true
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: Theme.space3
+                        anchors.rightMargin: who.choosable ? Theme.space1 : Theme.space3
+
+                        spacing: Theme.space2
+
+                        Sans {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+
+                            text: root.nameOf(root.identity)
+                        }
+
+                        Caption {
+                            Layout.alignment: Qt.AlignVCenter
+
+                            visible: text !== ""
+
+                            text: root.aboutOf(root.identity)
+                        }
+
+                        Glyph {
+                            Layout.alignment: Qt.AlignVCenter
+
+                            visible: who.choosable
+
+                            text: Icons.choose
+                        }
+                    }
+
+                    FocusRing {
+                        radius: who.radius
                     }
                 }
 
-                // ...and the list it opens into, the one in use checked.
-                // Escape folds it back up without choosing.
+                // ...and the list it opens into, the one in use checked the
+                // way a mac checks it in a pop-up menu. Escape folds it back
+                // up without choosing.
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.topMargin: Theme.space4 - Theme.rowPadding
 
                     visible: root.choosing
 
@@ -413,25 +482,27 @@ PanelWindow {
 
                             bleed: true
                             rule: choice.index < root.identities.length - 1
-                            ruleInset: Theme.discSizeSmall + Theme.rowSpacing
+                            ruleInset: Theme.iconWidth + Theme.rowSpacing
 
                             Accessible.name: choice.current ? `${root.nameOf(choice.modelData)}, chosen` : root.nameOf(choice.modelData)
 
                             onClicked: root.choose(choice.modelData)
 
-                            // the row the list opened from is gone, and the
-                            // keyboard lands on the one it stood for
+                            // the field the list opened from is gone, and
+                            // the keyboard lands on the one it stood for
                             Component.onCompleted: {
                                 if (choice.current)
                                     choice.forceActiveFocus();
                             }
 
-                            IconDisc {
+                            // a column of its own, there whether or not the
+                            // row is checked, so the names line up
+                            Glyph {
                                 Layout.alignment: Qt.AlignVCenter
+                                Layout.preferredWidth: Theme.iconWidth
 
-                                icon: choice.modelData.isGroup ? Icons.group : Icons.user
-                                size: Theme.discSizeSmall
-                                pressed: choice.pressed
+                                text: choice.current ? Icons.check : ""
+                                color: Theme.text
                             }
 
                             Label {
@@ -440,15 +511,6 @@ PanelWindow {
 
                                 title: root.nameOf(choice.modelData)
                                 caption: root.aboutOf(choice.modelData)
-                            }
-
-                            Glyph {
-                                Layout.alignment: Qt.AlignVCenter
-
-                                visible: choice.current
-
-                                text: Icons.check
-                                color: Theme.text
                             }
                         }
                     }
@@ -460,7 +522,7 @@ PanelWindow {
                     id: response
 
                     Layout.fillWidth: true
-                    Layout.topMargin: Theme.space1
+                    Layout.topMargin: Theme.space2
 
                     prompt: root.flow?.inputPrompt ?? ""
                     echo: root.flow?.responseVisible ?? false
@@ -472,10 +534,15 @@ PanelWindow {
 
                 // What there is to say about the last answer: whatever PAM
                 // had to add, in its own words; failing that, that it was
-                // wrong, or that it is still being checked. Always a line
-                // tall, so the buttons do not jump as it comes and goes.
+                // wrong, or that it is still being checked. Nothing to say,
+                // it takes no room, and the pane grows on its spring to
+                // make room for it as it comes.
                 RowLayout {
-                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.maximumWidth: column.width
+                    Layout.topMargin: Theme.space2
+
+                    visible: status.text !== ""
 
                     spacing: Theme.space2
 
@@ -486,6 +553,8 @@ PanelWindow {
                     }
 
                     Caption {
+                        id: status
+
                         Layout.fillWidth: true
 
                         text: {
@@ -497,6 +566,7 @@ PanelWindow {
                         }
                         color: (root.said !== "" ? root.saidError : root.wrong) ? Theme.urgent : Theme.textDim
 
+                        horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.Wrap
                         elide: Text.ElideNone
                     }
@@ -504,24 +574,30 @@ PanelWindow {
 
                 // ── the answer, or none ───────────────────────────────────
 
+                // side by side and as wide as each other, the default one
+                // on the right where a mac puts it
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.topMargin: Theme.space1
+                    Layout.topMargin: Theme.space4
 
                     spacing: Theme.space2
 
-                    Item {
-                        Layout.fillWidth: true
-                    }
-
                     Button {
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: (column.width - Theme.space2) / 2
+                        implicitHeight: Theme.polkitFieldHeight
+
                         text: "Cancel"
 
                         onClicked: root.cancel()
                     }
 
                     Button {
-                        text: "Authenticate"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: (column.width - Theme.space2) / 2
+                        implicitHeight: Theme.polkitFieldHeight
+
+                        text: "OK"
                         primary: true
                         enabled: root.ready
 
@@ -552,5 +628,14 @@ PanelWindow {
         if (identity.isGroup)
             return login ? `Group · ${login}` : "Group";
         return login;
+    }
+
+    // ...and whose answer it wants, as the sentence under the question puts
+    // it: the person at the machine's own, or else an administrator's, since
+    // polkit only offers anyone else when the action wants an administrator.
+    function whose(identity: var): string {
+        if (identity && !identity.isGroup && identity.string === Quickshell.env("USER"))
+            return "your";
+        return "an administrator's";
     }
 }
