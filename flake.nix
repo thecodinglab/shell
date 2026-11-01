@@ -43,6 +43,10 @@
               pkgs.quickshell
               pkgs.kdePackages.qtdeclarative # qmlls, qmlformat
               (smokeFor system) # shell-smoke ./src
+              # what the package's wrapper puts on the path that a desktop
+              # does not have already, for spotlight's clipboard
+              pkgs.cliphist
+              pkgs.wl-clipboard
             ];
 
             shellHook = ''
