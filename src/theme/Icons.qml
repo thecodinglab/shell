@@ -74,6 +74,17 @@ Singleton {
     // the door to the system page, which on the home page is a dial
     readonly property string gauge: "󰓅"
 
+    // ── spotlight's other sources ─────────────────────────────────────────
+
+    // a sum, worked out
+    readonly property string calculator: "󰃬"
+    // a window that is already open, with no icon of its own
+    readonly property string window: "󰖲"
+    // the clipboard history, and a text entry in it
+    readonly property string clipboard: "󰅌"
+    // an entry in it that is a picture
+    readonly property string image: "󰋩"
+
     // ── authentication ────────────────────────────────────────────────────
 
     // the head of the polkit pane, when the request brings no icon of its own
