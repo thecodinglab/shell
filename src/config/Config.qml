@@ -128,6 +128,14 @@ Singleton {
     // it is, which for most of those means nothing you can see happens.
     readonly property string terminal: value("terminal", "")
 
+    // ── authentication ────────────────────────────────────────────────────
+
+    // Whether the shell is the session's polkit agent, the thing that asks
+    // for a password when something wants to do what it needs one for. Only
+    // one agent can answer for a session; turn this off to leave it to
+    // another one — hyprpolkitagent, polkit-gnome — that the session runs.
+    readonly property bool polkitAgent: value("polkitAgent", true)
+
     // ── motion ────────────────────────────────────────────────────────────
 
     // Wayland has no `prefers-reduced-motion` the shell can ask for, so this

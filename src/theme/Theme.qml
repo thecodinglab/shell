@@ -355,6 +355,22 @@ Singleton {
     // one breath of a block that is still loading
     readonly property int pulseDuration: 700
 
+    // ── authentication ────────────────────────────────────────────────────
+
+    // The polkit pane: Spotlight's material at the width of a question
+    // rather than of a list, and a little further down the screen than
+    // Spotlight sits, because it is read before it is typed into.
+    readonly property int polkitWidth: root.px(400)
+    // how far down the screen its top edge sits, as a share of the height
+    readonly property real polkitTop: 0.28
+    // the requesting application's icon, or the shield, at its head
+    readonly property int polkitIconSize: root.px(40)
+    // the size it opens from, and fades up out of
+    readonly property real polkitScale: 0.96
+    // How hard a wrong answer knocks the pane sideways, in pixels a second:
+    // it swings out and springs back, the way a login window shakes its head.
+    readonly property int polkitShake: root.px(720)
+
     // ── motion ────────────────────────────────────────────────────────────
     //
     // Made the way hyprland makes its own — see `Config.curves` and
