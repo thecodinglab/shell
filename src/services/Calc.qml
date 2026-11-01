@@ -119,7 +119,10 @@ Singleton {
                 continue;
             }
 
-            const number = /^(\d+(\.\d*)?|\.\d+)/.exec(rest);
+            // ...with an exponent, the way an answer too large or too
+            // small to write out is shown — `1e-8`, `1e+21` — so one pasted
+            // back in is the number it was and not `e` with a sum round it
+            const number = /^(\d+(\.\d*)?|\.\d+)(e[-+]?\d+)?/i.exec(rest);
             if (number) {
                 tokens.push({
                     kind: "number",
