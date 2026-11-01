@@ -100,7 +100,10 @@ Rectangle {
             Sans {
                 Layout.fillWidth: true
 
+                // Plain, never markup: a title can be anything a window or
+                // the clipboard was given, and `<b>` copied is `<b>` shown.
                 text: root.item.title
+                textFormat: Text.PlainText
                 color: root.selected ? Theme.onSelection : Theme.text
 
                 font.pixelSize: root.hit ? Theme.fontTitle : Theme.fontBody
@@ -113,6 +116,7 @@ Rectangle {
                 visible: root.hit && text !== ""
 
                 text: root.item.caption ?? ""
+                textFormat: Text.PlainText
                 color: root.selected ? Theme.onSelectionMuted : Theme.textDim
             }
         }
