@@ -25,6 +25,22 @@ speaker glyph, a bar and the figure, moves with every further press, and
 goes back up a moment and a half after the last one. It is not there while
 the notch is open, where the slider already is.
 
+While something is recording the microphone, reading the camera or sharing
+the screen, the pill carries a dot at its trailing end, the way a mac puts
+one beside its notch. A notch that is put away could not show it to anyone
+who had not already reached for it, so while anything is in use a tally
+stays behind on the top edge: the least of the notch that still reads as
+it, a slot just big enough to hold the dot, hanging where the notch hangs.
+It takes no clicks, and notifications drop in under it rather than over it.
+Open, the page says what is in use and by whom, a line each, under the
+clock. It is all read off pipewire. The microphone is any stream recording
+a source, apart from a meter — which says so in its own properties, as the
+sound panel's own meter does — and a stream taking what a speaker is
+playing. The camera is a device something is linked to, and a shared screen
+is the stream the portal offers for as long as the share lasts. What never
+passes through pipewire is not seen: a camera read straight from its device
+file, or the screen recorded through the compositor rather than the portal.
+
 Clicking the tab grows the same slab into a 440px sheet — over the windows,
 so opening the notch never reflows what is behind it — and its corners round
 out as it grows, from the hardware notch's into the island's. It is laid out
@@ -36,6 +52,7 @@ own, and a list is a column of names with a hairline between them.
 | | |
 | --- | --- |
 | head | the clock grown into the title with the date under it; at the right the dots where they were, and a bell with a count of what is waiting, which leads to the notifications |
+| in use | only while something is: the microphone, the camera, the screen, each a lit disc with its name and the applications using it underneath |
 | now playing | one section per mpris player: cover, title, transport, and a scrubber the width of the page |
 | sound | the name of the section, where the sound is going, and a bar to set how loud; the head of the section leads to the panel |
 | tiles | two rows of two modules, each on a ground of its own the way the blocks of a control centre are: bluetooth, network, stay awake and system, each a disc, a name and one line on how it is doing; a chevron at the right says the tile leads to a panel, a switch says it is a setting |
@@ -47,8 +64,9 @@ under the name says which. The accent is spent on nothing else: the fills —
 a slider, a scrubber, the play button — are the ink itself, so that a bar at
 half reads as a solid thing rather than a coloured one, and the one colour
 on the surface only ever says *on* or *here*: a lit disc, the workspace you
-are on, the count of notifications waiting, and the ring around whatever
-the keyboard has reached.
+are on, the count of notifications waiting, the ring around whatever the
+keyboard has reached — and the dot that says the microphone, the camera or
+the screen is in use, which is the same *on*.
 
 The volume bar is the notch's own control: tall enough to be the target, no
 knob, and the speaker glyph riding inside the fill. Drag or scroll the bar to
@@ -139,8 +157,8 @@ Blank, it offers the few things that get used most, under *Recents*, and if
 nothing has been used yet it is the field alone. Typing narrows everything
 that can be started down to what fits, and files it the way Spotlight does:
 the best fit on its own as the *Top Hit*, larger, with what it is under its
-name; then the rest of the *Applications*; then the rest of the *Shell* —
-the notch's own pages, Sound, Bluetooth, Network, System and Notifications,
+name; then the rest of the *Applications*; then the *Windows* already open;
+then the rest of the *Shell* — the notch's own pages, Sound, Bluetooth, Network, System and Notifications,
 and the two ways out of the session that are safe to press once, lock and
 sleep. Restart and shut down want their second press and stay on the
 notch's home page where they get it. `shell ipc call spotlight search
@@ -163,6 +181,32 @@ pane away, as does a click anywhere else. A console application — one whose
 entry asks for a terminal — is run in `terminal`, as `<terminal> -e
 <command>`, when one is configured.
 
+A sum is answered as it is typed, the way the calculator in Spotlight on a
+mac answers it: `12*7`, `2^10`, `sqrt(2)`, `2pi`, `(1+0.08)^5 - 1`. The
+answer is the top hit, set large with *Calculator* under it, and the search
+carries on underneath as if it were not there; Return copies the answer to
+the clipboard and puts the pane away. The query is read by a small parser of
+the shell's own, never run: the four operations, `%` for the remainder, `^`
+for a power, brackets, and a handful of names — `pi`, `tau`, `e`, `sqrt`,
+`abs`, `ln`, `log`, `exp`, `sin`, `cos`, `tan` and the like. A number on its
+own is not a sum, so `42` and `2048` are left to the search, and so is
+anything with a word in it that is not one of those names, like `1password`.
+
+The windows already open are found the way the applications are — by title
+first, then by the application they belong to — and opening one brings it
+forward, on whatever workspace and monitor it is on. They are not counted
+the way a launch is, so they never show up under *Recents*.
+
+*Clipboard*, among the shell's own rows, turns the pane over to what has
+been copied: the history cliphist keeps, newest first, with a picture named
+for what it is (*PNG image, 1920×1080 · 240 KiB*). Typing narrows it down,
+Return puts the entry back on the clipboard whole and puts the pane away,
+and escape on an empty field comes back out to the search. Without
+cliphist, or before anything has been copied, it says so. The home-manager
+module turns on home-manager's `services.cliphist` so the history is being
+written down; set `custom.shell.clipboard.enable = false` to leave cliphist
+to the rest of the config.
+
 The pane is frosted glass on a mac. Here its ground is near opaque by
 default, so it reads over anything; give the compositor a blur rule for its
 layer and lower `glassOpacity` to let the frosted desktop through:
@@ -182,17 +226,55 @@ Every application is started in a systemd scope of its own under `app.slice`
 (via `systemd-run --user --scope`) rather than as a child of the shell, so it
 keeps running when the shell's service is restarted or stopped.
 
+## Asking for a password
+
+The shell is the session's polkit agent, so when something wants to do what
+it needs a password for — restart a service, install a package, mount a
+disk — the shell is what asks. A pane of Spotlight's glass comes out on the
+focused monitor, a little above the middle, and while it is out it has the
+keyboard: Spotlight closes and every notch folds as it arrives. At its head
+is the application's own icon, or a shield when it brought none, and what
+polkit says is being asked, with the action it is asked for under it. Under
+that, who is being asked: the person whose password it wants, and when
+polkit would take any of several — another user, anyone in a group — the
+row opens into the list of them, the one in use checked, and picking
+another starts over for them. Then the field, which asks whatever PAM asks
+and shows dots unless it is told the answer may be seen, and under it a
+line for whatever PAM has to say: a fingerprint reader waiting, an account
+locked. Return answers and escape gives up. A wrong answer shakes the pane,
+says so, and leaves the field empty for another go.
+
+What is typed goes from the field to polkit and nowhere else: it is never
+bound to, stored or logged, and the field is emptied the moment it is sent.
+Requests that arrive while one is being answered wait their turn, and come
+up one after the other in the same pane.
+
+Only one agent can answer for a session. One that runs another —
+hyprpolkitagent, polkit-gnome — turns the shell's off:
+
+```nix
+custom.shell.settings.polkitAgent = false;
+```
+
+As with Spotlight, a blur rule on its layer and a lower `glassOpacity` let
+the frosted desktop through:
+
+```lua
+hl.layer_rule({ name = "polkit-blur", match = { namespace = "^shell-polkit$" }, blur = true, ignore_alpha = 0.5 })
+```
+
 ## From the keyboard
 
 The shell answers `qs ipc`, so any of it can be put on a hyprland bind:
 
 ```sh
-qs -p ~/dev/shell/src ipc call notch toggle       # open or close, on the focused monitor
-qs -p ~/dev/shell/src ipc call notch open audio   # straight to a panel: notifications, audio, bluetooth, network, resources
-qs -p ~/dev/shell/src ipc call notch peek         # bring the pill out for a moment
-qs -p ~/dev/shell/src ipc call notch close        # fold every monitor's notch
-qs -p ~/dev/shell/src ipc call spotlight toggle   # spotlight, on the focused monitor
-qs -p ~/dev/shell/src ipc call spotlight search x # ...with x already typed into it
+qs -p ~/dev/shell/src ipc call notch toggle         # open or close, on the focused monitor
+qs -p ~/dev/shell/src ipc call notch open audio     # straight to a panel: notifications, audio, bluetooth, network, resources
+qs -p ~/dev/shell/src ipc call notch peek           # bring the pill out for a moment
+qs -p ~/dev/shell/src ipc call notch close          # fold every monitor's notch
+qs -p ~/dev/shell/src ipc call spotlight toggle     # spotlight, on the focused monitor
+qs -p ~/dev/shell/src ipc call spotlight search x   # ...with x already typed into it
+qs -p ~/dev/shell/src ipc call spotlight clipboard  # ...on the clipboard history
 ```
 
 For the packaged build, `-p` is the store path the service runs from; the
@@ -221,6 +303,37 @@ Or the packaged build:
 ```sh
 nix run .
 ```
+
+### Checking it
+
+QML is only read when the shell starts, so a misspelt property, an import
+that is not there or a binding that throws would otherwise only turn up as a
+line in the log of a running shell. `nix flake check` catches them ahead of
+time:
+
+- **lint** runs qmllint over every file, against quickshell's own type
+  info, with the `qs.<dir>` imports resolved the way quickshell resolves
+  them, a qmldir per directory. Anything at warning level or above fails
+  it. The only findings let through are a handful that come from gaps in
+  quickshell's own type info rather than from the shell, and
+  `nix/checks.nix` names each of them.
+- **format** holds the QML to `qmlformat` and the nix files to `nixfmt`;
+  `qmlformat -i <file>` and `nix fmt` from `nix develop` put a file right.
+- **smoke** starts the packaged shell under a headless sway with two
+  outputs and opens every page of the notch and Spotlight from the ipc. It
+  fails if the shell does not load, exits, or logs a warning of its own.
+
+The smoke test runs outside the sandbox too, in a session of its own — its
+own compositor, runtime directory, home and session bus, and no system bus
+— so it is safe to run from inside a live hyprland session:
+
+```sh
+nix run .#smoke            # the packaged build
+nix run .#smoke -- ./src   # the working tree
+```
+
+`shell-smoke ./src` does the same from `nix develop`, and `SMOKE_KEEP=1`
+keeps its logs.
 
 ## Wiring it into a home-manager config
 
@@ -253,11 +366,13 @@ src/
   shell.qml            one notch per screen
   config/              settings, with defaults overridable from nix
   theme/               palette, metrics and glyphs derived from the base16 colors
-  services/            cpu, memory, disk, network, audio, bluetooth, mpris, notifications, workspaces
+  services/            cpu, memory, disk, network, audio, privacy, bluetooth, mpris, notifications, workspaces, polkit, sums, the clipboard history
   util/                formatting, sample history, pointer bookkeeping
   widgets/             the vocabulary the panels are built from
-  notch/               the window, the collapsed pill, the toasts, and the panels it unfolds into
+  notch/               the window, the collapsed pill, the tally, the toasts, and the panels it unfolds into
   spotlight/           the floating search pane, and its rows
+  polkit/              the pane that asks for a password, and the field it is typed into
+nix/                   the package, the home-manager module, and the checks
 ```
 
 Directories are importable as `qs.<name>`, so `import qs.theme` gets you
@@ -292,8 +407,8 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   The tiles on the home page are the exception the way a control centre's
   blocks are: modules, each on a ground of its own. The one line the surface
   draws is the hairline between two rows of a list or two sections of a
-  page. The floating surfaces — the slab, Spotlight, a toast, the volume
-  reading — cast one soft shadow; nothing on them casts any. The slab has
+  page. The floating surfaces — the slab, Spotlight, the password pane, a
+  toast, the volume reading — cast one soft shadow; nothing on them casts any. The slab has
   no frame, because it hangs from the edge of the screen rather than
   floating over it; the rest carry a hairline so they hold their edge
   against a window of their own colour. Three radii: small for anything on
