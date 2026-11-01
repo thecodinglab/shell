@@ -132,11 +132,30 @@ Singleton {
     // netlink events, so the notch reacts as instantly as waybar's own netlink
     // socket did instead of waiting for the next poll
     Process {
+        id: monitor
+
         running: true
         command: ["ip", "monitor", "link", "address"]
 
         stdout: SplitParser {
             onRead: root.refresh()
+        }
+
+        // It should run for as long as the shell does, so an exit is it
+        // having died: start it again after a moment, rather than at once
+        // in a loop if `ip` cannot run at all, and catch up on whatever
+        // changed while it was gone.
+        onExited: restart.restart()
+    }
+
+    Timer {
+        id: restart
+
+        interval: 2000
+
+        onTriggered: {
+            monitor.running = true;
+            root.refresh();
         }
     }
 
