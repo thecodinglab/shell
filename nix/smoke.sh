@@ -56,6 +56,11 @@ fail() {
 unset WAYLAND_DISPLAY DISPLAY HYPRLAND_INSTANCE_SIGNATURE SWAYSOCK I3SOCK \
     DBUS_SESSION_BUS_ADDRESS QS_CONFIG_PATH QS_CONFIG_NAME QS_MANIFEST
 
+# Pipewire looks for its socket where these say before it looks in the
+# runtime directory, so either one left over would hand the shell the host's
+# audio graph, and the audio page would start listening to its microphone.
+unset PIPEWIRE_RUNTIME_DIR PIPEWIRE_REMOTE
+
 export HOME=$work/home
 export XDG_RUNTIME_DIR=$work/run
 export XDG_CONFIG_HOME=$HOME/.config
