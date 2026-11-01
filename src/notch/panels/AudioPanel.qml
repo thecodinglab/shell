@@ -175,7 +175,7 @@ ColumnLayout {
                 required property var modelData
                 required property int index
 
-                readonly property bool selected: row.modelData === list.current
+                readonly property bool current: row.modelData === list.current
 
                 Layout.fillWidth: true
 
@@ -190,7 +190,7 @@ ColumnLayout {
                     Layout.fillWidth: true
 
                     text: Audio.label(row.modelData)
-                    color: row.selected ? Theme.text : Theme.textMuted
+                    color: row.current ? Theme.text : Theme.textMuted
                 }
 
                 Caption {
@@ -198,7 +198,7 @@ ColumnLayout {
                 }
 
                 Glyph {
-                    visible: row.selected
+                    visible: row.current
 
                     text: Icons.check
                     color: Theme.accent
