@@ -145,6 +145,8 @@ steps=(
     "notch close"
     "notch peek"
     "spotlight search a"
+    "spotlight search 2^10"
+    "spotlight clipboard"
     "spotlight toggle"
     "launcher toggle"
     "launcher toggle"
@@ -177,6 +179,12 @@ expected=(
     '^ *ERROR quickshell\.service\.pipewire\.loop: Failed to connect pipewire context\. Errno: [0-9]+$'
     # no hyprland, so no workspaces and no focused monitor
     '^ *WARN: [$]HYPRLAND_INSTANCE_SIGNATURE is unset\. Cannot connect to hyprland\.$'
+    # nor any windows for Spotlight to ask it for
+    '^ *WARN quickshell\.hyprland\.ipc: Error making request: QLocalSocket::ServerNotFoundError request: "j/clients"$'
+    # no login session for the polkit agent to answer for, and no polkit
+    # to register it with
+    '^ *WARN quickshell\.service\.polkit\.listener: failed to (create subject for|register) listener: .+$'
+    '^ *WARN quickshell\.service\.polkit: failed to register listener on path "/org/quickshell/PolkitAgent"$'
     # no system bus, so no bluez
     '^ *WARN quickshell\.bluetooth: Could not connect to DBus\. Bluetooth integration is not available\.$'
     # a session bus with no portal on it for qt to register with

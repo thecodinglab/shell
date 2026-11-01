@@ -25,9 +25,9 @@ Singleton {
     id: root
 
     // the request being answered, or null while there is none
-    readonly property var flow: agent.item?.flow ?? null
+    readonly property var flow: (agent.item as PolkitAgent)?.flow ?? null
     // polkit took the agent on as the session's
-    readonly property bool registered: agent.item?.isRegistered ?? false
+    readonly property bool registered: (agent.item as PolkitAgent)?.isRegistered ?? false
 
     // The answer, handed straight to the conversation. This is the only
     // place a password passes through on its way out of the field, and it

@@ -52,6 +52,10 @@ let
       # registered under, so none of them resolve.
       or (.id == "unresolved-type"
         and (.message | test("^Type \"(BluetoothAdapter|UntypedObjectModel|BluetoothDeviceState::Enum)\" of property \"[A-Za-z]+\" not found\\.")))
+      # PolkitAgent's flow names AuthFlow the same way, without its
+      # namespace, so a flow read off the agent has no type.
+      or (.id == "unresolved-type"
+        and (.message | test("^Type \"AuthFlow\" of property \"flow\" not found\\.")))
       # Process's exited signal carries a QProcess enum no module exports.
       or (.id == "signal-handler-parameters"
         and (.message | test("^Type QProcess::ExitStatus of parameter exitStatus in signal called exited was not found")));
