@@ -74,6 +74,18 @@ Singleton {
     // the door to the system page, which on the home page is a dial
     readonly property string gauge: "󰓅"
 
+    // ── authentication ────────────────────────────────────────────────────
+
+    // the head of the polkit pane, when the request brings no icon of its own
+    readonly property string shield: "󰦝"
+    // who is being authenticated: one person, or anyone in a group
+    readonly property string user: "󰀄"
+    readonly property string group: "󰡉"
+    // the head of the field the password goes in
+    readonly property string key: "󰌆"
+    // a row that opens into a list of what else it could be
+    readonly property string expand: "󰅀"
+
     // The `icon` bluez hands out is a freedesktop icon name; map the ones
     // that actually show up and fall back to a plain bluetooth mark.
     function device(icon: string): string {

@@ -7,6 +7,7 @@ import Quickshell.Hyprland
 import qs.services
 import qs.notch
 import qs.spotlight
+import qs.polkit
 
 ShellRoot {
     id: root
@@ -75,6 +76,22 @@ ShellRoot {
         const spotlight = root.clearForSpotlight();
         if (spotlight)
             spotlight.toggle();
+    }
+
+    // ── authentication ────────────────────────────────────────────────────
+    //
+    // The polkit agent's pane, one for the whole shell, coming out on the
+    // monitor that has focus when something asks for a password. It takes
+    // the keyboard while it is out, so whatever had it is put away first:
+    // Spotlight closes and every notch folds.
+    Prompt {
+        focusedScreen: root.focused()?.modelData ?? null
+
+        onOpened: {
+            root.closeSpotlights();
+            for (const notch of notches.instances)
+                notch.expanded = false;
+        }
     }
 
     // ── the volume, from the keyboard ─────────────────────────────────────
