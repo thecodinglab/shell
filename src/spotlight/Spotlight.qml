@@ -209,11 +209,11 @@ PanelWindow {
     // is the same row, its icon already loaded.
     readonly property var rows: {
         const row = (item, group, hit) => ({
-                key: `${group}:${item.key}`,
-                item,
-                group,
-                hit
-            });
+                    key: `${group}:${item.key}`,
+                    item,
+                    group,
+                    hit
+                });
 
         if (root.tokens.length === 0)
             return root.results.filter(item => Apps.weight(item.key) > 0).slice(0, Theme.spotlightRecents).map(item => row(item, "Recents", false));

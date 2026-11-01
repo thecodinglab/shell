@@ -171,7 +171,7 @@ PanelWindow {
             running?.complete();
         root.rising = [];
 
-        const page = body.page.item;
+        const page = body.page.item as Item;
         if (!page || Theme.motion === 0)
             return;
 
