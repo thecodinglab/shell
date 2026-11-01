@@ -369,9 +369,10 @@ PanelWindow {
 
         anchors.horizontalCenter: parent.horizontalCenter
 
-        // where it rests, hanging under the slab like the toasts do; put away
-        // it is that plus its own height further up, off the top edge
-        readonly property int rest: slab.y + slab.height + Theme.toastSpacing
+        // where it rests, hanging under the slab like the toasts do — or the
+        // tally, see `hang`; put away it is that plus its own height further
+        // up, off the top edge
+        readonly property int rest: root.hang + Theme.toastSpacing
         // How far the toasts have to move down to hang under it: taken from
         // where it actually is, frame by frame, so they move in lockstep with
         // it rather than on a curve of their own.
@@ -394,9 +395,10 @@ PanelWindow {
 
         anchors.horizontalCenter: parent.horizontalCenter
         // slab.y is -slab.height while the notch is put away, so this is the
-        // top of the screen until the notch slides out from over it, and the
-        // volume pill pushes them further down while it is out
-        y: Math.round(slab.y + slab.height) + Theme.toastSpacing + osd.room
+        // top of the screen — or the foot of the tally, see `hang` — until
+        // the notch slides out from over it, and the volume pill pushes them
+        // further down while it is out
+        y: root.hang + Theme.toastSpacing + osd.room
 
         width: Theme.toastWidth
         // As tall as there is screen for it: the view keeps a toast on for
@@ -478,6 +480,26 @@ PanelWindow {
             }
         }
     }
+
+    // ── the tally ─────────────────────────────────────────────────────────
+
+    // What stays on the top edge of a notch that is put away while the
+    // microphone, the camera or the screen is in use — see Tally. Behind the
+    // slab, which covers it whenever it is out: the pill carries its own dot.
+    Tally {
+        id: tally
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: 0
+
+        covered: slab.y + slab.height >= tally.height
+    }
+
+    // The lowest edge anything hangs from at the top of the screen: the
+    // slab's, or put away, the tally's while it is out. The volume reading
+    // and the toasts hang under this rather than over the tally, which would
+    // hide the one thing it is there to show for as long as they were up.
+    readonly property int hang: Math.round(Math.max(slab.y + slab.height, tally.reach))
 
     // ── the slab ──────────────────────────────────────────────────────────
 
@@ -641,6 +663,25 @@ PanelWindow {
 
                 visible: Media.playing
                 playing: Media.playing && collapsed.visible
+            }
+
+            // Something is using the microphone, the camera or the screen:
+            // a dot at the very end, where a mac puts it beside the notch, in
+            // the colour that says on — see `Theme.privacy`. What, and who,
+            // is on the page.
+            Rectangle {
+                Layout.alignment: Qt.AlignVCenter
+
+                visible: Privacy.active
+
+                implicitWidth: Theme.privacyDot
+                implicitHeight: Theme.privacyDot
+
+                radius: width / 2
+                color: Theme.privacy
+
+                Accessible.role: Accessible.Indicator
+                Accessible.name: Privacy.summary
             }
         }
 

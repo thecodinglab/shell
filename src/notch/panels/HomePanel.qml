@@ -14,7 +14,8 @@ import qs.notch
 //
 // A page rather than a stack of modules. The clock is its title, set large
 // at the top left; under it the sections follow with nothing between them
-// but air — what is playing, the sound, a grid of four tiles, and at the
+// but air — what is using the microphone, the camera or the screen, while
+// anything is, what is playing, the sound, a grid of four tiles, and at the
 // foot the four ways out of the session. Nothing on it has a ground of its
 // own until the pointer, or the keyboard, finds it.
 ColumnLayout {
@@ -95,6 +96,14 @@ ColumnLayout {
                 count: Notifs.count
             }
         }
+    }
+
+    // ── what is in use ────────────────────────────────────────────────────
+    // the microphone, the camera, the screen, and who has them, while
+    // anyone does — see InUse
+
+    InUse {
+        Layout.fillWidth: true
     }
 
     // ── what is playing ───────────────────────────────────────────────────

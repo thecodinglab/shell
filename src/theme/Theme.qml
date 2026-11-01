@@ -371,6 +371,27 @@ Singleton {
     // it swings out and springs back, the way a login window shakes its head.
     readonly property int polkitShake: root.px(720)
 
+    // ── privacy ───────────────────────────────────────────────────────────
+
+    // What lights while the microphone, the camera or the screen is in use —
+    // see `Privacy`. The accent, on purpose. A mac has an orange dot for the
+    // microphone and a green one for the camera, which would be two more
+    // accents here; and what the dot says is that something is on — the
+    // microphone open, the camera live — which is what the accent already
+    // says on a lit disc. Not the red: the red is for what has gone wrong or
+    // is waiting on an answer, and a call you started is neither, and it
+    // would be crying wolf for the length of every meeting. Which of the
+    // three it is the page says in words, not the dot in a hue.
+    readonly property color privacy: root.accent
+    // the dot at the trailing end of the pill
+    readonly property int privacyDot: root.space2
+    // The tally the notch leaves on the top edge while it is put away and
+    // something is in use: a slot just big enough to hold the dot, hanging
+    // from the edge where the notch would, with ears of its own.
+    readonly property int tallyWidth: root.space6
+    readonly property int tallyHeight: root.space4
+    readonly property int tallyEar: root.space1
+
     // ── motion ────────────────────────────────────────────────────────────
     //
     // Made the way hyprland makes its own — see `Config.curves` and

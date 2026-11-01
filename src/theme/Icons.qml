@@ -86,6 +86,13 @@ Singleton {
     // a row that opens into a list of what else it could be
     readonly property string expand: "󰅀"
 
+    // ── privacy ───────────────────────────────────────────────────────────
+
+    // what is in use, beside its name on the home page — see `Privacy`; the
+    // microphone is the one under audio
+    readonly property string camera: "󰖠"
+    readonly property string screenShare: "󱒃"
+
     // The `icon` bluez hands out is a freedesktop icon name; map the ones
     // that actually show up and fall back to a plain bluetooth mark.
     function device(icon: string): string {
