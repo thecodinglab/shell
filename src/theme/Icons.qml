@@ -74,6 +74,13 @@ Singleton {
     // the door to the system page, which on the home page is a dial
     readonly property string gauge: "󰓅"
 
+    // ── privacy ───────────────────────────────────────────────────────────
+
+    // what is in use, beside its name on the home page — see `Privacy`; the
+    // microphone is the one under audio
+    readonly property string camera: "󰖠"
+    readonly property string screenShare: "󱒃"
+
     // The `icon` bluez hands out is a freedesktop icon name; map the ones
     // that actually show up and fall back to a plain bluetooth mark.
     function device(icon: string): string {
