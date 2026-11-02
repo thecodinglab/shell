@@ -6,7 +6,11 @@ import qs.theme
 // for the small tier, and Num for anything that has to hold still while it
 // changes.
 Text {
-    color: Theme.text
+    id: root
+
+    property Scheme scheme: Theme.schemeOf(root)
+
+    color: root.scheme.text
 
     font.family: Theme.sansFamily
     font.pixelSize: Theme.fontBody

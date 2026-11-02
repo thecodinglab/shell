@@ -8,12 +8,15 @@ import qs.services
 import qs.util
 import qs.widgets
 
-// The three numbers worth watching, twice over: a dial for where each one is
-// now, and the history beside it for how it got there.
+// The three numbers worth watching: a dial for where each one is now, and,
+// for the two that move, the history beside it for how it got there. A disk
+// does not fill up on a scale of minutes, so its bars would only ever be a
+// flat line.
 //
 // Each has a row to itself with a hairline between them: the dial at the
 // left, the name and the figure behind it beside that, and the last few
-// minutes as bars underneath.
+// minutes as bars underneath. Dials and bars alike are in the ink, the way
+// a reading is; only a dial past nine tenths turns red.
 ColumnLayout {
     id: root
 
@@ -40,6 +43,7 @@ ColumnLayout {
                     name: "Processor",
                     fraction: Cpu.usage,
                     detail: Cpu.threads > 0 ? `${Cpu.threads} threads` : "",
+                    graph: true,
                     history: Cpu.history,
                     span: Cpu.historySeconds
                 },
@@ -47,6 +51,7 @@ ColumnLayout {
                     name: "Memory",
                     fraction: Memory.usage,
                     detail: `${Fmt.bytes(Memory.usedBytes)} of ${Fmt.bytes(Memory.totalBytes)}`,
+                    graph: true,
                     history: Memory.history,
                     span: Memory.historySeconds
                 },
@@ -54,8 +59,9 @@ ColumnLayout {
                     name: "Disk",
                     fraction: Disk.usage,
                     detail: `${Fmt.bytes(Disk.freeBytes)} free of ${Fmt.bytes(Disk.totalBytes)} on ${Config.diskPath}`,
-                    history: Disk.history,
-                    span: Disk.historySeconds
+                    graph: false,
+                    history: [],
+                    span: 0
                 }
             ]
 
@@ -75,7 +81,6 @@ ColumnLayout {
                     spacing: Theme.space3
 
                     Gauge {
-                        id: dial
 
                         Layout.alignment: Qt.AlignVCenter
 
@@ -107,17 +112,20 @@ ColumnLayout {
                             Caption {
                                 Layout.alignment: Qt.AlignTop
 
-                                text: `Last ${Fmt.span(reading.modelData.span)}`
+                                visible: reading.modelData.graph
+
+                                // "past", not "last": "last 80s" reads as
+                                // a decade
+                                text: `Past ${Fmt.span(reading.modelData.span)}`
                             }
                         }
 
                         Graph {
                             Layout.fillWidth: true
 
+                            visible: reading.modelData.graph
+
                             values: reading.modelData.history
-                            // a machine under pressure reads the same colour
-                            // in the dial and in the bars leading up to it
-                            recentColor: dial.fillColor
                         }
                     }
                 }

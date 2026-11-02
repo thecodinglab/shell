@@ -24,6 +24,8 @@ RowLayout {
 
         icon: Icons.back
         label: "Back"
+        // the way out of the page, set as large as the title it stands beside
+        pixelSize: Theme.fontTitle
 
         onClicked: root.notch.panel = "home"
     }

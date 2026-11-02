@@ -44,14 +44,26 @@ ColumnLayout {
             text: "Output"
         }
 
+        // Nothing to send the sound to: said in words, rather than a bar
+        // that looks as if it could be dragged and an empty list under it.
+        Empty {
+            visible: Audio.sinks.length === 0
+
+            text: "No output devices"
+        }
+
         Volume {
             Layout.fillWidth: true
+
+            visible: Audio.sinks.length > 0
 
             node: Audio.sink
             label: "Output volume"
         }
 
         DeviceList {
+            visible: Audio.sinks.length > 0
+
             nodes: Audio.sinks
             current: Audio.sink
 
@@ -90,7 +102,7 @@ ColumnLayout {
                     Layout.fillWidth: true
 
                     text: Audio.app(stream.modelData)
-                    color: Theme.textMuted
+                    color: Theme.bezel.textMuted
                 }
 
                 Volume {
@@ -124,13 +136,14 @@ ColumnLayout {
         }
 
         // the level the microphone is picking up right now, which is the
-        // only honest way to show that it is hearing anything
+        // only honest way to show that it is hearing anything; in a quiet
+        // ink, since it is read rather than switched on
         Meter {
             Layout.fillWidth: true
             Layout.rightMargin: Theme.figureWidth + Theme.rowSpacing
 
             value: root.inputMuted ? 0 : monitor.peak
-            fillColor: Theme.textDim
+            fillColor: Theme.bezel.textDim
         }
 
         DeviceList {
@@ -182,7 +195,12 @@ ColumnLayout {
                 bleed: true
                 rule: row.index < list.nodes.length - 1
 
+                // one of a set of which exactly one is picked, and read out
+                // as that rather than as a button
+                Accessible.role: Accessible.RadioButton
                 Accessible.name: Audio.label(row.modelData)
+                Accessible.checkable: true
+                Accessible.checked: row.current
 
                 onClicked: list.picked(row.modelData)
 
@@ -190,7 +208,7 @@ ColumnLayout {
                     Layout.fillWidth: true
 
                     text: Audio.label(row.modelData)
-                    color: row.current ? Theme.text : Theme.textMuted
+                    color: row.current ? Theme.bezel.text : Theme.bezel.textMuted
                 }
 
                 Caption {
@@ -201,7 +219,7 @@ ColumnLayout {
                     visible: row.current
 
                     text: Icons.check
-                    color: Theme.accent
+                    color: Theme.bezel.accentInk
 
                     font.pixelSize: Theme.fontSmall
                 }

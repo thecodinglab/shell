@@ -15,7 +15,9 @@ ShapePath {
     property real start: 0
     property real sweep: 360
 
-    strokeColor: Theme.track
+    // A path has no parent to find its material by, so the empty ring is the
+    // bezel's, and whatever draws one on glass says so.
+    strokeColor: Theme.bezel.track
     strokeWidth: root.thickness
     fillColor: "transparent"
     capStyle: ShapePath.RoundCap

@@ -42,7 +42,10 @@ Row {
                 height: Math.max(width, Math.round(parent.height * bar.level))
 
                 radius: width / 2
-                color: Theme.accent
+                // Ink, not the accent: playing is not "on", and the privacy
+                // dot beside it is the accent, which a wave in the same
+                // colour would read as one more bar of.
+                color: Theme.bezel.textMuted
 
                 SequentialAnimation on level {
                     running: root.playing && root.visible && Theme.motion > 0

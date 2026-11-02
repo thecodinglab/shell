@@ -16,8 +16,11 @@ import qs.notch
 // at the top left; under it the sections follow with nothing between them
 // but air — what is using the microphone, the camera or the screen, while
 // anything is, what is playing, the sound, a grid of four tiles, and at the
-// foot the four ways out of the session. Nothing on it has a ground of its
-// own until the pointer, or the keyboard, finds it.
+// foot the four ways out of the session. Nothing on it but the tiles has a
+// ground of its own until the pointer, or the keyboard, finds it.
+//
+// It is the bezel unfolded, dark whatever the palette, so what it colours
+// itself it colours from `Theme.bezel`.
 ColumnLayout {
     id: root
 
@@ -47,7 +50,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 text: Time.time
-                color: Theme.text
+                color: Theme.bezel.text
 
                 font.family: Theme.displayFamily
                 font.pixelSize: Theme.fontDisplay
@@ -59,7 +62,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 text: Time.date
-                color: Theme.textMuted
+                color: Theme.bezel.textMuted
             }
         }
 
@@ -82,7 +85,9 @@ ColumnLayout {
                 anchors.fill: parent
 
                 icon: Icons.bell
-                label: "Notifications"
+                // the count on its shoulder is a picture; this is the same
+                // figure for whoever cannot see it
+                label: Notifs.count ? `Notifications, ${Notifs.count} waiting` : "Notifications"
 
                 onClicked: root.notch.panel = "notifications"
             }
@@ -144,6 +149,7 @@ ColumnLayout {
             bleed: true
 
             Accessible.name: "Sound"
+            Accessible.description: soundWhere.text
 
             onClicked: root.notch.panel = "audio"
 
@@ -154,25 +160,30 @@ ColumnLayout {
             }
 
             Caption {
+                id: soundWhere
+
                 Layout.alignment: Qt.AlignVCenter
 
                 text: Audio.sink ? Audio.label(Audio.sink) : "No output"
-                color: soundHead.hovered ? Theme.textMuted : Theme.textDim
+                color: soundHead.hovered ? Theme.bezel.textMuted : Theme.bezel.textDim
             }
 
+            // dim rather than faint, as on the tiles: it is the only thing
+            // saying the row opens a page
             Glyph {
                 Layout.alignment: Qt.AlignVCenter
                 Layout.leftMargin: -Theme.space2
 
                 text: Icons.forward
-                color: soundHead.hovered ? Theme.textMuted : Theme.textFaint
+                color: soundHead.hovered ? Theme.bezel.textMuted : Theme.bezel.textDim
 
                 Layout.preferredWidth: implicitWidth
                 font.pixelSize: Theme.fontSmall
             }
         }
 
-        // the bar alone: the figure is in the panel
+        // the bar alone: the figure is in the panel, and with nowhere for
+        // the sound to go the bar has nothing to set and stays put
         Volume {
             Layout.fillWidth: true
 
@@ -182,9 +193,11 @@ ColumnLayout {
     }
 
     // ── four tiles ────────────────────────────────────────────────────────
-    // Two rows of two modules, each on a ground of its own. A lit disc means the
-    // thing is in use: a device on the line, a link carrying an address.
-    // A chevron means the tile is a door; a switch means it is a setting.
+    // Two rows of two modules, each a capsule on a ground of its own. A lit
+    // disc means the thing is on, as it does in a control centre: the radio
+    // up, a link carrying an address, the inhibitor held. A chevron means the
+    // tile is a door; a tile without one is a setting, and pressing it is
+    // the switch.
 
     GridLayout {
         Layout.fillWidth: true
@@ -204,7 +217,8 @@ ColumnLayout {
                     return Icons.bluetoothOff;
                 return Bt.primary ? Icons.device(Bt.primary.icon) : Icons.bluetooth;
             }
-            on: Bt.primary !== null
+            // the radio, not a device on it: the caption says which is
+            on: Bt.enabled
             door: true
             title: "Bluetooth"
             caption: {
@@ -214,10 +228,8 @@ ColumnLayout {
                     return "Off";
                 if (Bt.primary)
                     return [Bt.label(Bt.primary), Bt.battery(Bt.primary)].filter(part => part).join(", ");
-                return Bt.discovering ? "Scanning" : "Not connected";
+                return "On";
             }
-
-            Accessible.name: "Bluetooth"
 
             onClicked: root.notch.panel = "bluetooth"
         }
@@ -243,37 +255,29 @@ ColumnLayout {
                     return "Offline";
                 }
             }
-            captionColor: Network.state === "connected" ? Theme.textDim : Theme.urgent
-
-            Accessible.name: "Network"
+            captionColor: Network.state === "connected" ? Theme.bezel.textDim : Theme.bezel.urgent
 
             onClicked: root.notch.panel = "network"
         }
 
         // The inhibitor: on, the notch holds a wayland inhibitor on its
         // window and the idle daemon neither locks the screen nor turns it
-        // off; off, the daemon is left to its timeouts.
+        // off; off, the daemon is left to its timeouts. The whole tile is
+        // the switch and its lit disc the state, so it carries no switch of
+        // its own to say the same thing twice.
         Tile {
             Layout.fillWidth: true
             Layout.preferredWidth: 1
             Layout.fillHeight: true
 
             icon: Icons.awake
+            on: Power.awake
+            checkable: true
+            checked: Power.awake
             title: "Stay awake"
-            caption: Power.awake ? "Screen stays on" : "Off"
-
-            Accessible.name: "Stay awake"
+            caption: Power.awake ? "On" : "Off"
 
             onClicked: Power.awake = !Power.awake
-
-            trailing: Toggle {
-                checked: Power.awake
-                label: "Stay awake"
-                // the tile is the button; the switch only shows the state
-                activeFocusOnTab: false
-
-                onToggled: Power.awake = !Power.awake
-            }
         }
 
         // The door to the system page. Its disc is a ring rather than a
@@ -291,9 +295,7 @@ ColumnLayout {
 
             door: true
             title: "System"
-            caption: `${Fmt.percent(Cpu.usage)} cpu, ${Fmt.percent(Memory.usage)} memory`
-
-            Accessible.name: "System"
+            caption: `CPU ${Fmt.percent(Cpu.usage)} · RAM ${Fmt.percent(Memory.usage)}`
 
             onClicked: root.notch.panel = "resources"
 
@@ -301,7 +303,7 @@ ColumnLayout {
                 anchors.fill: parent
 
                 radius: width / 2
-                color: Theme.surface
+                color: Theme.bezel.surface
 
                 Shape {
                     id: ring
@@ -315,19 +317,24 @@ ColumnLayout {
 
                     preferredRendererType: Shape.CurveRenderer
 
+                    // The empty ring a step up from the disc it sits in. On
+                    // the bezel the track is the disc's own ground, and a
+                    // ring the colour of what is under it is no ring.
                     Arc {
                         size: ring.size
                         thickness: Theme.ringThickness
                         start: -90
-                        strokeColor: Theme.surfacePress
+                        strokeColor: Theme.bezel.surfacePress
                     }
 
+                    // in the ink, as the dials inside are: how busy the
+                    // processor is is a reading, not something switched on
                     Arc {
                         size: ring.size
                         thickness: Theme.ringThickness
                         start: -90
                         sweep: load.value
-                        strokeColor: system.load >= 0.9 ? Theme.urgent : Theme.accent
+                        strokeColor: system.load >= 0.9 ? Theme.bezel.urgent : Theme.bezel.fill
                     }
                 }
 
@@ -437,6 +444,7 @@ ColumnLayout {
                 Layout.preferredWidth: 1
 
                 Accessible.name: mark.modelData.label
+                Accessible.description: mark.asking ? "Press again to " + mark.modelData.label.toLowerCase() : ""
 
                 onClicked: root.press(mark.modelData.action)
 
@@ -459,11 +467,13 @@ ColumnLayout {
                     Caption {
                         Layout.fillWidth: true
 
-                        text: mark.asking ? "Press again" : mark.modelData.label
+                        // the question in place of the name, so what the
+                        // second press will do is still there to read
+                        text: mark.asking ? (mark.modelData.action === "reboot" ? "Restart?" : "Shut down?") : mark.modelData.label
                         color: {
                             if (mark.asking)
-                                return Theme.urgent;
-                            return mark.hovered ? Theme.textMuted : Theme.textDim;
+                                return Theme.bezel.urgent;
+                            return mark.hovered ? Theme.bezel.textMuted : Theme.bezel.textDim;
                         }
 
                         horizontalAlignment: Text.AlignHCenter

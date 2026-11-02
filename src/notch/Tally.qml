@@ -71,9 +71,9 @@ Item {
         topRightRadius: 0
         bottomLeftRadius: slot.height / 2
         bottomRightRadius: slot.height / 2
-        color: Theme.slab
+        color: Theme.bezel.ground
 
-        // in the colour that says on — see `Theme.privacy`
+        // in the colour that says on — see `Scheme.privacy`
         Rectangle {
             anchors.centerIn: parent
 
@@ -81,7 +81,7 @@ Item {
             height: Theme.privacyDot
 
             radius: width / 2
-            color: Theme.privacy
+            color: Theme.bezel.privacy
         }
     }
 

@@ -4,8 +4,14 @@ import QtQuick
 import Quickshell
 import qs.config
 
-// The design system: one neutral scale, one accent, one family, a 4-unit
-// grid, and the handful of durations everything moves in.
+// The design system: two materials — the bezel the notch is made of and the
+// glass that floats out from under it — each one neutral scale and one
+// accent, then one family, a 4-unit grid, and the handful of durations
+// everything moves in.
+//
+// The colours are the materials' — see Scheme. A widget reads them from the
+// one it stands on, `schemeOf(item)`, and a page that colours a thing of its
+// own names the material outright: `Theme.bezel.text`, `Theme.pane.glass`.
 //
 // The notch was drawn at a 10pt base. Every length below is a design unit
 // put through `px()`, which multiplies it by the session's font size and by
@@ -13,9 +19,10 @@ import qs.config
 // overflowing it. Layout lengths are multiples of four units; strokes and
 // hairlines are not, because they are not layout.
 //
-// Nothing outside this file names a colour, a size or a duration. A widget
-// that needs one reads it from here, and a panel that needs a gap reads one
-// of the spacing tokens.
+// Nothing outside this file names a colour, a size or a duration, but for
+// Scheme, which works the roles out of what this hands it. A widget that
+// needs one reads it from here, and a panel that needs a gap reads one of the
+// spacing tokens.
 Singleton {
     id: root
 
@@ -23,116 +30,84 @@ Singleton {
 
     // Light and dark are told apart by the palette's ground rather than by a
     // setting: a base16 scheme with a light base00 is a light scheme.
-    readonly property bool light: root.luminance(Config.base00) > 0.5
+    readonly property bool light: Paint.luminance(Config.base00) > 0.5
+    // the palette's lighter and darker ends, whichever of base00 and base05
+    // they happen to be
+    readonly property color litEnd: root.light ? Config.base00 : Config.base05
+    readonly property color dimEnd: root.light ? Config.base05 : Config.base00
 
-    // ── neutral scale ─────────────────────────────────────────────────────
+    // Increased contrast pushes the hairlines and the quiet inks a step
+    // harder, and with reduced transparency it makes the glass solid, the
+    // way a mac does with either setting.
+    readonly property bool contrastUp: Config.increaseContrast
+    readonly property bool opaqueGlass: Config.reducedTransparency || Config.increaseContrast
+    // How little of the glass may be its own ground. Every ink is measured
+    // against the glass at this strength laid over pure white, or pure black,
+    // with no blur behind it; a `glassOpacity` below it would let the desktop
+    // decide whether a caption can be read.
+    readonly property real glassFloor: 0.92
+    readonly property real glassAlpha: root.opaqueGlass ? 1 : Math.max(root.glassFloor, Config.glassOpacity)
 
-    // The ground the scale starts from. Dark, it is the palette's pushed most
-    // of the way to black, the way the notch on a macbook is the black of the
-    // bezel around it rather than a grey laid over the windows; it keeps the
-    // palette's tint, so the shell still belongs to the scheme it is set in.
-    // Light, the palette's own ground is left as it is.
-    readonly property color ground: root.light ? Config.base00 : root.mix(Config.base00, "#000000", 0.55)
+    // ── the two materials ─────────────────────────────────────────────────
 
-    // Twelve steps from the ground to the ink (base05). The two
-    // modes are spaced differently: on a dark ground the eye needs bigger
-    // steps low down, where the grounds are, and on a light one the ink has
-    // to be pushed further toward full strength before it reads as text.
+    // The bezel: the pill, the tally, the ears, the open sheet and every
+    // panel on it. It is the black of the screen's own frame, the way the
+    // notch on a macbook is the bezel around it rather than a grey laid over
+    // the windows, so it is dark whatever the palette is: the darker end of
+    // it pushed most of the way to black, keeping its tint so the shell still
+    // belongs to the scheme it is set in, with the lighter end as its ink.
     //
-    //   0      the ground behind everything: the ink on a filled control
-    //   1..3   the sheet and the washes a row shows under the pointer
-    //   4..6   the ground under a disc, an empty track, and their hover
-    //   7      a workspace that exists but is not here
-    //   8      disabled ink, the last tier that still passes as large text
-    //   9..11  the three tiers of text: dim, muted, and full
-    readonly property var steps: root.light ? [0, 0.04, 0.07, 0.10, 0.13, 0.17, 0.24, 0.36, 0.62, 0.84, 0.92, 1] : [0, 0.045, 0.08, 0.12, 0.16, 0.22, 0.30, 0.40, 0.50, 0.62, 0.74, 1]
-    readonly property var neutral: root.steps.map(t => root.mix(root.ground, Config.base05, t))
+    // The steps are spaced for a dark ground, where the eye needs bigger
+    // steps low down, where the grounds are. The seventh, a workspace that
+    // exists, sits far enough up to clear 3:1 on a lit row, as a shape that
+    // has to be told apart must.
+    readonly property Scheme bezel: Scheme {
+        ground: Paint.mix(root.dimEnd, "#000000", 0.55)
+        ink: root.litEnd
+        steps: [0, 0.045, 0.08, 0.12, 0.16, 0.22, 0.30, 0.45, 0.50, 0.62, 0.74, 1]
+        accentBase: Config.base0D
+        urgentBase: Config.base08
+        contrastUp: root.contrastUp
+    }
 
-    // ── grounds ───────────────────────────────────────────────────────────
+    // The pane: glass, for what floats over the windows rather than hanging
+    // from the edge — a toast, the volume reading, Spotlight, the password
+    // prompt. It follows the palette. Dark, its ground is the palette's
+    // pushed a little toward black, lighter than the bezel it drops out from
+    // under; light, the palette's own ground, with an ink pushed toward black
+    // until there is room in it for four tiers of text. On a light ground the
+    // ink has to be pushed further toward full strength before it reads as
+    // text, so the upper steps are spaced wider.
+    readonly property Scheme pane: Scheme {
+        ground: root.light ? Config.base00 : Paint.mix(Config.base00, "#000000", 0.30)
+        ink: root.light ? Paint.mix(Config.base05, "#000000", 0.35) : Config.base05
+        steps: root.light ? [0, 0.04, 0.07, 0.10, 0.13, 0.17, 0.24, 0.36, 0.62, 0.80, 0.90, 1] : [0, 0.045, 0.08, 0.12, 0.16, 0.22, 0.30, 0.45, 0.55, 0.73, 0.84, 1]
+        translucent: true
+        alpha: root.glassAlpha
+        accentBase: Config.base0D
+        urgentBase: Config.base08
+        contrastUp: root.contrastUp
+    }
 
-    // The sheet, and the pill it collapses to: the ground itself. Hanging
-    // from the top edge it has no frame of its own, the way a notch has none;
-    // the shadow is what lifts it off the window it opens over.
-    readonly property color slab: root.neutral[0]
-    // the hairline round a surface floating free of the top edge — a toast,
-    // the volume reading — for when it lands on a window of its own colour
-    readonly property color slabBorder: root.neutral[root.light ? 4 : 2]
-    // the sheet pushed toward the red an urgent notification warns with
-    readonly property color slabUrgent: root.mix(root.slab, root.urgent, 0.10)
+    // What the root of a glass surface is named, so everything drawn on it
+    // can find out that it is on glass.
+    readonly property string paneTag: "shell-pane"
 
-    // A frosted pane: the ground, as much of it as `Config.glassOpacity`
-    // says, for the compositor to blur what is behind it through — see
-    // `Spotlight` — with a hairline of the ink catching its edge the way the
-    // rim of a sheet of glass does.
-    readonly property color glass: Qt.rgba(root.slab.r, root.slab.g, root.slab.b, Config.glassOpacity)
-    readonly property color glassEdge: Qt.rgba(Qt.color(Config.base05).r, Qt.color(Config.base05).g, Qt.color(Config.base05).b, root.light ? 0.10 : 0.14)
+    // Which material `item` stands on: the pane if anything it sits in is
+    // tagged as glass, and the bezel otherwise. A widget that draws colour
+    // asks this for the default of its `scheme`, rather than being told by
+    // every page it is put on, and asks again if it is moved.
+    function schemeOf(item: Item): Scheme {
+        for (let p = item; p; p = p.parent)
+            if (p.objectName === root.paneTag)
+                return root.pane;
+        return root.bezel;
+    }
 
-    // a row on the sheet has no ground until the pointer finds it
-    readonly property color rowHover: root.neutral[2]
-    readonly property color rowPress: root.neutral[3]
-
-    // A module: a tile on the home page, standing on a ground of its own the
-    // way the blocks of a control centre do, and the two steps it takes
-    // under the pointer.
-    readonly property color module: root.neutral[root.light ? 2 : 1]
-    readonly property color moduleHover: root.neutral[root.light ? 3 : 2]
-    readonly property color modulePress: root.neutral[root.light ? 4 : 3]
-
-    // the ground under a disc, a button, an empty track — something raised
-    // off the sheet — and the two steps it takes under the pointer
-    readonly property color surface: root.neutral[4]
-    readonly property color surfaceHover: root.neutral[5]
-    readonly property color surfacePress: root.neutral[6]
-
-    // the hairline between two rows, or two sections
-    readonly property color rule: root.neutral[3]
-    // the empty part of a track, and a graph's older samples
-    readonly property color track: root.neutral[4]
-
-    // What the sheet casts on the desktop. Black rather than a wash of the
-    // palette, because it falls on whatever window is behind it; lighter in
-    // light mode, where a heavy shadow reads as dirt.
+    // What a floating surface casts on the desktop. Black rather than a wash
+    // of the palette, because it falls on whatever window is behind it;
+    // lighter in light mode, where a heavy shadow reads as dirt.
     readonly property color shadow: Qt.rgba(0, 0, 0, root.light ? 0.16 : 0.36)
-
-    // ── ink ───────────────────────────────────────────────────────────────
-
-    // Four tiers. Hierarchy is carried by these and by weight before it is
-    // carried by size.
-    readonly property color text: root.neutral[11]
-    readonly property color textMuted: root.neutral[10]
-    readonly property color textDim: root.neutral[9]
-    // disabled, and nothing that has to be read
-    readonly property color textFaint: root.neutral[8]
-
-    // A slider's fill is the ink itself, so a bar at half reads as a solid
-    // thing rather than a coloured one; what is drawn over it is the ground.
-    readonly property color fill: root.neutral[11]
-    readonly property color onFill: root.neutral[0]
-
-    // ── accent, and the one semantic colour ───────────────────────────────
-
-    // Spent on state alone: on, here, focused. Never on decoration.
-    readonly property color accent: Config.base0D
-    readonly property color onAccent: Config.base00
-    readonly property color accentSurface: root.mix(root.slab, root.accent, 0.16)
-    // the default button — the one Return presses — under the pointer
-    readonly property color accentHover: root.mix(root.accent, root.text, 0.14)
-    // the row Spotlight's Return will open: filled in the accent, the way a
-    // selection is, and its words in the ground
-    readonly property color selection: root.accent
-    readonly property color onSelection: root.onAccent
-    readonly property color onSelectionMuted: root.mix(root.accent, root.onAccent, 0.72)
-
-    // The palette's red, pulled a little toward the ink so it warns without
-    // shouting, and the wash and hairline an urgent surface is drawn with.
-    readonly property color urgent: root.mix(Config.base08, Config.base05, 0.12)
-    readonly property color urgentSurface: root.mix(root.slab, root.urgent, 0.14)
-    readonly property color urgentBorder: root.mix(root.slab, root.urgent, 0.32)
-
-    // the workspaces: one that exists but is not focused, and one that does
-    // not exist yet
-    readonly property color dotOccupied: root.neutral[7]
-    readonly property color dotEmpty: root.neutral[4]
 
     // ── typography ────────────────────────────────────────────────────────
 
@@ -142,11 +117,15 @@ Singleton {
     // face has no separate display cut
     readonly property string displayFamily: Config.displayFamily || Config.sansFamily
 
-    // Four sizes, and Spotlight's field. Small for metadata and figures, body for everything read,
-    // title for the name of a page and the clock on the pill, display for the
-    // clock at the head of the page.
+    // Four sizes, and Spotlight's field, on the steps a mac sets its own
+    // text in: small for metadata and figures (its subheadline, 11), body
+    // for everything read and every control with a word on it (its body,
+    // 13), title for the name of a page and the clock on the pill (title
+    // three, 15), display for the clock at the head of the page. Small sits
+    // far enough under body that size carries some of the hierarchy, not
+    // the ink alone.
     readonly property int fontSmall: root.px(11)
-    readonly property int fontBody: root.px(12)
+    readonly property int fontBody: root.px(13)
     readonly property int fontTitle: root.px(15)
     readonly property int fontDisplay: root.px(28)
     // ...and one more, for what is typed into Spotlight: the field is the
@@ -190,9 +169,13 @@ Singleton {
 
     // ── radius ────────────────────────────────────────────────────────────
 
-    // Three. Small for anything on the sheet — a row's hover ground, a piece
-    // of artwork, a tooltip; medium for a field; large for the floating
-    // surfaces themselves, the slab and a toast. Anything round is a pill.
+    // Three. Small for a piece of artwork, a row's hover ground, a tooltip;
+    // medium for what sits one page margin inside the sheet; large for
+    // Spotlight's results. The corners of the surfaces themselves are worked
+    // out from these, as the radius of what is inside plus the distance to
+    // it, so a corner within a corner runs parallel to it all the way round
+    // rather than pinching. Anything you press or type into is a capsule:
+    // its radius is half its height.
     readonly property int radiusSmall: root.px(8)
     readonly property int radiusMedium: root.px(14)
     readonly property int radiusLarge: root.px(26)
@@ -204,15 +187,19 @@ Singleton {
 
     // The corners. Folded, the notch is the hardware one: a slot with its
     // bottom corners only softened. It rounds out as it unfolds, until the
-    // sheet is the island it grew into, as round as its corners can be
-    // without the page inside losing its own.
+    // sheet is the island it grew into, its corners concentric with the
+    // medium ones a page margin inside it.
     readonly property int notchRadius: root.px(12)
-    readonly property int notchRadiusOpen: root.px(34)
+    readonly property int notchRadiusOpen: root.pagePadding + root.radiusMedium
     // Where its sides meet the top edge they flare out into it rather than
     // standing on it at a right angle: a quarter of a circle cut out of the
     // corner either side, so the notch reads as part of the edge it hangs
     // from rather than as something stuck under it.
     readonly property int earRadius: root.px(10)
+    // The line round the open sheet, down its sides and along its bottom
+    // and never its top, that tells the bezel from a dark window it opens
+    // over. A stroke rather than layout, so it is not on the grid.
+    readonly property int keyLineWidth: root.px(1)
 
     // the bars that move on the pill while something is playing
     readonly property int waveBarWidth: root.px(3)
@@ -254,6 +241,10 @@ Singleton {
     readonly property real spotlightTop: 0.22
     // between the pane's edge and the rows inside it
     readonly property int spotlightPadding: root.space2
+    // a row's corners, concentric with the sheet's at that inset
+    readonly property int spotlightRowRadius: root.radiusLarge - root.spotlightPadding
+    // between the field and the sheet of results hanging under it
+    readonly property int spotlightGap: root.space2
     // the icon at the head of a result, and the larger one of the top hit
     readonly property int spotlightIconSize: root.space6
     readonly property int spotlightHitIconSize: root.px(40)
@@ -292,8 +283,8 @@ Singleton {
     readonly property int figureWidth: root.px(36)
 
     // a switch, and the knob inside it
-    readonly property int switchWidth: root.px(32)
-    readonly property int switchHeight: root.px(18)
+    readonly property int switchWidth: root.px(36)
+    readonly property int switchHeight: root.space5
     readonly property int switchInset: root.px(2)
 
     // A slider is a bar you drag by its fill, with the glyph for what it sets
@@ -302,6 +293,9 @@ Singleton {
     readonly property int sliderHeight: root.space6
     // the least a bar may be squeezed to and still be dragged
     readonly property int sliderMinWidth: root.px(120)
+    // ...and the least height it is aimed at, however thin it is drawn: the
+    // smallest target a pointer is given anywhere on the surface
+    readonly property int sliderTarget: root.space5
     // ...except a scrubber, which is read far more often than it is dragged
     // and grows under the pointer when it is
     readonly property int scrubHeight: root.px(4)
@@ -328,11 +322,17 @@ Singleton {
     readonly property int gaugePadding: root.space1
     readonly property int ringThickness: root.px(2)
     readonly property int artSize: root.px(64)
+    // how much of a disc its glyph fills
+    readonly property real discGlyph: 0.55
 
-    readonly property int dotSize: root.px(6)
-    // the focused workspace stretches into a bar instead of growing
-    readonly property int dotActiveWidth: root.space5
-    readonly property int dotSpacing: root.space2
+    // A workspace: a dot, spaced so each one is a target of its own. The
+    // focused one stretches into a bar instead of growing, and one asking
+    // for attention into a shorter one, so it is told by its shape as well
+    // as by the red.
+    readonly property int dotSize: root.space2
+    readonly property int dotActiveWidth: root.space6
+    readonly property int dotUrgentWidth: root.px(14)
+    readonly property int dotSpacing: root.space3
 
     // the ring around whatever has keyboard focus
     readonly property int focusWidth: root.px(2)
@@ -342,6 +342,8 @@ Singleton {
     readonly property int toastWidth: root.px(360)
     readonly property int toastPadding: root.space4
     readonly property int toastSpacing: root.space2
+    // concentric with the corner of the sender's icon, the padding in
+    readonly property int toastRadius: root.toastPadding + root.radiusSmall
     // the sender's icon at the head of a toast
     readonly property int toastIconSize: root.px(36)
 
@@ -350,7 +352,7 @@ Singleton {
     // bar and a figure rather than a line of prose.
     readonly property int osdWidth: root.px(240)
     readonly property int osdPadding: root.space2
-    readonly property int osdTrackHeight: root.px(4)
+    readonly property int osdTrackHeight: root.px(6)
 
     readonly property int tooltipPadding: root.space2
     readonly property int tooltipDelay: 500
@@ -374,6 +376,8 @@ Singleton {
     readonly property int polkitBadgeRim: root.px(2)
     // a field: who is asked, and the answer
     readonly property int polkitFieldHeight: root.space8
+    // concentric with the capsules on it, a page margin in
+    readonly property int polkitRadius: root.pagePadding + root.polkitFieldHeight / 2
     // the size it opens from, and fades up out of
     readonly property real polkitScale: 0.96
     // How hard a wrong answer knocks the pane sideways, in pixels a second:
@@ -382,17 +386,7 @@ Singleton {
 
     // ── privacy ───────────────────────────────────────────────────────────
 
-    // What lights while the microphone, the camera or the screen is in use —
-    // see `Privacy`. The accent, on purpose. A mac has an orange dot for the
-    // microphone and a green one for the camera, which would be two more
-    // accents here; and what the dot says is that something is on — the
-    // microphone open, the camera live — which is what the accent already
-    // says on a lit disc. Not the red: the red is for what has gone wrong or
-    // is waiting on an answer, and a call you started is neither, and it
-    // would be crying wolf for the length of every meeting. Which of the
-    // three it is the page says in words, not the dot in a hue.
-    readonly property color privacy: root.accent
-    // the dot at the trailing end of the pill
+    // the dot at the trailing end of the pill, lit in `Scheme.privacy`
     readonly property int privacyDot: root.space2
     // The tally the notch leaves on the top edge while it is put away and
     // something is in use: a slot just big enough to hold the dot, hanging
@@ -475,6 +469,13 @@ Singleton {
     readonly property int spinDuration: 900
     // how long the volume reading stays out after the last key press
     readonly property int osdHold: 1500
+    // how long the pill stays out when it is brought out for a glance at the
+    // clock — see `Notch.peek`
+    readonly property int peekHold: 2500
+    // How long a level meter takes to glide from one sample to the next. A
+    // signal is sampled a few times a second, and a bar that stepped between
+    // them would flicker; a longer glide would lag the sound it reads.
+    readonly property int meterDuration: 60 * root.motion
     // how long a mark that has to be pressed twice — restart, shut down —
     // waits for the second press before letting the first one go
     readonly property int confirmHold: 4000
@@ -492,25 +493,18 @@ Singleton {
         return Math.round(units * root.scale);
     }
 
-    // `t` of the way from `a` to `b`
+    // The colour arithmetic lives in Paint, so a Scheme can be built out of
+    // it while this is still being built; these hand on to it, for a page
+    // that only has Theme to hand.
     function mix(a: color, b: color, t: real): color {
-        const x = Qt.color(a);
-        const y = Qt.color(b);
-        return Qt.rgba(x.r + (y.r - x.r) * t, x.g + (y.g - x.g) * t, x.b + (y.b - x.b) * t, x.a + (y.a - x.a) * t);
+        return Paint.mix(a, b, t);
     }
 
-    // `c` with none of it showing: what a ground that only appears under the
-    // pointer is while it is not there, so that it fades in as itself rather
-    // than out of a transparent black
     function clear(c: color): color {
-        const q = Qt.color(c);
-        return Qt.rgba(q.r, q.g, q.b, 0);
+        return Paint.clear(c);
     }
 
-    // relative luminance, the way the contrast rules measure it
     function luminance(c: color): real {
-        const q = Qt.color(c);
-        const lin = v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-        return 0.2126 * lin(q.r) + 0.7152 * lin(q.g) + 0.0722 * lin(q.b);
+        return Paint.luminance(c);
     }
 }

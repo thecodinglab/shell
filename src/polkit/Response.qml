@@ -3,7 +3,7 @@ import qs.theme
 import qs.util
 import qs.widgets
 
-// The line a polkit prompt is answered on: a field on the raised ground, the
+// The line a polkit prompt is answered on: a capsule on the field ground, the
 // way a mac draws the password field of its prompt, with the prompt the
 // conversation asked with — "Password", most of the time — as the words in
 // it until something is typed.
@@ -51,8 +51,8 @@ Rectangle {
 
     implicitHeight: Theme.polkitFieldHeight
 
-    radius: Theme.radiusSmall
-    color: Theme.surface
+    radius: height / 2
+    color: Theme.pane.field
 
     // Under the words: anywhere on the field puts the caret in it.
     MouseArea {
@@ -64,10 +64,11 @@ Rectangle {
         onClicked: input.forceActiveFocus()
     }
 
+    // the words start clear of the capsule's round ends
     Item {
         anchors.fill: parent
-        anchors.leftMargin: Theme.space3
-        anchors.rightMargin: Theme.space3
+        anchors.leftMargin: Theme.space4
+        anchors.rightMargin: Theme.space4
 
         TextInput {
             id: input
@@ -81,9 +82,9 @@ Rectangle {
             inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | (root.echo ? 0 : Qt.ImhHiddenText)
             persistentSelection: false
 
-            color: root.ready ? Theme.text : Theme.textFaint
-            selectionColor: Theme.accentSurface
-            selectedTextColor: Theme.text
+            color: root.ready ? Theme.pane.text : Theme.pane.textFaint
+            selectionColor: Theme.pane.accentSurface
+            selectedTextColor: Theme.pane.text
 
             font.family: Theme.sansFamily
             font.pixelSize: Theme.fontBody
@@ -116,7 +117,7 @@ Rectangle {
             visible: root.empty
 
             text: root.placeholder
-            color: Theme.textDim
+            color: Theme.pane.placeholder
         }
     }
 

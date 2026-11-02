@@ -6,9 +6,11 @@ import qs.widgets
 // A reading that appears for a moment when something is changed from the
 // keyboard: the volume, set by its media keys, without the notch in sight.
 //
-// A pill hanging from the top edge, like a notification but smaller and with
-// nothing to do to it: a glyph for what was set, a bar for how far, and the
-// figure. It is not the control — the slider in the notch is — it is what the
+// A capsule of glass dropping out from under the top edge, like a
+// notification but smaller and with nothing to do to it: a glyph for what was
+// set, a bar for how far, and the figure. Glass rather than the bezel, because
+// it floats over the windows rather than hanging from the edge as part of it.
+// It is not the control — the slider in the notch is — it is what the
 // control would show, so it reads the same way: the fill is the ink, and the
 // glyph and figure sit either side of it. Pressing the key again while it is
 // up moves the fill and holds it there; left alone it goes back where it came
@@ -38,14 +40,14 @@ Rectangle {
         hold.restart();
     }
 
+    // glass, so what is drawn on it takes the pane's colours
+    objectName: Theme.paneTag
+
     implicitWidth: Theme.osdWidth
     implicitHeight: row.implicitHeight + Theme.osdPadding * 2
 
     radius: height / 2
-    color: Theme.slab
-
-    border.width: 1
-    border.color: Theme.slabBorder
+    color: Theme.pane.glass
 
     // fading as it goes up into the top edge, rather than on a clock of its
     // own, so a key pressed while it is going catches it wherever it is
@@ -80,7 +82,7 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter
 
             text: root.icon
-            color: Theme.text
+            color: Theme.pane.text
 
             font.pixelSize: Theme.fontTitle
         }
@@ -96,7 +98,7 @@ Rectangle {
             implicitHeight: Theme.osdTrackHeight
 
             radius: height / 2
-            color: Theme.track
+            color: Theme.pane.track
             clip: true
 
             Rectangle {
@@ -104,7 +106,7 @@ Rectangle {
                 height: parent.height
 
                 radius: height / 2
-                color: Theme.fill
+                color: Theme.pane.fill
 
                 // One press moves the fill one step; a run of them slides it,
                 // and each press adds to the way it is already going rather
@@ -123,7 +125,7 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter
 
             text: root.text
-            color: Theme.textMuted
+            color: Theme.pane.textMuted
 
             horizontalAlignment: Text.AlignRight
         }
@@ -133,5 +135,11 @@ Rectangle {
         id: hold
 
         interval: Theme.osdHold
+    }
+
+    // the rim of the glass, over everything else on it
+    Rim {
+        target: root
+        radius: root.radius
     }
 }

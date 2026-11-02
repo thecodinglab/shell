@@ -58,6 +58,8 @@ ColumnLayout {
                 rule: link.index < Network.interfaces.length - 1
                 ruleInset: Theme.discSizeSmall + Theme.rowSpacing
 
+                Accessible.name: `${Network.kindLabel(link.modelData.kind)}, ${link.up ? link.modelData.address : "No address"}`
+
                 IconDisc {
                     Layout.alignment: Qt.AlignVCenter
 
@@ -66,19 +68,21 @@ ColumnLayout {
                     size: Theme.discSizeSmall
                 }
 
+                // named for what the link is, with the name the kernel gave
+                // it underneath for whoever needs to find it in `ip`
                 Label {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
 
-                    title: link.modelData.name
-                    caption: Network.kindLabel(link.modelData.kind)
+                    title: Network.kindLabel(link.modelData.kind)
+                    caption: link.modelData.name
                 }
 
                 Num {
                     Layout.alignment: Qt.AlignVCenter
 
                     text: link.up ? link.modelData.address : "No address"
-                    color: link.up ? Theme.textMuted : Theme.urgent
+                    color: link.up ? Theme.bezel.textMuted : Theme.bezel.urgent
 
                     font.pixelSize: Theme.fontBody
                 }

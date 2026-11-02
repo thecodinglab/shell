@@ -17,9 +17,12 @@ Item {
 
     property string icon: ""
     property string label: ""
+    // anything more a screen reader should say about it than what it does
+    property string description: ""
     property bool filled: false
     property int size: Theme.actionSize
     property int pixelSize: Theme.fontBody
+    property Scheme scheme: Theme.schemeOf(root)
 
     signal clicked
 
@@ -43,6 +46,7 @@ Item {
 
     Accessible.role: Accessible.Button
     Accessible.name: root.label
+    Accessible.description: root.description
     Accessible.onPressAction: root.clicked()
 
     Keys.onPressed: event => {
@@ -63,14 +67,14 @@ Item {
 
         color: {
             if (root.filled)
-                return !root.enabled ? Theme.surface : mouse.containsMouse ? Theme.textMuted : Theme.fill;
+                return !root.enabled ? root.scheme.surface : mouse.containsMouse ? root.scheme.textMuted : root.scheme.fill;
             if (!root.enabled)
-                return Theme.clear(Theme.surfaceHover);
+                return Theme.clear(root.scheme.surfaceHover);
             if (mouse.pressed)
-                return Theme.surfacePress;
+                return root.scheme.surfacePress;
             if (mouse.containsMouse)
-                return Theme.surfaceHover;
-            return Theme.clear(Theme.surfaceHover);
+                return root.scheme.surfaceHover;
+            return Theme.clear(root.scheme.surfaceHover);
         }
 
         Behavior on color {
@@ -84,10 +88,10 @@ Item {
         text: root.icon
         color: {
             if (!root.enabled)
-                return Theme.textFaint;
+                return root.scheme.textFaint;
             if (root.filled)
-                return Theme.onFill;
-            return mouse.containsMouse ? Theme.text : Theme.textMuted;
+                return root.scheme.inkOnFill;
+            return mouse.containsMouse ? root.scheme.text : root.scheme.textMuted;
         }
 
         Behavior on color {
@@ -95,10 +99,13 @@ Item {
         }
 
         font.family: Theme.monoFamily
-        font.pixelSize: root.filled ? Theme.fontSmall : root.pixelSize
+        // the filled one is the primary action in its group, and its mark is
+        // set large enough to be the first thing found in it
+        font.pixelSize: root.filled ? Theme.fontTitle : root.pixelSize
     }
 
     FocusRing {
+        scheme: root.scheme
         radius: width / 2
     }
 
@@ -108,7 +115,8 @@ Item {
         anchors.fill: parent
         enabled: root.enabled
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        // the arrow, as over any control; the pointing hand is for links
+        cursorShape: Qt.ArrowCursor
 
         onPressed: Nav.pointer()
         onClicked: root.clicked()

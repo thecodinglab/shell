@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import qs.theme
 import qs.util
 
-// A word you can press, on a pill of the raised ground.
+// A word you can press, on a capsule of the raised ground.
 //
 // `primary` is the default one, the one Return presses, and is filled with
 // the accent instead, the way a mac fills the default button of a dialog:
@@ -15,6 +15,7 @@ Rectangle {
     property string text: ""
     property string icon: ""
     property bool primary: false
+    property Scheme scheme: Theme.schemeOf(root)
 
     signal clicked
 
@@ -25,12 +26,12 @@ Rectangle {
 
     color: {
         if (root.primary)
-            return !root.enabled ? Theme.surface : mouse.containsMouse ? Theme.accentHover : Theme.accent;
+            return !root.enabled ? root.scheme.surface : mouse.containsMouse ? root.scheme.accentHover : root.scheme.accent;
         if (mouse.pressed)
-            return Theme.surfacePress;
+            return root.scheme.surfacePress;
         if (mouse.containsMouse)
-            return Theme.surfaceHover;
-        return Theme.surface;
+            return root.scheme.surfaceHover;
+        return root.scheme.surface;
     }
 
     Behavior on color {
@@ -75,11 +76,12 @@ Rectangle {
 
             visible: root.icon !== ""
 
+            scheme: root.scheme
             text: root.icon
             color: label.color
 
             Layout.preferredWidth: implicitWidth
-            font.pixelSize: Theme.fontSmall
+            font.pixelSize: Theme.fontBody
         }
 
         Sans {
@@ -87,14 +89,16 @@ Rectangle {
 
             Layout.alignment: Qt.AlignVCenter
 
+            scheme: root.scheme
             text: root.text
             color: {
                 if (!root.enabled)
-                    return Theme.textFaint;
-                return root.primary ? Theme.onAccent : Theme.text;
+                    return root.scheme.textFaint;
+                return root.primary ? root.scheme.inkOnAccent : root.scheme.text;
             }
 
-            font.pixelSize: Theme.fontSmall
+            // the size a mac sets the word on a control in
+            font.pixelSize: Theme.fontBody
             font.weight: Font.Medium
         }
     }
@@ -102,6 +106,7 @@ Rectangle {
     // the accent would be lost on a button filled with it, so on the default
     // button the ring stands just clear of its edge instead
     FocusRing {
+        scheme: root.scheme
         inset: root.primary ? -Theme.focusWidth * 2 : 0
         radius: root.radius - inset
     }
@@ -112,7 +117,8 @@ Rectangle {
         anchors.fill: parent
         enabled: root.enabled
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        // the arrow, as over any control; the pointing hand is for links
+        cursorShape: Qt.ArrowCursor
 
         onPressed: Nav.pointer()
         onClicked: root.clicked()

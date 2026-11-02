@@ -33,6 +33,10 @@ RowLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
 
+        // With no node there is nothing to set: the bar is still there, in
+        // its place, but it cannot be moved and has no figure beside it.
+        enabled: root.node !== null
+
         icon: {
             if (root.input)
                 return root.muted ? Icons.microphoneMuted : Icons.microphone;
@@ -46,13 +50,15 @@ RowLayout {
     }
 
     Num {
+        id: reading
+
         Layout.preferredWidth: Theme.figureWidth
         Layout.alignment: Qt.AlignVCenter
 
-        visible: root.figure
+        visible: root.figure && root.node !== null
 
         text: root.muted ? "Muted" : Fmt.percent(root.volume)
-        color: root.muted ? Theme.textDim : Theme.textMuted
+        color: root.muted ? reading.scheme.textDim : reading.scheme.textMuted
 
         horizontalAlignment: Text.AlignRight
     }

@@ -9,7 +9,8 @@ Item {
 
     // 0..1
     property real value: 0
-    property color fillColor: Theme.fill
+    property Scheme scheme: Theme.schemeOf(root)
+    property color fillColor: root.scheme.fill
 
     implicitHeight: Theme.meterHeight
 
@@ -17,7 +18,7 @@ Item {
         anchors.fill: parent
 
         radius: height / 2
-        color: Theme.track
+        color: root.scheme.track
         clip: true
 
         Rectangle {
@@ -31,7 +32,7 @@ Item {
             // between samples rather than stepping
             Behavior on width {
                 NumberAnimation {
-                    duration: 60
+                    duration: Theme.meterDuration
                 }
             }
         }

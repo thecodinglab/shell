@@ -15,6 +15,7 @@ Rectangle {
     property Item target: root.parent
     property bool active: root.target.activeFocus
     property real inset: 0
+    property Scheme scheme: Theme.schemeOf(root)
 
     anchors.fill: root.target
     anchors.margins: root.inset
@@ -26,5 +27,5 @@ Rectangle {
 
     color: "transparent"
     border.width: Theme.focusWidth
-    border.color: Theme.accent
+    border.color: root.scheme.accent
 }

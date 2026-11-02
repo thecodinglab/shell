@@ -38,17 +38,31 @@ ColumnLayout {
         notch: root.notch
         title: "Bluetooth"
 
-        Caption {
+        // in the ink, with the spinner: scanning is busy, not on
+        RowLayout {
             visible: Bt.discovering
 
-            text: "Scanning"
-            color: Theme.accent
+            spacing: Theme.space2
+
+            Spinner {
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Caption {
+                Layout.alignment: Qt.AlignVCenter
+
+                text: "Scanning"
+                color: Theme.bezel.textMuted
+            }
         }
 
+        // with no adapter there is nothing for a switch to turn on, so
+        // there is no switch
         Toggle {
+            visible: Bt.available
+
             checked: Bt.enabled
             label: "Bluetooth"
-            enabled: Bt.available
 
             onToggled: Bt.toggle()
         }
@@ -71,14 +85,14 @@ ColumnLayout {
         Component.onCompleted: search.take()
     }
 
+    // no spinner of its own while it is looking: the one in the header is
+    // already turning
     Empty {
         visible: root.matches.length === 0
 
-        busy: Bt.enabled && Bt.devices.length === 0 && Bt.discovering
-
         text: {
             if (!Bt.available)
-                return "No bluetooth adapter";
+                return "No Bluetooth adapter";
             if (!Bt.enabled)
                 return "Bluetooth is off";
             if (Bt.devices.length === 0)
@@ -130,7 +144,9 @@ ColumnLayout {
                 icon: Icons.device(deviceRow.modelData.icon)
                 on: deviceRow.connected
                 size: Theme.discSizeSmall
-                iconColor: deviceRow.modelData.paired ? Theme.textMuted : Theme.textDim
+                // a device it already knows a tier louder than a stranger;
+                // never the dim tier, which does not read on a disc
+                iconColor: deviceRow.modelData.paired ? Theme.bezel.text : Theme.bezel.textMuted
             }
 
             Label {
@@ -139,7 +155,13 @@ ColumnLayout {
 
                 title: Bt.label(deviceRow.modelData)
                 caption: Bt.status(deviceRow.modelData)
-                captionColor: deviceRow.connected || deviceRow.busy ? Theme.accent : Theme.textDim
+                // connected is on, and says so in the accent; a handshake
+                // is only busy
+                captionColor: {
+                    if (deviceRow.connected)
+                        return Theme.bezel.accentInk;
+                    return deviceRow.busy ? Theme.bezel.textMuted : Theme.bezel.textDim;
+                }
             }
 
             Spinner {

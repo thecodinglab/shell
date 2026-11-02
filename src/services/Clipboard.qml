@@ -52,6 +52,44 @@ Singleton {
         Quickshell.execDetached(["wl-copy", "--", text]);
     }
 
+    // Forget one entry, or the whole history: the way to take back something
+    // that should not have been written down, a password say. cliphist
+    // deletes whatever it is given on stdin in the form its list prints, so
+    // the id goes in with the tab that ends it there.
+    function remove(entry: var): void {
+        if (!entry)
+            return;
+
+        root.edit(["sh", "-c", "printf '%s\\t\\n' \"$1\" | cliphist delete", "sh", entry.id]);
+    }
+
+    function wipe(): void {
+        root.edit(["cliphist", "wipe"]);
+    }
+
+    // Changes run one at a time, in the order they were asked for, and the
+    // list is asked for again once the last of them is done: a run of
+    // deletions from the keyboard is a run of rows going, not a list that
+    // comes back with some of them still in it.
+    property var edits: []
+
+    function edit(command: var): void {
+        root.edits = [...root.edits, command];
+        if (!editor.running)
+            root.nextEdit();
+    }
+
+    function nextEdit(): void {
+        if (root.edits.length === 0) {
+            root.refresh();
+            return;
+        }
+
+        editor.command = root.edits[0];
+        root.edits = root.edits.slice(1);
+        editor.running = true;
+    }
+
     // What a picture is called in the list. cliphist previews anything it
     // can read as an image as `[[ binary data 12 KiB png 1920x1080 ]]`,
     // which is a description written for a terminal; the list says
@@ -105,5 +143,11 @@ Singleton {
             if (exitCode !== 0)
                 root.entries = [];
         }
+    }
+
+    Process {
+        id: editor
+
+        onExited: root.nextEdit()
     }
 }

@@ -52,14 +52,52 @@ Singleton {
         notification.dismiss();
     }
 
+    // Gone because you did what it offered, which deals with it the same
+    // way. The record is taken first: an action on a notification that is
+    // not resident closes it there and then, which takes it off the screen
+    // and out of `live` before `dismiss` would get to it.
+    function act(notification: Notification, action: var): void {
+        const record = root.recordOf(notification);
+        action.invoke();
+        root.forget(record);
+        root.dismiss(notification);
+    }
+
     function remove(notification: Notification): void {
         root.toasts = root.toasts.filter(n => n !== notification);
     }
 
-    // How long this notification is allowed to sit there. A sender asking for
-    // zero means "until dismissed", which the notch does not offer; anything
-    // else is capped so a stuck application cannot own the screen.
+    // Put a new one at the head of the stack. With no room left, the oldest
+    // that would have gone on its own goes early, into the panel — the new
+    // one itself, when everything else up is critical. A critical one has
+    // no clock to go on, and is only pushed off by more critical ones than
+    // there is room for: otherwise a burst of chatter would take it off the
+    // screen before anybody had dealt with it.
+    function admit(notification: Notification): void {
+        const toasts = [notification, ...root.toasts];
+        while (toasts.length > root.visibleCount) {
+            let last = toasts.length - 1;
+            for (let i = last; i >= 0; i--) {
+                if (toasts[i].urgency !== NotificationUrgency.Critical) {
+                    last = i;
+                    break;
+                }
+            }
+            toasts.splice(last, 1);
+        }
+        root.toasts = toasts;
+    }
+
+    // How long this notification is allowed to sit there, or 0 for until it
+    // is dealt with. A critical one stays: something that has gone wrong
+    // should not be gone again before anybody has looked up, and it leaves
+    // when it is clicked or dismissed. Any other sender asking for zero
+    // means "until dismissed" too, which the notch does not offer them;
+    // anything else is capped so a stuck application cannot own the screen.
     function timeout(notification: Notification): int {
+        if (notification?.urgency === NotificationUrgency.Critical)
+            return 0;
+
         const asked = notification?.expireTimeout ?? -1;
         if (asked <= 0)
             return Config.notificationTimeout;
@@ -295,7 +333,7 @@ Singleton {
         onNotification: notification => {
             // without this the server drops it the moment this handler returns
             notification.tracked = true;
-            root.toasts = [notification, ...root.toasts].slice(0, root.visibleCount);
+            root.admit(notification);
 
             // One marked transient is the sender asking for exactly this: a
             // volume step, a track change — shown, and not kept.

@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -6,8 +8,10 @@ import qs.theme
 import qs.widgets
 
 // What a notification says, laid out: the sender's mark, the title with who
-// it came from beside it, and the body under that. A toast and a row in the
-// panel are this same thing on two different grounds.
+// it came from beside it, the body under that, and under the body whatever
+// the notification offers to do. A toast and a row in the panel are this
+// same thing on two different grounds — glass and the bezel — so it takes
+// its colours from whichever one it is standing on.
 RowLayout {
     id: root
 
@@ -23,13 +27,31 @@ RowLayout {
     property bool urgent: false
     property int discSize: Theme.discSize
 
+    // What it offers to do besides being opened, as the server hands them
+    // over: a button each, up to the three a toast has room for, set out
+    // under the body while there is still a notification to do them to.
+    property var actions: []
+    // there is still a notification behind this; false once it has closed
+    property bool live: true
+    // A cross in the meta's place, to get rid of it: room is kept for it,
+    // and while `offered` it stands where the meta was, so the line it is on
+    // does not move when it comes and goes.
+    property bool dismissable: false
+    property bool offered: false
+
+    property Scheme scheme: Theme.schemeOf(root)
+
+    // one of `actions` was pressed, or the cross was
+    signal acted(var action)
+    signal dismissed
+
     readonly property string source: root.image || (root.icon ? Quickshell.iconPath(root.icon, true) : "")
 
     spacing: Theme.space3
 
     // The mark at the head: the sender's own icon, at its own shape, or a
-    // bell on a disc of the accent when it has none. An urgent one sits on
-    // the red instead, whatever it carries.
+    // bell on a plain disc when it has none — a notification is not "on".
+    // An urgent one sits on the red instead, whatever it carries.
     Item {
         Layout.alignment: Qt.AlignTop
 
@@ -53,23 +75,15 @@ RowLayout {
             }
         }
 
-        Rectangle {
+        IconDisc {
             anchors.fill: parent
 
             visible: root.source === ""
 
-            radius: width / 2
-            color: root.urgent ? Theme.urgentSurface : Theme.accentSurface
-
-            Text {
-                anchors.centerIn: parent
-
-                text: Icons.bell
-                color: root.urgent ? Theme.urgent : Theme.accent
-
-                font.family: Theme.monoFamily
-                font.pixelSize: Math.round(root.discSize * 0.42)
-            }
+            scheme: root.scheme
+            icon: Icons.bell
+            danger: root.urgent
+            size: root.discSize
         }
     }
 
@@ -87,15 +101,49 @@ RowLayout {
             Sans {
                 Layout.fillWidth: true
 
+                scheme: root.scheme
                 text: root.title
 
                 font.weight: Font.Medium
             }
 
-            Caption {
-                text: root.meta
-                // when, in figures that hold still as the minutes tick over
-                font.features: Theme.tabular
+            Item {
+                Layout.alignment: Qt.AlignVCenter
+
+                implicitWidth: root.dismissable ? Math.max(meta.implicitWidth, Theme.actionSize) : meta.implicitWidth
+                implicitHeight: meta.implicitHeight
+
+                Caption {
+                    id: meta
+
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    opacity: root.dismissable && root.offered ? 0 : 1
+
+                    scheme: root.scheme
+                    text: root.meta
+                    // when, in figures that hold still as the minutes tick over
+                    font.features: Theme.tabular
+                }
+
+                // Taller than the line it stands on, so it hangs over the
+                // padding above and the line below rather than pushing them
+                // apart, and out to the right by as much as its disc is wider
+                // than its mark, so the mark ends where the meta did.
+                IconButton {
+                    anchors.right: parent.right
+                    anchors.rightMargin: -(Theme.actionSize - Theme.fontBody) / 2
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    visible: root.dismissable && root.offered
+
+                    scheme: root.scheme
+                    icon: Icons.close
+                    label: "Dismiss"
+
+                    onClicked: root.dismissed()
+                }
             }
         }
 
@@ -104,8 +152,9 @@ RowLayout {
 
             visible: text !== ""
 
+            scheme: root.scheme
             text: root.body
-            color: Theme.textMuted
+            color: root.scheme.textMuted
 
             // the server advertises markup support, so bodies arrive with
             // it in them
@@ -113,6 +162,30 @@ RowLayout {
             wrapMode: Text.Wrap
             maximumLineCount: 3
             lineHeight: 1.35
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            Layout.topMargin: Theme.space2
+
+            visible: root.live && root.actions.length > 0
+
+            spacing: Theme.space2
+
+            Repeater {
+                model: root.live ? root.actions : []
+
+                Button {
+                    id: action
+
+                    required property var modelData
+
+                    scheme: root.scheme
+                    text: action.modelData.text
+
+                    onClicked: root.acted(action.modelData)
+                }
+            }
         }
     }
 }

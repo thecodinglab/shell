@@ -8,7 +8,11 @@ import qs.theme
 // one of these, and anything set in one of these can be laid out as if its
 // width were fixed, because it is.
 Text {
-    color: Theme.textMuted
+    id: root
+
+    property Scheme scheme: Theme.schemeOf(root)
+
+    color: root.scheme.textMuted
 
     font.family: Theme.sansFamily
     font.pixelSize: Theme.fontSmall

@@ -3,13 +3,16 @@ import qs.theme
 import qs.util
 
 // A switch. Lit in the accent when it is on, the plain track when it is not;
-// the knob rides the full travel between the two.
+// the knob rides the full travel between the two. Under the pointer it
+// takes a step toward the ink either way, so it reads as something to press
+// before it is pressed.
 Rectangle {
     id: root
 
     property bool checked: false
     // what it switches, in words
     property string label: ""
+    property Scheme scheme: Theme.schemeOf(root)
 
     signal toggled
 
@@ -19,8 +22,10 @@ Rectangle {
     radius: height / 2
     color: {
         if (!root.enabled)
-            return Theme.surface;
-        return root.checked ? Theme.accent : Theme.track;
+            return root.scheme.surface;
+        if (root.checked)
+            return mouse.containsMouse ? root.scheme.accentHover : root.scheme.accent;
+        return mouse.containsMouse ? root.scheme.surfaceHover : root.scheme.track;
     }
 
     Behavior on color {
@@ -54,8 +59,8 @@ Rectangle {
         // against the accent the knob has to read as a hole, not a dot
         color: {
             if (!root.enabled)
-                return Theme.textFaint;
-            return root.checked ? Theme.onAccent : Theme.textMuted;
+                return root.scheme.textFaint;
+            return root.checked ? root.scheme.inkOnAccent : root.scheme.textMuted;
         }
 
         // flicked back before it has got there, it turns round mid-way
@@ -69,6 +74,7 @@ Rectangle {
 
     // too small to hold a ring: it goes round the outside
     FocusRing {
+        scheme: root.scheme
         inset: -Theme.space1
         radius: height / 2
     }
@@ -78,7 +84,9 @@ Rectangle {
 
         anchors.fill: parent
         enabled: root.enabled
-        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: true
+        // the arrow, as over any control; the pointing hand is for links
+        cursorShape: Qt.ArrowCursor
 
         onPressed: Nav.pointer()
         onClicked: root.toggled()

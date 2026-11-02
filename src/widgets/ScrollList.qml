@@ -23,6 +23,7 @@ Item {
     property alias delegate: list.delegate
     // as tall as the list may make itself
     property int maxHeight: 0
+    property Scheme scheme: Theme.schemeOf(root)
 
     implicitHeight: Math.min(list.contentHeight, root.maxHeight)
 
@@ -127,7 +128,7 @@ Item {
             height: Math.max(Theme.space6, bar.height * bar.ratio)
 
             radius: width / 2
-            color: drag.pressed || drag.containsMouse ? Theme.textMuted : Theme.track
+            color: drag.pressed || drag.containsMouse ? root.scheme.textMuted : root.scheme.track
         }
 
         MouseArea {
@@ -138,7 +139,8 @@ Item {
             // a drag that has left the bar is still a drag
             preventStealing: true
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
+            // the arrow, as over any control; the pointing hand is for links
+            cursorShape: Qt.ArrowCursor
 
             // the pointer grabs the middle of the handle, so the usable range
             // starts half a handle in

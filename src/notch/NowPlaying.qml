@@ -38,7 +38,7 @@ ColumnLayout {
             implicitHeight: Theme.artSize
 
             radius: Theme.radiusSmall
-            color: Theme.surface
+            color: Theme.bezel.surface
 
             Image {
                 id: art
@@ -75,7 +75,9 @@ ColumnLayout {
                 visible: art.status === Image.Null || art.status === Image.Error
 
                 text: Icons.music
-                color: Theme.textDim
+                // muted rather than dim: on the raised ground the dim ink
+                // is too faint to be read
+                color: Theme.bezel.textMuted
 
                 font.family: Theme.monoFamily
                 font.pixelSize: Theme.fontTitle
@@ -102,7 +104,7 @@ ColumnLayout {
                 visible: text !== ""
 
                 text: [root.player.trackArtist, root.player.trackAlbum].filter(part => part).join(" — ")
-                color: Theme.textMuted
+                color: Theme.bezel.textMuted
             }
 
             Caption {
@@ -160,7 +162,7 @@ ColumnLayout {
             Layout.preferredWidth: Theme.figureWidth
 
             text: Fmt.duration(root.position)
-            color: Theme.textDim
+            color: Theme.bezel.textDim
         }
 
         Slider {
@@ -173,7 +175,7 @@ ColumnLayout {
             // it is a hairline until a pointer comes for it
             trackHeight: Theme.scrubHeight
             activeHeight: Theme.scrubHeightActive
-            fillColor: root.player.canSeek ? Theme.fill : Theme.textFaint
+            fillColor: root.player.canSeek ? Theme.bezel.fill : Theme.bezel.textFaint
 
             onMoved: fraction => {
                 if (root.player.canSeek && root.length > 0)
@@ -185,7 +187,7 @@ ColumnLayout {
             Layout.preferredWidth: Theme.figureWidth
 
             text: Fmt.duration(root.length)
-            color: Theme.textDim
+            color: Theme.bezel.textDim
 
             horizontalAlignment: Text.AlignRight
         }

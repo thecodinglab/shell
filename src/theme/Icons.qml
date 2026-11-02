@@ -84,6 +84,8 @@ Singleton {
     readonly property string clipboard: "󰅌"
     // an entry in it that is a picture
     readonly property string image: "󰋩"
+    // the way to forget all of it
+    readonly property string erase: "󰗩"
 
     // ── authentication ────────────────────────────────────────────────────
 

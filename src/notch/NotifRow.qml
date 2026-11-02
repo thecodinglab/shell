@@ -20,6 +20,10 @@ ListRow {
 
     ruleInset: Theme.discSizeSmall + Theme.rowSpacing
 
+    // read out as what it is and who sent it, then what it says
+    Accessible.name: [root.record?.summary, root.record?.appName].filter(part => part).join(", ")
+    Accessible.description: root.record?.body ?? ""
+
     onClicked: Notifs.open(root.record)
 
     NotifContent {

@@ -77,10 +77,13 @@ Singleton {
     // the drawing at the size it was drawn.
     readonly property real scale: value("scale", 1.25)
 
-    // How much of Spotlight's pane is its own ground rather than what is
-    // behind it. Near opaque by default, so it reads over anything; with a
-    // blur layer rule on `shell-spotlight` in the compositor, lower it — 0.75
-    // or so — to let the frosted desktop through.
+    // How much of the glass — the toasts, the volume reading, Spotlight and
+    // the password prompt — is its own ground rather than what is behind it.
+    // Near opaque by default, so it reads over anything; with a blur layer
+    // rule in the compositor a little lower lets the frosted desktop
+    // through. Anything below 0.92 is raised to 0.92: that is as far as the
+    // glass can go and still have every caption on it read over a white
+    // window with no blur behind it.
     readonly property real glassOpacity: value("glassOpacity", 0.94)
 
     // Locale used for the clock and the date. Empty means "whatever the
@@ -141,6 +144,13 @@ Singleton {
     // Wayland has no `prefers-reduced-motion` the shell can ask for, so this
     // is the switch: set, everything that moves arrives instead.
     readonly property bool reducedMotion: value("reducedMotion", false)
+
+    // ...and the same for the two settings a mac keeps beside it. Reduced
+    // transparency makes the glass solid. Increased contrast does that too,
+    // and also darkens the quiet inks and strengthens the hairlines, the
+    // rims and the line round the open sheet.
+    readonly property bool reducedTransparency: value("reducedTransparency", false)
+    readonly property bool increaseContrast: value("increaseContrast", false)
 
     // The curves the shell moves on, named and written the way hyprland's
     // are, so one set of them can be handed to both: a bezier by its two

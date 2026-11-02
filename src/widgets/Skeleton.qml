@@ -7,8 +7,10 @@ import qs.theme
 Rectangle {
     id: root
 
+    property Scheme scheme: Theme.schemeOf(root)
+
     radius: Theme.radiusSmall
-    color: Theme.surface
+    color: root.scheme.surface
 
     SequentialAnimation on opacity {
         running: root.visible && Theme.motion > 0

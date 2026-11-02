@@ -8,7 +8,11 @@ import qs.theme
 // A glyph never stands alone: it sits beside a name, or on a button that
 // says in words what it does.
 Text {
-    color: Theme.textMuted
+    id: root
+
+    property Scheme scheme: Theme.schemeOf(root)
+
+    color: root.scheme.textMuted
 
     font.family: Theme.monoFamily
     font.pixelSize: Theme.fontBody

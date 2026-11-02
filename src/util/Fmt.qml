@@ -9,7 +9,7 @@ Singleton {
     id: root
 
     // Divide by 1024 until the value fits, then print one decimal followed by
-    // the binary prefix: 312.4GiB.
+    // the binary prefix, a space apart the way a quantity is set: 312.4 GiB.
     function bytes(value: real): string {
         const units = ["", "k", "M", "G", "T", "P"];
 
@@ -21,7 +21,7 @@ Singleton {
         }
 
         const prefix = units[pow] + (pow > 0 ? "i" : "");
-        return `${fraction.toFixed(1)}${prefix}B`;
+        return `${fraction.toFixed(1)} ${prefix}B`;
     }
 
     // Track positions, mpris style: 1:47, or 1:02:03 once it passes an hour.
@@ -39,16 +39,18 @@ Singleton {
     }
 
     // How long something covers, in the coarsest unit that still says
-    // something: 80s, 3m, 2h. Unlike `duration` this is a length of time
-    // rather than a position in one, so it never reads as a clock.
+    // something: 80 s, 3 min, 2 h. Unlike `duration` this is a length of time
+    // rather than a position in one, so it never reads as a clock; and it is
+    // set the way a quantity is, the figure and its unit a space apart, so
+    // that "80 s" does not read as a decade.
     function span(seconds: real): string {
         if (!isFinite(seconds) || seconds <= 0)
-            return "0s";
+            return "0 s";
         if (seconds < 120)
-            return `${Math.round(seconds)}s`;
+            return `${Math.round(seconds)} s`;
         if (seconds < 7200)
-            return `${Math.round(seconds / 60)}m`;
-        return `${Math.round(seconds / 3600)}h`;
+            return `${Math.round(seconds / 60)} min`;
+        return `${Math.round(seconds / 3600)} h`;
     }
 
     // How long ago something happened, the way a list of things that happened

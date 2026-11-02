@@ -8,6 +8,8 @@ import qs.theme
 RowLayout {
     id: root
 
+    property Scheme scheme: Theme.schemeOf(root)
+
     property string text: ""
     property bool busy: false
 
@@ -20,13 +22,15 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
 
         visible: root.busy
+        scheme: root.scheme
     }
 
     Sans {
         Layout.fillWidth: true
 
+        scheme: root.scheme
         text: root.text
-        color: Theme.textDim
+        color: root.scheme.textDim
 
         wrapMode: Text.Wrap
     }

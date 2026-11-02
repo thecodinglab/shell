@@ -33,6 +33,7 @@ Rectangle {
     // A module rather than a row: it stands on a ground of its own, the way
     // the blocks of a control centre do, which the pointer only lightens.
     property bool raised: false
+    property Scheme scheme: Theme.schemeOf(root)
 
     // the row is lit, whichever of the three lit it
     readonly property bool hovered: mouse.containsMouse || root.held || root.selected
@@ -54,12 +55,12 @@ Rectangle {
         if (!root.interactive)
             return "transparent";
         if (root.raised)
-            return mouse.pressed ? Theme.modulePress : root.hovered ? Theme.moduleHover : Theme.module;
+            return mouse.pressed ? root.scheme.modulePress : root.hovered ? root.scheme.moduleHover : root.scheme.module;
         if (mouse.pressed)
-            return Theme.rowPress;
+            return root.scheme.rowPress;
         if (root.hovered)
-            return Theme.rowHover;
-        return Theme.clear(Theme.rowHover);
+            return root.scheme.rowHover;
+        return Theme.clear(root.scheme.rowHover);
     }
 
     // the ground comes up under the pointer and goes as it leaves, so
@@ -101,7 +102,8 @@ Rectangle {
         anchors.fill: parent
         enabled: root.interactive
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        // the arrow, as over any control; the pointing hand is for links
+        cursorShape: Qt.ArrowCursor
 
         onPressed: Nav.pointer()
         onClicked: root.clicked()
@@ -126,10 +128,11 @@ Rectangle {
         visible: root.rule
 
         height: 1
-        color: Theme.rule
+        color: root.scheme.rule
     }
 
     FocusRing {
+        scheme: root.scheme
         radius: root.radius
     }
 }

@@ -27,7 +27,8 @@ Item {
     property string icon: ""
     // what the bar sets, in words
     property string label: ""
-    property color fillColor: Theme.fill
+    property Scheme scheme: Theme.schemeOf(root)
+    property color fillColor: root.scheme.fill
     // one notch of the wheel, or one press of an arrow key
     property real step: 0.02
 
@@ -50,12 +51,15 @@ Item {
     readonly property bool covered: rail.width * root.fraction > root.trackHeight / 2
 
     implicitWidth: Theme.sliderMinWidth
-    implicitHeight: Math.max(root.trackHeight, root.activeHeight)
+    // however thin the bar is drawn, the item it is centred in is never less
+    // than a target's height, and the whole item answers the pointer
+    implicitHeight: Math.max(root.trackHeight, root.activeHeight, Theme.sliderTarget)
 
-    activeFocusOnTab: true
+    activeFocusOnTab: root.enabled
 
     Accessible.role: Accessible.Slider
     Accessible.name: root.label
+    Accessible.description: Fmt.percent(root.value)
 
     Keys.onPressed: event => {
         Nav.key();
@@ -95,7 +99,7 @@ Item {
         height: Math.round(thickening.value)
 
         radius: height / 2
-        color: Theme.track
+        color: root.scheme.track
         // the fill is a child, so it is clipped to the rail's own round ends
         // rather than drawing a second pair of them part way along it
         clip: true
@@ -112,7 +116,8 @@ Item {
             height: rail.height
 
             radius: height / 2
-            color: root.fillColor
+            // disabled, a bar that is there but cannot be moved: its ink goes
+            color: root.enabled ? root.fillColor : root.scheme.textFaint
         }
     }
 
@@ -126,7 +131,11 @@ Item {
         visible: root.icon !== ""
 
         text: root.icon
-        color: root.covered ? Theme.onFill : Theme.textMuted
+        color: {
+            if (root.covered)
+                return root.scheme.inkOnFill;
+            return root.enabled ? root.scheme.textMuted : root.scheme.textFaint;
+        }
 
         font.family: Theme.monoFamily
         font.pixelSize: Theme.fontTitle
@@ -137,6 +146,7 @@ Item {
     }
 
     FocusRing {
+        scheme: root.scheme
         target: rail
         active: root.activeFocus
         inset: -Theme.focusWidth
@@ -147,17 +157,19 @@ Item {
         id: mouse
 
         anchors.fill: parent
+        enabled: root.enabled
         // the rail can be thinner than the item; the whole item is still the
         // target, so a pointer near the track is on it
         hoverEnabled: true
         // a drag that starts on the track belongs to the track, even once it
         // has wandered off the panel
         preventStealing: true
-        cursorShape: Qt.PointingHandCursor
+        // the arrow, as over any control; the pointing hand is for links
+        cursorShape: Qt.ArrowCursor
 
         // whether a press landed on the glyph's cell, and whether it has
         // since turned into a drag along the track
-        property bool onIcon: false
+        property bool pressedOnIcon: false
         property bool dragged: false
 
         function report(x: real): void {
@@ -172,10 +184,10 @@ Item {
         // start of a drag and is reported like one.
         onPressed: event => {
             Nav.pointer();
-            mouse.onIcon = root.icon !== "" && event.x < root.trackHeight;
+            mouse.pressedOnIcon = root.icon !== "" && event.x < root.trackHeight;
             mouse.dragged = false;
 
-            if (!mouse.onIcon)
+            if (!mouse.pressedOnIcon)
                 mouse.report(event.x);
         }
 
@@ -183,7 +195,7 @@ Item {
             if (!mouse.pressed)
                 return;
 
-            if (mouse.onIcon && Math.abs(event.x - root.trackHeight / 2) < root.trackHeight / 2)
+            if (mouse.pressedOnIcon && Math.abs(event.x - root.trackHeight / 2) < root.trackHeight / 2)
                 return;
 
             mouse.dragged = true;
@@ -191,7 +203,7 @@ Item {
         }
 
         onReleased: {
-            if (mouse.onIcon && !mouse.dragged)
+            if (mouse.pressedOnIcon && !mouse.dragged)
                 root.iconClicked();
         }
 

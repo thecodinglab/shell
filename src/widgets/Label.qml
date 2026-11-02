@@ -11,15 +11,18 @@ import qs.theme
 ColumnLayout {
     id: root
 
+    property Scheme scheme: Theme.schemeOf(root)
+
     property string title: ""
     property string caption: ""
-    property color captionColor: Theme.textDim
+    property color captionColor: root.scheme.textDim
 
     spacing: Theme.lineGap
 
     Sans {
         Layout.fillWidth: true
 
+        scheme: root.scheme
         text: root.title
 
         font.weight: Font.Medium
@@ -30,6 +33,7 @@ ColumnLayout {
 
         visible: text !== ""
 
+        scheme: root.scheme
         text: root.caption
         color: root.captionColor
         // captions carry figures — an address, a percentage — and hold

@@ -14,7 +14,7 @@ Shape {
     id: root
 
     property bool mirror: false
-    property color color: Theme.slab
+    property color color: Theme.bezel.ground
 
     // the radius of the cut, and the size of the square it is cut from
     readonly property real size: Math.min(width, height)
@@ -50,7 +50,10 @@ Shape {
             y: 0
             radiusX: root.size
             radiusY: root.size
-            direction: PathArc.Clockwise
+            // the short way round from the side to the edge, hollowed toward
+            // the corner between them; the other way it bulges out of it into
+            // a shoulder
+            direction: PathArc.Counterclockwise
         }
     }
 }

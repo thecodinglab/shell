@@ -465,11 +465,25 @@ PanelWindow {
                 leaf: "layers"
                 property: "y"
             }
+
+            // One still fading in when it is pushed along has its arrival
+            // cut short by this, and would be left half there: it finishes
+            // fading in on the way.
+            Fade {
+                property: "opacity"
+                to: 1
+            }
         }
 
         // ...and back up over the gap one leaving has left, but only once it
         // has gone, rather than up through it while it is still fading.
         removeDisplaced: Transition {
+            // as above
+            Fade {
+                property: "opacity"
+                to: 1
+            }
+
             SequentialAnimation {
                 PauseAnimation {
                     duration: Theme.duration("fadeOut")
@@ -599,7 +613,7 @@ PanelWindow {
         // of a short notch.
         bottomLeftRadius: Math.min(Theme.notchRadius + (Theme.notchRadiusOpen - Theme.notchRadius) * slab.unfold, height / 2)
         bottomRightRadius: bottomLeftRadius
-        color: Theme.slab
+        color: Theme.bezel.ground
 
         HoverHandler {
             id: hover
@@ -636,10 +650,12 @@ PanelWindow {
             // dots changing workspace are not to be animated up there.
             visible: opacity > 0 && slab.slide < 1
 
+            // each one a target the full height of the pill
             Dots {
                 Layout.alignment: Qt.AlignVCenter
 
                 screen: root.modelData
+                reach: (Theme.collapsedHeight - Theme.dotSize) / 2
             }
 
             // The clock is the only thing on the pill that is read rather
@@ -650,7 +666,7 @@ PanelWindow {
                 Layout.alignment: Qt.AlignVCenter
 
                 text: Time.time
-                color: Theme.text
+                color: Theme.bezel.text
 
                 font.family: Theme.displayFamily
                 font.pixelSize: Theme.fontTitle
@@ -669,7 +685,7 @@ PanelWindow {
 
             // Something is using the microphone, the camera or the screen:
             // a dot at the very end, where a mac puts it beside the notch, in
-            // the colour that says on — see `Theme.privacy`. What, and who,
+            // the colour that says on — see `Scheme.privacy`. What, and who,
             // is on the page.
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
@@ -680,7 +696,7 @@ PanelWindow {
                 implicitHeight: Theme.privacyDot
 
                 radius: width / 2
-                color: Theme.privacy
+                color: Theme.bezel.privacy
 
                 Accessible.role: Accessible.Indicator
                 Accessible.name: Privacy.summary
@@ -835,12 +851,23 @@ PanelWindow {
         mirror: true
     }
 
+    // Unfolded, a line round the sheet and its ears that tells it from a
+    // dark window it has opened over. It comes up as the slab unfolds and is
+    // gone by the pill, which is the hardware notch and has no line round it.
+    KeyLine {
+        target: slab
+        radius: slab.bottomLeftRadius
+        ear: root.earReach
+
+        opacity: slab.unfold
+    }
+
     // ── revealing and unfolding ───────────────────────────────────────────
 
     Timer {
         id: peekTimer
 
-        interval: 2500
+        interval: Theme.peekHold
 
         onTriggered: root.held = false
     }

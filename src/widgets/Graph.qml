@@ -7,7 +7,8 @@ import qs.theme
 //
 // The number of slots is fixed rather than taken from the sample count, so a
 // graph that has only been running for ten seconds is a mostly empty graph
-// instead of three fat bars.
+// instead of three fat bars; and empty, rather than a floor of samples of
+// nothing, which would read as a history of an idle machine.
 Item {
     id: root
 
@@ -17,15 +18,18 @@ Item {
     // the newest few, picked out against the rest
     property int recent: 3
 
-    property color pastColor: Theme.track
-    property color recentColor: Theme.accent
+    property Scheme scheme: Theme.schemeOf(root)
+    // in the ink, as a reading is; the newest few at full strength
+    property color pastColor: root.scheme.track
+    property color recentColor: root.scheme.fill
 
     implicitHeight: Theme.graphHeight
 
-    // slot `index` counted back from the newest sample
+    // slot `index` counted back from the newest sample, or -1 for a slot from
+    // before there were any
     function sample(index: int): real {
         const offset = root.values.length - root.slots + index;
-        return offset >= 0 ? (root.values[offset] ?? 0) : 0;
+        return offset >= 0 ? (root.values[offset] ?? 0) : -1;
     }
 
     Row {
@@ -48,6 +52,8 @@ Item {
 
                 Rectangle {
                     anchors.bottom: parent.bottom
+
+                    visible: root.sample(slot.index) >= 0
 
                     width: parent.width
                     // a floor, so an idle cpu still draws a baseline

@@ -5,7 +5,11 @@ import qs.theme
 // same family, which is drawn tighter and with smaller apertures for exactly
 // this — type read at a glance rather than a line at a time.
 Text {
-    color: Theme.text
+    id: root
+
+    property Scheme scheme: Theme.schemeOf(root)
+
+    color: root.scheme.text
 
     font.family: Theme.displayFamily
     font.pixelSize: Theme.fontTitle

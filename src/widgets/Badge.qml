@@ -11,6 +11,7 @@ Rectangle {
     id: root
 
     property int count: 0
+    property Scheme scheme: Theme.schemeOf(root)
 
     // the count as it was, to tell a new arrival from one being dealt with
     property int last: 0
@@ -27,7 +28,7 @@ Rectangle {
     implicitWidth: Math.max(implicitHeight, figure.implicitWidth + Theme.space1 * 2)
 
     radius: height / 2
-    color: Theme.accent
+    color: root.scheme.accent
 
     scale: grow.value * start.value
     visible: root.scale > 0.01
@@ -56,8 +57,9 @@ Rectangle {
 
         anchors.centerIn: parent
 
+        scheme: root.scheme
         text: String(root.count)
-        color: Theme.onAccent
+        color: root.scheme.inkOnAccent
 
         font.weight: Font.Medium
     }

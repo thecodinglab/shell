@@ -16,6 +16,7 @@ Item {
 
     readonly property Item target: Tip.item
     readonly property bool shown: Tip.text !== "" && root.owns(root.target)
+    property Scheme scheme: Theme.schemeOf(root)
 
     // whether a control is on this notch's sheet
     function owns(item: Item): bool {
@@ -65,7 +66,9 @@ Item {
         implicitHeight: words.implicitHeight + Theme.space1 * 2
 
         radius: Theme.radiusSmall
-        color: Theme.fill
+        // the ink itself, with the ground for its words, so it stands out
+        // from whatever on the page it is laid over
+        color: root.scheme.fill
 
         opacity: root.shown ? 1 : 0
         visible: opacity > 0
@@ -79,7 +82,8 @@ Item {
 
             anchors.centerIn: parent
 
-            color: Theme.onFill
+            scheme: root.scheme
+            color: root.scheme.inkOnFill
         }
     }
 }

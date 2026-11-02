@@ -17,7 +17,8 @@
 # shows up as a line in the log of a running shell and nowhere else; these
 # turn the ones that can be caught ahead of time into a failed build.
 #
-#   lint    qmllint over every file, against quickshell's own type info
+#   lint    qmllint over every file, against quickshell's own type info,
+#           and the few rules of the design system a pattern can catch
 #   format  qmlformat and nixfmt, which the tree is already written in
 #   smoke   the packaged shell, started under a headless compositor and
 #           walked through every page — see smoke.sh
@@ -109,6 +110,28 @@ in
         find qs -name '*.qml' | sort > files
         echo "linting $(wc -l < files) files"
 
+        # What qmllint has no words for: the design system's own rules, each
+        # a pattern no line of the shell may match, reported by file and
+        # line as qmllint's findings are.
+        forbid() {
+          grep -nE "$1" $(cat files) | while IFS=: read -r file line _; do
+            echo "src/''${file#qs/}:$line: $2 [$3]"
+          done >> rules || true
+        }
+        touch rules
+        # QML reads a property named on and a capital as a signal handler,
+        # and one declared under such a name does not read back as what it
+        # was set to; an ink drawn on a fill is inkOn<Fill>
+        forbid 'property +[[:alnum:]_<>.]+ +on[A-Z]' \
+          "a property named on<Capital> is read as a signal handler; name it inkOn<Capital>" on-property
+        # the pointing hand is for a link; every control here takes the arrow
+        forbid 'PointingHandCursor' \
+          "the pointing hand is for links; a control takes Qt.ArrowCursor" pointing-hand
+        # every colour belongs to one of the two materials: Theme.bezel.x on
+        # the notch, Theme.pane.x on glass, or a widget's own scheme.x
+        forbid 'Theme\.(text|textMuted|textDim|textFaint|accent|surface|slab|glass|rule|track|fill|urgent|module)\b' \
+          "a colour is read from a material, Theme.bezel or Theme.pane, not from Theme itself" top-level-colour
+
         qmllint --bare -I . -I ${quickshellQml} -I ${qtQml} \
           --redundant-optional-chaining info \
           --json report.json $(cat files) > /dev/null 2>&1 || true
@@ -128,12 +151,20 @@ in
           [.files[].warnings[] | select(.type != "info") | select(excused)] | length
         ' report.json > count
 
+        status=0
+        if [ -s rules ]; then
+          cat rules
+          echo "rules: $(wc -l < rules) findings"
+          status=1
+        fi
         if [ -s findings ]; then
           cat findings
           echo "qmllint: $(wc -l < findings) findings"
-          exit 1
+          status=1
         fi
+        [ $status -eq 0 ] || exit 1
 
+        echo "rules: clean"
         echo "qmllint: clean, $(cat count) findings excused as quickshell's own"
         touch $out
       '';

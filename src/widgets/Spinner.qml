@@ -5,9 +5,12 @@ import qs.theme
 // A ring with a bite taken out of it, turning.
 //
 // For the waits nobody can put a number on — a handshake with a headset is
-// done when the headset says so — where a progress bar would be a lie.
+// done when the headset says so — where a progress bar would be a lie. In the
+// ink rather than the accent: busy is not on.
 Item {
     id: root
+
+    property Scheme scheme: Theme.schemeOf(root)
 
     implicitWidth: Theme.spinnerSize
     implicitHeight: Theme.spinnerSize
@@ -25,6 +28,7 @@ Item {
         Arc {
             size: Theme.spinnerSize
             thickness: Theme.spinnerThickness
+            strokeColor: root.scheme.track
         }
 
         // ...and the part of it that is moving
@@ -32,7 +36,7 @@ Item {
             size: Theme.spinnerSize
             thickness: Theme.spinnerThickness
             sweep: 110
-            strokeColor: Theme.accent
+            strokeColor: root.scheme.textMuted
         }
 
         // Only while it is on screen: a panel that has been folded away still

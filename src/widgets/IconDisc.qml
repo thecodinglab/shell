@@ -18,8 +18,9 @@ Rectangle {
     // the row the disc heads is held down, and the disc sinks under it
     property bool pressed: false
     property int size: Theme.discSize
+    property Scheme scheme: Theme.schemeOf(root)
     // ink for the glyph while the disc is not lit
-    property color iconColor: Theme.textMuted
+    property color iconColor: root.scheme.textMuted
 
     implicitWidth: root.size
     implicitHeight: root.size
@@ -27,8 +28,8 @@ Rectangle {
     radius: root.size / 2
     color: {
         if (root.danger)
-            return Theme.urgentSurface;
-        return root.on ? Theme.accent : Theme.surface;
+            return root.scheme.urgentSurface;
+        return root.on ? root.scheme.accent : root.scheme.surface;
     }
 
     Behavior on color {
@@ -50,12 +51,12 @@ Rectangle {
         text: root.icon
         color: {
             if (root.danger)
-                return Theme.urgent;
-            return root.on ? Theme.onAccent : root.iconColor;
+                return root.scheme.urgent;
+            return root.on ? root.scheme.inkOnAccent : root.iconColor;
         }
 
         font.family: Theme.monoFamily
-        font.pixelSize: Math.round(root.size * 0.46)
+        font.pixelSize: Math.round(root.size * Theme.discGlyph)
 
         Behavior on color {
             ColorFade {}

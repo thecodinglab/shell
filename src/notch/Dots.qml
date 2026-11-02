@@ -9,7 +9,9 @@ import qs.util
 import qs.widgets
 
 // This monitor's workspaces, as dots. The active one stretches into a bar
-// instead of growing, so the row keeps its rhythm.
+// instead of growing, so the row keeps its rhythm, and one asking for
+// attention into a shorter one, so it is told by its shape as well as by
+// the red.
 //
 // Every workspace bound to this monitor by a rule gets a dot whether it is
 // open or not, so the row is the same width no matter what is running and
@@ -20,6 +22,11 @@ Row {
     id: root
 
     required property var screen
+    // How far above and below the row each dot's target reaches: to the
+    // edges of whatever the row sits in, so a pointer anywhere in that band
+    // over a dot is on it. The default is the room the home page leaves
+    // around it; the pill is taller, and says so.
+    property int reach: Theme.space2
 
     readonly property var monitor: Hyprland.monitorFor(root.screen)
     readonly property var open: Hyprland.workspaces.values.filter(w => w.id > 0)
@@ -56,6 +63,7 @@ Row {
             // the one this monitor is showing, focused or not: every notch
             // marks its own, not just the one the pointer is on
             readonly property bool active: dot.workspace?.active ?? false
+            readonly property bool urgent: dot.workspace?.urgent ?? false
 
             // a workspace that is not open yet is created by the switch,
             // on this monitor, because it is bound here
@@ -68,13 +76,18 @@ Row {
 
             radius: height / 2
 
+            // Here in the accent, and asking for attention in the red. One
+            // that exists is filled, and one that does not exist yet is only
+            // its outline: it is still somewhere to go, but nothing is there.
             color: {
-                if (dot.workspace?.urgent)
-                    return Theme.urgent;
+                if (dot.urgent)
+                    return Theme.bezel.urgent;
                 if (dot.active)
-                    return Theme.accent;
-                return dot.workspace ? Theme.dotOccupied : Theme.dotEmpty;
+                    return Theme.bezel.accent;
+                return dot.workspace ? Theme.bezel.dotOccupied : Theme.clear(Theme.bezel.dotOccupied);
             }
+            border.width: dot.workspace ? 0 : 1
+            border.color: Theme.bezel.dotOccupied
 
             // switched away from before it has finished stretching, it
             // shrinks back from as far as it got
@@ -82,7 +95,11 @@ Row {
                 id: stretch
 
                 visible: dot.visible
-                to: dot.active ? Theme.dotActiveWidth : Theme.dotSize
+                to: {
+                    if (dot.active)
+                        return Theme.dotActiveWidth;
+                    return dot.urgent ? Theme.dotUrgentWidth : Theme.dotSize;
+                }
             }
 
             Behavior on color {
@@ -92,7 +109,7 @@ Row {
             activeFocusOnTab: true
 
             Accessible.role: Accessible.Button
-            Accessible.name: `Workspace ${dot.workspaceId}`
+            Accessible.name: `Workspace ${dot.workspaceId}${dot.active ? ", current" : ""}${dot.urgent ? ", needs attention" : ""}`
             Accessible.onPressAction: dot.go()
 
             Keys.onPressed: event => {
@@ -112,14 +129,17 @@ Row {
 
             MouseArea {
                 anchors.fill: parent
-                // a 6px target is not a target; reach out to the midpoint of
-                // the gap on either side and well past the dot vertically
+                // A dot is not a target. Each one reaches out to the midpoint
+                // of the gap on either side, so the row is one strip of
+                // targets with no dead space between them, and up and down
+                // as far as `reach`.
                 anchors.leftMargin: -Theme.dotSpacing / 2
                 anchors.rightMargin: -Theme.dotSpacing / 2
-                anchors.topMargin: -Theme.space2
-                anchors.bottomMargin: -Theme.space2
+                anchors.topMargin: -root.reach
+                anchors.bottomMargin: -root.reach
 
-                cursorShape: Qt.PointingHandCursor
+                // the arrow, as over any control; the pointing hand is for links
+                cursorShape: Qt.ArrowCursor
 
                 onPressed: Nav.pointer()
                 onClicked: dot.go()

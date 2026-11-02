@@ -16,10 +16,12 @@ Item {
     property string text: ""
 
     property int size: Theme.gaugeSize
+    property Scheme scheme: Theme.schemeOf(root)
 
     readonly property real fraction: Math.max(0, Math.min(1, root.value || 0))
-    // past nine tenths the ring is not just full, it is a problem
-    readonly property color fillColor: root.fraction >= 0.9 ? Theme.urgent : Theme.accent
+    // The ring is a reading, in the ink, not a state: the accent would say
+    // something is on. Past nine tenths it is not just full, it is a problem.
+    readonly property color fillColor: root.fraction >= 0.9 ? root.scheme.urgent : root.scheme.fill
 
     // the wedge the ring leaves open at the bottom, in degrees
     readonly property real gap: 108
@@ -47,6 +49,7 @@ Item {
             size: root.size
             start: root.start
             sweep: 360 - root.gap
+            strokeColor: root.scheme.track
         }
 
         // ...and as much of it as the value fills
@@ -75,8 +78,9 @@ Item {
     Num {
         anchors.centerIn: parent
 
+        scheme: root.scheme
         text: root.text
-        color: Theme.text
+        color: root.scheme.text
 
         font.pixelSize: Theme.fontTitle
         font.weight: Font.Medium

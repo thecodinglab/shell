@@ -5,7 +5,11 @@ import qs.theme
 // sentence case — a label is there to name the thing beside it, and setting
 // it louder than what it names defeats it.
 Text {
-    color: Theme.textDim
+    id: root
+
+    property Scheme scheme: Theme.schemeOf(root)
+
+    color: root.scheme.textDim
 
     font.family: Theme.sansFamily
     font.pixelSize: Theme.fontSmall

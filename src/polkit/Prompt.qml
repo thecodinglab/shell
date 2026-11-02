@@ -17,18 +17,20 @@ import qs.widgets
 //
 // It is drawn after the password prompt on a mac, out of Spotlight's glass:
 // a narrow pane floating a little above the middle of the screen, with the
-// shadow and the hairline round it and the large radius, and everything on
-// it centred down one column. At its head the application's own icon with
-// the padlock on its shoulder, or the padlock alone when it brought none;
-// under it, in bold, what polkit says is being asked — "Authentication is
-// required to manage system services or other units" — and what it wants
-// for it: "Enter your password to allow this." Then two fields, one above
-// the other: who is being asked, where a mac has the user name, which opens
-// into the list of them when polkit would take any of several; and the
-// answer, which asks whatever the conversation asks and hides what is typed
-// unless it is told the answer may be seen. Under them a line for what PAM
-// has to say, and at the foot Cancel and OK, side by side and as wide as
-// each other, OK in the accent because it is what Return presses.
+// shadow and the hairline round it, and everything on it centred down one
+// column. Its corners are those of the capsules on it, a page margin out.
+// At its head the application's own icon with the padlock on its shoulder,
+// or the padlock alone when it brought none; under it, in bold, what polkit
+// says is being asked — "Authentication is required to manage system
+// services or other units" — and what it wants for it: "Enter your
+// password to allow this." Then who is being asked, unless it can only be
+// whoever is at the machine: a name, said plainly, or a pop-up that
+// opens into the list of them when polkit would take any of several. Then
+// the answer, a capsule that asks whatever the conversation asks and hides
+// what is typed unless it is told the answer may be seen. Under it a line
+// for what PAM has to say, and at the foot Cancel and Allow, side by side
+// and as wide as each other, Allow in the accent because it is what Return
+// presses.
 //
 // Return answers and Escape gives up; a wrong answer shakes the pane, says
 // so, and leaves the field empty for another go. While it is out it has the
@@ -173,6 +175,8 @@ PanelWindow {
             root.wrong = true;
             shake.nudge(Theme.polkitShake);
             response.take();
+            // the shake is not heard, so the words are said out loud
+            status.Accessible.announce(status.text);
         }
 
         function onSupplementaryMessageChanged(): void {
@@ -250,17 +254,18 @@ PanelWindow {
     ClippingRectangle {
         id: pane
 
+        // glass, and everything on it drawn for glass
+        objectName: Theme.paneTag
+
         // whole pixels, or the text on it shimmers as it moves
         x: Math.round((root.width - pane.width) / 2 + shake.value)
         y: Math.round(root.height * Theme.polkitTop)
         width: Theme.polkitWidth
         height: Math.round(deepening.value)
 
-        radius: Theme.radiusLarge
-        color: Theme.glass
-
-        border.width: 1
-        border.color: Theme.glassEdge
+        // concentric with the capsules on it, a page margin in
+        radius: Theme.polkitRadius
+        color: Theme.pane.glass
 
         opacity: Math.max(0, Math.min(1, appearing.value))
         scale: Theme.polkitScale + (1 - Theme.polkitScale) * appearing.value
@@ -321,7 +326,9 @@ PanelWindow {
                     }
 
                     // cut out of the sheet by a rim of the pane's ground,
-                    // so it reads as laid on the icon rather than part of it
+                    // so it reads as laid on the icon rather than part of
+                    // it; solid, where a disc on the glass is a wash, or
+                    // the icon would show through the padlock
                     IconDisc {
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
@@ -330,11 +337,12 @@ PanelWindow {
                         visible: root.image !== ""
 
                         icon: Icons.lock
-                        iconColor: Theme.text
+                        iconColor: Theme.pane.text
                         size: Theme.polkitBadgeSize + Theme.polkitBadgeRim * 2
+                        color: Paint.over(Theme.pane.surface, Theme.pane.ground)
 
                         border.width: Theme.polkitBadgeRim
-                        border.color: Theme.slab
+                        border.color: Theme.pane.ground
                     }
                 }
 
@@ -355,6 +363,7 @@ PanelWindow {
                     Layout.topMargin: Theme.space1
 
                     text: `Enter ${root.whose(root.identity)} ${root.wanted} to allow this.`
+                    color: Theme.pane.textMuted
 
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
@@ -364,9 +373,27 @@ PanelWindow {
                 // ── who is asked ──────────────────────────────────────────
 
                 // The one whose password it wants, where a mac has the
-                // user name. Polkit offering several, the field opens into
+                // user name, and only when it could be anyone but whoever
+                // is at the machine: the sentence above already says
+                // "your". Offering one other, it says who, as words and not
+                // as a field, since there is nothing to do with it.
+                Sans {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Theme.space2
+
+                    visible: !who.choosable && text !== "" && root.whose(root.identity) !== "your"
+
+                    text: root.nameOf(root.identity)
+                    color: Theme.pane.textMuted
+
+                    horizontalAlignment: Text.AlignHCenter
+
+                    Accessible.name: `Authenticating as ${root.nameOf(root.identity)}`
+                }
+
+                // Polkit offering several, it is a pop-up that opens into
                 // the list of them, in its place, with the keyboard on the
-                // one in use; offering one, it only says who.
+                // one in use.
                 Rectangle {
                     id: who
 
@@ -375,27 +402,25 @@ PanelWindow {
                     Layout.fillWidth: true
                     Layout.topMargin: Theme.space4
 
-                    visible: !root.choosing
+                    visible: who.choosable && !root.choosing
 
                     implicitHeight: Theme.polkitFieldHeight
 
-                    radius: Theme.radiusSmall
+                    radius: height / 2
                     color: {
-                        if (!who.choosable)
-                            return Theme.surface;
                         if (whoMouse.pressed)
-                            return Theme.surfacePress;
-                        return whoMouse.containsMouse ? Theme.surfaceHover : Theme.surface;
+                            return Theme.pane.surfacePress;
+                        return whoMouse.containsMouse ? Theme.pane.surfaceHover : Theme.pane.surface;
                     }
 
                     Behavior on color {
                         ColorFade {}
                     }
 
-                    activeFocusOnTab: who.choosable
+                    activeFocusOnTab: true
 
-                    Accessible.role: who.choosable ? Accessible.ComboBox : Accessible.StaticText
-                    Accessible.name: who.choosable ? `Authenticating as ${root.nameOf(root.identity)}, choose someone else` : `Authenticating as ${root.nameOf(root.identity)}`
+                    Accessible.role: Accessible.ComboBox
+                    Accessible.name: `Authenticating as ${root.nameOf(root.identity)}, choose someone else`
                     Accessible.onPressAction: root.choosing = true
 
                     Keys.onPressed: event => {
@@ -412,18 +437,21 @@ PanelWindow {
 
                         anchors.fill: parent
 
-                        enabled: who.choosable
                         hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
+                        // the arrow, as over any control; the pointing hand
+                        // is for links
+                        cursorShape: Qt.ArrowCursor
 
                         onPressed: Nav.pointer()
                         onClicked: root.choosing = true
                     }
 
+                    // the name where the answer's words start, and the
+                    // chevrons centred in the capsule's round end
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: Theme.space3
-                        anchors.rightMargin: who.choosable ? Theme.space1 : Theme.space3
+                        anchors.leftMargin: Theme.space4
+                        anchors.rightMargin: Math.round((who.height - Theme.iconWidth) / 2)
 
                         spacing: Theme.space2
 
@@ -434,18 +462,19 @@ PanelWindow {
                             text: root.nameOf(root.identity)
                         }
 
+                        // on the raised ground, where the dimmest ink does
+                        // not read, so in the one above it
                         Caption {
                             Layout.alignment: Qt.AlignVCenter
 
                             visible: text !== ""
 
                             text: root.aboutOf(root.identity)
+                            color: Theme.pane.placeholder
                         }
 
                         Glyph {
                             Layout.alignment: Qt.AlignVCenter
-
-                            visible: who.choosable
 
                             text: Icons.choose
                         }
@@ -502,7 +531,7 @@ PanelWindow {
                                 Layout.preferredWidth: Theme.iconWidth
 
                                 text: choice.current ? Icons.check : ""
-                                color: Theme.text
+                                color: Theme.pane.text
                             }
 
                             Label {
@@ -522,7 +551,9 @@ PanelWindow {
                     id: response
 
                     Layout.fillWidth: true
-                    Layout.topMargin: Theme.space2
+                    // close under the pop-up it goes with, and a full gap
+                    // under the words when there is no pop-up
+                    Layout.topMargin: who.choosable ? Theme.space2 : Theme.space4
 
                     prompt: root.flow?.inputPrompt ?? ""
                     echo: root.flow?.responseVisible ?? false
@@ -561,10 +592,15 @@ PanelWindow {
                             if (root.said !== "")
                                 return root.said;
                             if (root.wrong)
-                                return "That was not accepted. Try again.";
+                                return `Incorrect ${root.wanted}. Try again.`;
                             return root.checking ? "Checking…" : "";
                         }
-                        color: (root.said !== "" ? root.saidError : root.wrong) ? Theme.urgent : Theme.textDim
+                        color: (root.said !== "" ? root.saidError : root.wrong) ? Theme.pane.urgent : Theme.pane.textDim
+
+                        // an alert, so a screen reader says it without the
+                        // keys leaving the field
+                        Accessible.role: Accessible.AlertMessage
+                        Accessible.name: status.text
 
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.Wrap
@@ -597,7 +633,7 @@ PanelWindow {
                         Layout.preferredWidth: (column.width - Theme.space2) / 2
                         implicitHeight: Theme.polkitFieldHeight
 
-                        text: "OK"
+                        text: "Allow"
                         primary: true
                         enabled: root.ready
 
@@ -606,6 +642,17 @@ PanelWindow {
                 }
             }
         }
+    }
+
+    // the rim of the glass, over it rather than round it, and so beside it:
+    // the pane clips what it holds
+    Rim {
+        target: pane
+        radius: pane.radius
+
+        opacity: pane.opacity
+        scale: pane.scale
+        visible: pane.visible
     }
 
     // ── names ─────────────────────────────────────────────────────────────
