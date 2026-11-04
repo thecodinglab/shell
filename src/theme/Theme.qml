@@ -345,6 +345,13 @@ Singleton {
     readonly property int toastRadius: root.toastPadding + root.radiusSmall
     // the sender's icon at the head of a toast
     readonly property int toastIconSize: root.px(36)
+    // When a notification brings a picture of its own — the face of who
+    // wrote, a cover — the application's icon rides on its shoulder, cut out
+    // of the bezel by a rim of it, so who it is from and what it came
+    // through are both still there: on a toast, and on a row in the panel.
+    readonly property int toastBadgeSize: root.space4
+    readonly property int rowBadgeSize: root.space3
+    readonly property int badgeRim: root.px(2)
 
     // The reading that drops out of the top edge when the volume is set from
     // the keyboard: narrower than a notification, because it carries one

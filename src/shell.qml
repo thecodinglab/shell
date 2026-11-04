@@ -178,6 +178,12 @@ ShellRoot {
         function peek(): void {
             root.focused()?.peek();
         }
+
+        // Put away the newest notification hanging under the notch, as its
+        // cross would, for a key rather than the pointer.
+        function dismiss(): void {
+            Notifs.dismissNewest();
+        }
     }
 
     // Spotlight, for the keybind that used to run a launcher of its own:

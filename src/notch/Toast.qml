@@ -16,11 +16,13 @@ import qs.services
 // that went away on its own while you were looking elsewhere would be one
 // you never had.
 //
-// The notification behind it is gone before the toast is: once it is closed
-// the server drops the object, and the toast is still on screen fading out.
-// So what it shows is bound to the notification only while there is one, and
-// held as it was the moment it closed — the card that fades is the card that
-// was being read, not a blank one.
+// The notification behind it can be gone before the toast is: dealt with, it
+// is closed, the server drops the object, and the toast is still on screen
+// closing up. So what it shows is bound to the notification only while the
+// toast is in the stack, and held as it was the moment it left — the card
+// that goes is the card that was being read, not a blank one. One that ran
+// out of time leaves with its notification still open behind its row in the
+// panel, and holds what it shows all the same.
 Item {
     id: root
 
@@ -64,22 +66,10 @@ Item {
     implicitHeight: root.live ? content.implicitHeight + Theme.toastPadding * 2 : root.held
 
     Accessible.role: Accessible.AlertMessage
-    Accessible.name: root.title
+    // a critical one is heard as one before anything it says, the way it is
+    // seen as one — see NotifContent
+    Accessible.name: root.urgent ? `Critical, ${root.title}` : root.title
     Accessible.description: root.body
-
-    // An urgent one is told by its ground: a wash of the red under
-    // everything on it, inset from the stack's edges and concentric with its
-    // corners, so the outline of the stack stays the bezel's all the way
-    // round and into the ears, wherever in it the urgent one is.
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: Theme.toastPadding / 2
-
-        visible: root.urgent
-
-        radius: Theme.toastRadius - Theme.toastPadding / 2
-        color: Theme.bezel.urgentSurface
-    }
 
     // The pointer anywhere on it, over a button on it or not: what holds the
     // clock, and what brings out the cross. A handler rather than the mouse
@@ -145,8 +135,9 @@ Item {
         onDismissed: Notifs.dismiss(root.notification)
     }
 
-    // Out of time: off the screen, and into the panel. A critical one has no
-    // time to run out of — see `Notifs.timeout`.
+    // Out of time: off the screen, and into the panel, still open behind
+    // its row there. A critical one has no time to run out of — see
+    // `Notifs.timeout`.
     Timer {
         interval: Notifs.timeout(root.notification)
         // reading it holds it there

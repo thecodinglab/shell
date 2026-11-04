@@ -123,24 +123,36 @@ section; each leads to exactly one panel:
   the top, the way a laptop's notification centre keeps it. A toast that
   ran out of time lands here; one that was clicked, answered or put away by
   hand does not, and neither does one the sender marked transient. A
-  critical one never runs out of time: it stays under the notch, tinted red,
-  until it has been dealt with, and a burst of newer ones pushes the others
-  off the screen before it. While the pointer is on a toast its clock stops
-  and the sender's name gives way to a cross that puts it away, as a middle
-  click does; and one whose sender gave it things to do carries them under
-  what it says, up to three, a button each, beside the click on the toast
-  itself, which does what the notification is for. Each row is the
-  toast it was, with who sent it and how long ago. Clicking it does what
-  the toast would have done — the notification's own action while it is
-  still up, and failing that the application it came from — and leaves the
-  row where it is; the cross at its right is what takes it away, and the
-  header clears the lot. Whatever is left goes on its own after
-  `notificationRetention` seconds, a day by default, and the list is capped
-  at `notificationLimit`. The list is written to
+  critical one never runs out of time: it stays under the notch until it
+  has been dealt with, and a burst of newer ones pushes the others off the
+  screen before it. It says so over its title, "Critical" in the red with a
+  warning mark beside it, on the toast and on its row alike, so it is told
+  by a word and not by the colour alone. While the pointer is on a toast
+  its clock stops and the sender's name gives way to a cross that puts it
+  away, as a middle click does; and one whose sender gave it things to do
+  carries them under what it says, up to three, a button each, beside the
+  click on the toast itself, which does what the notification is for. A
+  notification that brought a picture of its own — the face of who wrote, a
+  cover — shows it at the head, with the application's icon on its
+  shoulder; one whose icon the theme does not have gets the bell instead.
+  Each row is the toast it was, with who sent it and how long ago. A toast
+  that ran out of time leaves the screen but not the application: the
+  notification stays open behind its row, so what it offered to do is on
+  the row as it was on the toast, and pressing one deals with it there.
+  Clicking the row does what the toast would have done — the
+  notification's own action while it is still open, and failing that the
+  application it came from — and leaves the row where it is; under the
+  pointer, or the keyboard, the sender's name gives way to the cross that
+  takes it away, and the header clears the lot. Whatever is left goes on
+  its own after `notificationRetention` seconds, a day by default, and the
+  list is capped at `notificationLimit`; a row going on its own tells the
+  application its notification expired, and one put away tells it it was
+  dismissed. The list is written to
   `$XDG_STATE_HOME/shell/notifications.json` as it changes, so it survives
   the shell being restarted; a notification an application updates in place
-  updates its row rather than adding one, and one the application takes
-  back is taken out.
+  updates its row rather than adding one — and comes back under the notch
+  if what it says has changed since its toast went — and one the
+  application takes back is taken out.
 - **Sound** — output and input, each a section: its bar at the top with the
   figure beside it, and the devices it could be going through underneath,
   with a check beside the one it is. One click on a device makes it the
@@ -342,6 +354,7 @@ qs -p ~/dev/shell/src ipc call notch toggle         # open or close, on the focu
 qs -p ~/dev/shell/src ipc call notch open audio     # straight to a panel: notifications, audio, bluetooth, network, resources
 qs -p ~/dev/shell/src ipc call notch peek           # bring the pill out for a moment
 qs -p ~/dev/shell/src ipc call notch close          # fold every monitor's notch
+qs -p ~/dev/shell/src ipc call notch dismiss        # put away the newest notification
 qs -p ~/dev/shell/src ipc call spotlight toggle     # spotlight, on the focused monitor
 qs -p ~/dev/shell/src ipc call spotlight search x   # ...with x already typed into it
 qs -p ~/dev/shell/src ipc call spotlight clipboard  # ...on the clipboard history

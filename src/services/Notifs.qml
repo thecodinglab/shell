@@ -11,13 +11,17 @@ import qs.config
 // dealt with, which is what the notifications panel shows.
 //
 // The two are different things. A toast is the Notification object itself,
-// and lives exactly as long as the server keeps it: dismissing one closes
-// the notification for real, so the sending application knows it is gone.
-// The panel holds a record of each one instead — what it said, when — that
-// is written to disk as it changes, so what was waiting before the shell
-// restarted is still waiting after. A record leaves when it is dismissed,
-// when the application takes the notification back, or on its own once it
-// is older than `Config.notificationRetention`.
+// on screen for a while. The panel holds a record of each one — what it
+// said, when — that is written to disk as it changes, so what was waiting
+// before the shell restarted is still waiting after. A toast that runs out
+// of time leaves the screen but not the server: the notification stays open
+// behind its record, so what it offered to do can still be done from the
+// panel, the way a notification centre keeps a notification's buttons. It
+// is closed when it is dealt with — a click, its cross, one of its actions,
+// on the toast or on the row — or when the record goes on its own, once it
+// is older than `Config.notificationRetention` or pushed off the end of the
+// list. Dealing with one tells the sending application it was dismissed;
+// one that went on its own is told it expired.
 Singleton {
     id: root
 
@@ -27,44 +31,73 @@ Singleton {
     property var toasts: []
     readonly property int visibleCount: 3
 
-    // Gone from the screen because its time ran out. The notification is
-    // told so; the record stays for the panel.
+    // Gone from the screen because its time ran out. One with a record stays
+    // open behind it, for the panel; one that nothing keeps — a transient
+    // one — is told it has expired.
     function expire(notification: Notification): void {
         // The same toast hangs under every monitor's notch, each with a clock
-        // of its own: the first to run out closes it, and the rest find it
-        // already gone. Closing it a second time is an error.
+        // of its own: the first to run out takes it down, and the rest find
+        // it already gone.
         if (!root.toasts.includes(notification))
             return;
 
         root.remove(notification);
-        notification.expire();
+        if (!root.recordOf(notification))
+            root.end(notification, true);
     }
 
-    // Gone from the screen because you got rid of it, which is also how the
-    // notification is closed — and having been got rid of, it has no
+    // Gone because you got rid of it, from the toast: closed for real, so
+    // the sending application knows, and having been got rid of it has no
     // business turning up again in the panel.
     function dismiss(notification: Notification): void {
-        if (!root.toasts.includes(notification))
-            return;
-
-        root.remove(notification);
-        root.forget(root.recordOf(notification));
-        notification.dismiss();
+        const record = root.recordOf(notification);
+        if (record)
+            root.forget(record);
+        else
+            root.end(notification, false);
     }
 
-    // Gone because you did what it offered, which deals with it the same
-    // way. The record is taken first: an action on a notification that is
-    // not resident closes it there and then, which takes it off the screen
-    // and out of `live` before `dismiss` would get to it.
+    // Gone because you did what it offered, from the toast or from its row,
+    // which deals with it the same way. The record is taken first: an action
+    // on a notification that is not resident closes it there and then, which
+    // takes it out of `live` before `dismiss` would find it there.
     function act(notification: Notification, action: var): void {
         const record = root.recordOf(notification);
         action.invoke();
-        root.forget(record);
-        root.dismiss(notification);
+        if (record)
+            root.forget(record);
+        else
+            root.end(notification, false);
+    }
+
+    // The newest toast on screen, put away as its cross would — for a key.
+    function dismissNewest(): void {
+        if (root.toasts.length > 0)
+            root.dismiss(root.toasts[0]);
     }
 
     function remove(notification: Notification): void {
-        root.toasts = root.toasts.filter(n => n !== notification);
+        if (root.toasts.includes(notification))
+            root.toasts = root.toasts.filter(n => n !== notification);
+    }
+
+    // The notifications the server still has open. Each is closed once and
+    // only once: by the time a second way of closing it gets to it — two
+    // monitors, an action that closed it already — it is no longer here.
+    readonly property var unclosed: new Set()
+
+    // Close a notification, telling the application it expired or that it
+    // was dismissed, and take it off the screen if it is on it.
+    function end(notification: Notification, expired: bool): void {
+        if (!notification || !root.unclosed.has(notification))
+            return;
+
+        root.unclosed.delete(notification);
+        root.remove(notification);
+        if (expired)
+            notification.expire();
+        else
+            notification.dismiss();
     }
 
     // Put a new one at the head of the stack. With no room left, the oldest
@@ -132,6 +165,11 @@ Singleton {
         // url, which is meaningless after a restart and not written
         property string image: ""
         property bool urgent: false
+        // the notification behind it while it is still open, which is what
+        // a row does what it offers to; nothing once it has closed, and
+        // nothing for a record read back from disk. Untyped, because the
+        // type info has no type for the actions on one.
+        property var notification: null
     }
 
     Component {
@@ -156,6 +194,7 @@ Singleton {
                 time: time
             });
             root.live.set(notification, record);
+            record.notification = notification;
             root.trim([record, ...root.kept]);
         }
 
@@ -170,30 +209,40 @@ Singleton {
         root.save();
     }
 
-    // Let go of a record's object. It lingers a moment longer than the list
-    // does: a row on its way out is still reading from it while it fades.
-    function release(record: Record): void {
-        for (const [notification, r] of root.live)
-            if (r === record)
-                root.live.delete(notification);
+    // Let go of a record's object, and close the notification still open
+    // behind it, as having expired or as dismissed. The object lingers a
+    // moment longer than the list does: a row on its way out is still
+    // reading from it while it fades.
+    function release(record: Record, expired: bool): void {
+        const notification = record.notification;
+        record.notification = null;
+        if (notification)
+            root.live.delete(notification);
+        root.end(notification, expired);
 
         record.destroy(1000);
     }
 
-    // Make `records` the list, less whatever is over the cap at the end.
+    // Make `records` the list, less whatever is over the cap at the end,
+    // which went on its own rather than being dealt with.
     function trim(records: var): void {
         root.kept = records.slice(0, Config.notificationLimit);
         for (const record of records.slice(Config.notificationLimit))
-            root.release(record);
+            root.release(record, true);
     }
 
-    // Take a record out of the list.
+    // Take a record out of the list, as dealt with.
     function forget(record: Record): void {
+        root.drop(record, false);
+    }
+
+    // ...or as having gone on its own, when `expired`.
+    function drop(record: Record, expired: bool): void {
         if (!record || !root.kept.includes(record))
             return;
 
         root.kept = root.kept.filter(r => r !== record);
-        root.release(record);
+        root.release(record, expired);
         root.save();
     }
 
@@ -207,12 +256,7 @@ Singleton {
     // from. The record stays: opening something is not the same as being
     // done with it, and the cross is there for that.
     function open(record: Record): void {
-        let notification = null;
-        for (const [n, r] of root.live)
-            if (r === record)
-                notification = n;
-
-        const primary = notification?.actions?.find(a => a.identifier === "default") ?? null;
+        const primary = record.notification?.actions?.find(a => a.identifier === "default") ?? null;
         if (primary)
             primary.invoke();
         else if (record.desktopEntry)
@@ -223,7 +267,7 @@ Singleton {
     function sweep(): void {
         const cutoff = Date.now() - Config.notificationRetention * 1000;
         for (const record of root.kept.filter(r => r.time < cutoff))
-            root.forget(record);
+            root.drop(record, true);
     }
 
     Timer {
@@ -333,6 +377,28 @@ Singleton {
         onNotification: notification => {
             // without this the server drops it the moment this handler returns
             notification.tracked = true;
+            root.unclosed.add(notification);
+
+            // However it closed — dealt with here, by its own clock, or taken
+            // back by the application — it is no longer anything to show or
+            // to close, and its record no longer has anything behind it.
+            // Taken back by the application, the record no longer applies
+            // either; closed because it was dealt with, the record has
+            // already gone — see `forget`. A record whose notification went
+            // on its own is the point of keeping records, and stays.
+            notification.closed.connect(reason => {
+                const record = root.recordOf(notification);
+                root.unclosed.delete(notification);
+                root.live.delete(notification);
+                root.remove(notification);
+                if (!record)
+                    return;
+
+                record.notification = null;
+                if (reason === NotificationCloseReason.CloseRequested)
+                    root.forget(record);
+            });
+
             root.admit(notification);
 
             // One marked transient is the sender asking for exactly this: a
@@ -344,23 +410,22 @@ Singleton {
 
             // An application replacing what it said — a download counting
             // up — updates the same notification rather than sending a new
-            // one, and the record follows it.
+            // one, and the record follows it. One whose toast has already
+            // gone is still open behind its row, so the server hands the
+            // update to it rather than announcing a new one: a change in what
+            // it says brings it back to the screen, as a new notification
+            // would have come, and a change of icon alone does not.
             const refresh = () => root.keep(notification);
-            notification.summaryChanged.connect(refresh);
-            notification.bodyChanged.connect(refresh);
+            const renew = () => {
+                root.keep(notification);
+                if (!root.toasts.includes(notification))
+                    root.admit(notification);
+            };
+            notification.summaryChanged.connect(renew);
+            notification.bodyChanged.connect(renew);
             notification.appIconChanged.connect(refresh);
             notification.imageChanged.connect(refresh);
             notification.urgencyChanged.connect(refresh);
-
-            // Closed by the application itself, the notification no longer
-            // applies and neither does the record. Closed because its time
-            // ran out, the record is the point. Closed because it was
-            // dismissed, the record has already gone — see `dismiss`.
-            notification.closed.connect(reason => {
-                if (reason === NotificationCloseReason.CloseRequested)
-                    root.forget(root.recordOf(notification));
-                root.live.delete(notification);
-            });
         }
     }
 }

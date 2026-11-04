@@ -62,6 +62,8 @@ Singleton {
     readonly property string forward: "󰅂"
     readonly property string close: "󰅖"
     readonly property string bell: "󰂚"
+    // a notification that is critical, beside the word that says so
+    readonly property string alert: "󰀦"
     readonly property string search: "󰍉"
     readonly property string check: "󰄬"
 
