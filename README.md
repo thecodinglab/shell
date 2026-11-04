@@ -18,15 +18,20 @@ by four grey bars moving at its trailing end, the way a live activity widens
 the island. Most of the time it is not there at all: the screen belongs to
 the windows on it, nothing is reserved, and all the shell occupies is a few
 pixels along the top edge. Reach the top of the screen and the tab slides
-back out; leave and it puts itself away again. A notification drops out from
-under the top edge on its own, whether the tab is out or not, as a pane of
-glass rather than more of the bezel; one that goes back up unread is kept in
-the notifications panel, and one that was clicked or put away is not. So
-does the volume: set it from a media key and a capsule of glass drops out
-under the notch on the focused monitor with the speaker glyph, a bar and the
-figure, moves with every further press, and goes back up a moment and a half
-after the last one. It is not there while the notch is open, where the
-slider already is.
+back out; leave and it puts itself away again. A notification grows out
+of the top edge on its own, whether the tab is out or not, as more of the
+bezel: it comes out at the width of the tab and widens as it deepens, its
+corners rounding out the way the tab's do when it unfolds, with ears where
+it meets the edge. Another one arriving opens at the head of it, under the
+edge, and the stack deepens to take it, pushing the rest down, with nothing
+between them but a hairline; one going closes up and the rest follow it up.
+One that goes back up unread is kept in the notifications panel, and one
+that was clicked or put away is not. The volume comes out on its own too,
+but as glass: set it from a media key and a capsule drops out under the
+notch, or under the notifications while there are any, on the focused
+monitor with the speaker glyph, a bar and the figure, moves with every
+further press, and goes back up a moment and a half after the last one.
+It is not there while the notch is open, where the slider already is.
 
 While something is recording the microphone, reading the camera or sharing
 the screen, the pill carries a dot at its trailing end, the way a mac puts
@@ -258,7 +263,7 @@ to the rest of the config.
 
 Spotlight is frosted glass on a mac, and so is everything here that floats
 over the windows rather than hanging from the edge: Spotlight's two pieces,
-the toasts, the volume reading and the password pane. They follow the
+the volume reading and the password pane. They follow the
 palette, light in a light session, and their ground is near opaque —
 `glassOpacity`, 0.94 by default — so they read over anything. It goes no
 lower than 0.92, and a lower setting is raised to that: every caption on the
@@ -271,7 +276,7 @@ the compositor; give it a blur rule for the layer:
 hl.layer_rule({ name = "spotlight-blur", match = { namespace = "^shell-spotlight$" }, blur = true, ignore_alpha = 0.5 })
 ```
 
-The notch's layer can have one too, for the toasts and the volume reading.
+The notch's layer can have one too, for the volume reading.
 The bezel is opaque, so the blur only shows under the glass, and the slab
 itself stays crisp:
 

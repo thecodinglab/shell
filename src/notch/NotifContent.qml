@@ -10,8 +10,8 @@ import qs.widgets
 // What a notification says, laid out: the sender's mark, the title with who
 // it came from beside it, the body under that, and under the body whatever
 // the notification offers to do. A toast and a row in the panel are this
-// same thing on two different grounds — glass and the bezel — so it takes
-// its colours from whichever one it is standing on.
+// same thing in two places, both on the bezel, and it takes its colours
+// from whatever it is standing on.
 RowLayout {
     id: root
 

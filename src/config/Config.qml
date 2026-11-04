@@ -77,8 +77,8 @@ Singleton {
     // the drawing at the size it was drawn.
     readonly property real scale: value("scale", 1.25)
 
-    // How much of the glass — the toasts, the volume reading, Spotlight and
-    // the password prompt — is its own ground rather than what is behind it.
+    // How much of the glass — the volume reading, Spotlight and the
+    // password prompt — is its own ground rather than what is behind it.
     // Near opaque by default, so it reads over anything; with a blur layer
     // rule in the compositor a little lower lets the frosted desktop
     // through. Anything below 0.92 is raised to 0.92: that is as far as the

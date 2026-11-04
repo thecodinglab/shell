@@ -2,11 +2,12 @@ import QtQuick
 import Quickshell.Services.Notifications
 import qs.theme
 import qs.services
-import qs.widgets
 
-// A notification, dropping out from under the notch: a pane of glass, since
-// it floats over the windows rather than hanging from the edge the way the
-// bezel does.
+// A notification, opening out of the top edge as more of the notch: the
+// bezel rather than glass, laid straight onto the ground of the stack it is
+// one of — see `Notch.stack` — with nothing between it and the one above but
+// a hairline. The stack draws the ground, the shadow and the corners; this
+// is only what is on them.
 //
 // It leaves on its own after a while, and the clock stops while the pointer
 // is on it — the one case where you are demonstrably still reading. A
@@ -20,7 +21,7 @@ import qs.widgets
 // So what it shows is bound to the notification only while there is one, and
 // held as it was the moment it closed — the card that fades is the card that
 // was being read, not a blank one.
-Rectangle {
+Item {
     id: root
 
     required property var notification
@@ -37,10 +38,20 @@ Rectangle {
     property string image: root.notification?.image ?? ""
     property string icon: root.notification?.appIcon || root.notification?.desktopEntry || ""
 
+    // how tall it was when it closed — see `freeze`
+    property real held: 0
+
     // Keep what it says. Assigning each property its own current value
     // replaces the binding with that value, so nothing changes when the
-    // object the binding read from goes away.
+    // object the binding read from goes away. It keeps its height too: what
+    // it offered to do goes with the notification, and its place in the
+    // stack closes up from the height it had rather than jumping short by a
+    // row of buttons first. Once is enough; a second time it would measure
+    // itself without them.
     function freeze(): void {
+        if (!root.live)
+            return;
+        root.held = root.implicitHeight;
         root.live = false;
         root.urgent = root.urgent;
         root.title = root.title;
@@ -50,35 +61,24 @@ Rectangle {
         root.icon = root.icon;
     }
 
-    // glass, so what is drawn on it takes the pane's colours
-    objectName: Theme.paneTag
-
-    implicitHeight: content.implicitHeight + Theme.toastPadding * 2
-
-    // concentric with the corner of the sender's icon, the padding in
-    radius: Theme.toastRadius
-    color: Theme.pane.glass
+    implicitHeight: root.live ? content.implicitHeight + Theme.toastPadding * 2 : root.held
 
     Accessible.role: Accessible.AlertMessage
     Accessible.name: root.title
     Accessible.description: root.body
 
-    // it hangs over the desktop on its own, so it casts its own shadow
-    Shadow {
-        target: root
-        radius: root.radius
-    }
-
-    // An urgent one is told by its ground as well as by its rim: a wash of
-    // the red under everything on it.
+    // An urgent one is told by its ground: a wash of the red under
+    // everything on it, inset from the stack's edges and concentric with its
+    // corners, so the outline of the stack stays the bezel's all the way
+    // round and into the ears, wherever in it the urgent one is.
     Rectangle {
         anchors.fill: parent
+        anchors.margins: Theme.toastPadding / 2
 
         visible: root.urgent
 
-        radius: root.radius
-        color: Theme.pane.urgentSurface
-        opacity: 0.5
+        radius: Theme.toastRadius - Theme.toastPadding / 2
+        color: Theme.bezel.urgentSurface
     }
 
     // The pointer anywhere on it, over a button on it or not: what holds the
@@ -115,7 +115,11 @@ Rectangle {
     NotifContent {
         id: content
 
-        anchors.fill: parent
+        // from the top rather than filling it, so that what is left once
+        // the buttons have gone stays where it was — see `freeze`
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.margins: Theme.toastPadding
 
         title: root.title
@@ -139,14 +143,6 @@ Rectangle {
         // not turn up in the panel afterwards.
         onActed: action => Notifs.act(root.notification, action)
         onDismissed: Notifs.dismiss(root.notification)
-    }
-
-    // the rim of the glass, or the red's when it is urgent, over everything
-    // else on it
-    Rim {
-        target: root
-        radius: root.radius
-        border.color: root.urgent ? Theme.pane.urgentBorder : Theme.pane.edge
     }
 
     // Out of time: off the screen, and into the panel. A critical one has no

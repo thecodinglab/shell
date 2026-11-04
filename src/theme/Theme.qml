@@ -50,8 +50,8 @@ Singleton {
 
     // ── the two materials ─────────────────────────────────────────────────
 
-    // The bezel: the pill, the tally, the ears, the open sheet and every
-    // panel on it. It is the black of the screen's own frame, the way the
+    // The bezel: the pill, the tally, the ears, the notifications, the open
+    // sheet and every panel on it. It is the black of the screen's own frame, the way the
     // notch on a macbook is the bezel around it rather than a grey laid over
     // the windows, so it is dark whatever the palette is: the darker end of
     // it pushed most of the way to black, keeping its tint so the shell still
@@ -71,8 +71,7 @@ Singleton {
     }
 
     // The pane: glass, for what floats over the windows rather than hanging
-    // from the edge — a toast, the volume reading, Spotlight, the password
-    // prompt. It follows the palette. Dark, its ground is the palette's
+    // from the edge — the volume reading, Spotlight, the password prompt. It follows the palette. Dark, its ground is the palette's
     // pushed a little toward black, lighter than the bezel it drops out from
     // under; light, the palette's own ground, with an ink pushed toward black
     // until there is room in it for four tiers of text. On a light ground the

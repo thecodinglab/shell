@@ -234,13 +234,10 @@ PanelWindow {
             item: slab
         }
 
-        // the toasts, by what is in the stack rather than by the view, which
-        // is taller than that — see `toasts`
+        // the toasts, by the stack that holds them rather than by the view,
+        // which is taller than that — see `toasts`
         Region {
-            x: toasts.x
-            y: toasts.y
-            width: toasts.width
-            height: toasts.contentHeight
+            item: stack
         }
     }
 
@@ -352,33 +349,32 @@ PanelWindow {
 
     // ── under the slab ────────────────────────────────────────────────────
     //
-    // The volume reading and the toasts hang off the bottom edge of the slab,
-    // which put away is the top of the screen: one arriving on its own drops
-    // straight out of the top edge and leaves the notch where it was. If the
-    // notch does come out while one is up — because the pointer went for it —
-    // they ride down ahead of it rather than being covered by it, and the
+    // The notifications are more of the notch: a stack of the bezel hanging
+    // from the top edge with ears of its own, behind the slab and the tally,
+    // so that whichever of them is out is part of it rather than over it.
+    // The volume reading is glass, and hangs under all of it. If the notch
+    // comes out while a notification is up — because the pointer went for
+    // it — the stack deepens by as much as the pill reaches down, and the
     // toasts get out of the way entirely once the panel opens.
     //
     // Declared ahead of the slab, and so behind it: something on its way out
     // from under the top edge passes behind the pill if the pill is out, the
     // way it would if it really were coming out from under it.
 
-    // The volume, set from a media key, is announced the way a notification
-    // is. The shell root decides which monitor it drops on — see `showVolume`
-    // — and an open notch has its own slider in view, so it is never asked.
+    // The volume, set from a media key, is announced under the top edge
+    // without the notch. The shell root decides which monitor it drops on —
+    // see `showVolume` — and an open notch has its own slider in view, so it
+    // is never asked.
     Osd {
         id: osd
 
         anchors.horizontalCenter: parent.horizontalCenter
 
-        // where it rests, hanging under the slab like the toasts do — or the
-        // tally, see `hang`; put away it is that plus its own height further
-        // up, off the top edge
-        readonly property int rest: root.hang + Theme.toastSpacing
-        // How far the toasts have to move down to hang under it: taken from
-        // where it actually is, frame by frame, so they move in lockstep with
-        // it rather than on a curve of their own.
-        readonly property int room: Math.max(0, osd.y + osd.height + Theme.toastSpacing - osd.rest)
+        // Where it rests, hanging under the slab — or the tally, see `hang` —
+        // or under the notifications while there are any, following the foot
+        // of the stack frame by frame as it deepens and gives back; put away
+        // it is that plus its own height further up, off the top edge.
+        readonly property int rest: Math.max(root.hang, stack.height) + Theme.toastSpacing
 
         // whole pixels, or the text on it shimmers as it moves
         y: Math.round(osd.rest - osd.slide * (osd.rest + osd.height))
@@ -389,112 +385,221 @@ PanelWindow {
         text: Audio.muted ? "Muted" : Fmt.percent(Audio.volume)
     }
 
-    // A list rather than a column so that a toast can be seen leaving: the
-    // view keeps a delegate alive until its exit has played, where a column
-    // would drop it the moment it left the model.
-    ListView {
-        id: toasts
+    // ── the notifications ─────────────────────────────────────────────────
+
+    // What lifts the stack off the window behind it, pulled up off the top
+    // edge by the radius of its corners the way the slab's is.
+    Shadow {
+        target: stack
+        radius: stack.bottomLeftRadius
+
+        anchors.topMargin: -stack.bottomLeftRadius
+
+        visible: stack.visible
+    }
+
+    // The notifications that are up, as one piece of the notch: the bezel,
+    // square where it meets the top edge and round below, with ears where
+    // its sides meet the edge. The first one to arrive grows it out of the
+    // edge at the pill's width, and it widens to a notification's as it
+    // deepens, its corners rounding out from the hardware notch's as it
+    // goes, the way the slab unfolds into the sheet. Each one after that
+    // opens at the head of it, under the edge, and pushes the rest down, so
+    // the stack only ever deepens and gives back: there is never a gap in it,
+    // and never more than one of it. The last one going takes it back up
+    // into the edge.
+    ClippingRectangle {
+        id: stack
+
+        // How far it has widened, from the pill at 0 to a notification's
+        // width at 1. What it carries fades on this, the way the page fades
+        // on the slab's unfold.
+        readonly property real unfold: Math.max(0, Math.min(1, (stack.width - slab.pillWidth) / (Theme.toastWidth - slab.pillWidth)))
+        // How much of the notifications is out, frame by frame, as each one
+        // opens and closes — see the delegate.
+        readonly property real fill: toasts.contentHeight
+        // The room it keeps at its head for the pill or the tally, which hang
+        // in front of it from the same edge — see `hang`. Taken up only as the
+        // notifications come out, so an empty stack is nothing at all rather
+        // than a band either side of the pill.
+        readonly property real head: Math.min(root.hang, stack.fill)
 
         anchors.horizontalCenter: parent.horizontalCenter
-        // slab.y is -slab.height while the notch is put away, so this is the
-        // top of the screen — or the foot of the tally, see `hang` — until
-        // the notch slides out from over it, and the volume pill pushes them
-        // further down while it is out
-        y: root.hang + Theme.toastSpacing + osd.room
+        y: 0
 
-        width: Theme.toastWidth
-        // As tall as there is screen for it: the view keeps a toast on for
-        // its exit only while it is inside the view, and a view sized to its
-        // contents has already shrunk out from under it by then. The mask
-        // takes the height of what is actually there — see `occupied`.
-        height: Theme.windowHeight
-        spacing: Theme.toastSpacing
+        // whole pixels, all of it, or its edge and the text on it shimmer
+        width: Math.round(spreading.value)
+        height: Math.round(stack.head + stack.fill)
 
-        // it is a stack, not a scroller: no flicking, no wheel
-        interactive: false
+        visible: stack.height > 0
 
-        // Diffed against what is already there, so a notification arriving
-        // or leaving touches only its own toast. A plain array would rebuild
-        // every one of them — restarting their clocks, reloading their icons
-        // — each time the list changed.
-        model: ScriptModel {
-            values: root.expanded ? [] : Notifs.toasts
+        topLeftRadius: 0
+        topRightRadius: 0
+        // the pill's corners rounding out into a notification's, which are
+        // concentric with the sender's icon, the padding in
+        bottomLeftRadius: Math.min(Theme.notchRadius + (Theme.toastRadius - Theme.notchRadius) * stack.unfold, stack.height / 2)
+        bottomRightRadius: stack.bottomLeftRadius
+        color: Theme.bezel.ground
+
+        // the way the notch grows, from the pill's width while it is empty
+        Spring {
+            id: spreading
+
+            leaf: "windows"
+            to: toasts.count > 0 ? Theme.toastWidth : slab.pillWidth
         }
 
-        delegate: Toast {
-            required property var modelData
+        // A list rather than a column so that a toast can be seen leaving:
+        // the view keeps a delegate on until it has closed up, where a column
+        // would drop it the moment it left the model.
+        ListView {
+            id: toasts
 
-            width: ListView.view.width
-            notification: modelData
-        }
+            // laid out at a notification's width from the start, and shown
+            // by the stack widening over it from the middle, rather than
+            // reflowing on every frame
+            x: Math.round((stack.width - toasts.width) / 2)
+            y: Math.round(stack.head)
 
-        // A new one drops out of the top edge — from behind the pill, if the
-        // pill is out — to where it hangs, fading in as it comes.
-        add: Transition {
-            id: arrive
+            width: Theme.toastWidth
+            // As tall as there is screen for it, or one opening at the foot
+            // of a full stack would be laid out off the end of the view. The
+            // stack clips it to what is out, and the mask takes the stack —
+            // see `occupied`.
+            height: Theme.windowHeight
 
-            Slide {
-                property: "y"
-                // Read off the transition itself: written unqualified, the
-                // attached property belongs to this animation, and the view
-                // fills in only the transition's. The item is there only once
-                // it is running; the binding is first evaluated well before.
-                from: arrive.ViewTransition.item ? arrive.ViewTransition.destination.y - arrive.ViewTransition.item.height - toasts.y : 0
+            // in after the stack has started to widen, and all there by two
+            // thirds of the way, so it is never seen squeezed
+            opacity: Math.max(0, Math.min(1, (stack.unfold - 0.2) / 0.45))
+
+            // it is a stack, not a scroller: no flicking, no wheel
+            interactive: false
+
+            // Diffed against what is already there, so a notification
+            // arriving or leaving touches only its own toast. A plain array
+            // would rebuild every one of them — restarting their clocks,
+            // reloading their icons — each time the list changed.
+            model: ScriptModel {
+                values: root.expanded ? [] : Notifs.toasts
             }
 
-            Fade {
-                property: "opacity"
-                from: 0
-                to: 1
-            }
-        }
+            // Its place in the stack, which opens from nothing to the height
+            // of the toast in it and closes back up to nothing again. The
+            // toast stands on the foot of it, so as it opens the toast comes
+            // down out of the top of its place — out of the top edge, for the
+            // newest, from behind the pill if the pill is out — and as it
+            // closes the toast goes back up into it. The rest of the stack
+            // follows its foot, so they move in step with it rather than on a
+            // curve of their own, and the stack deepens by exactly as much.
+            delegate: Item {
+                id: slot
 
-        // ...and one leaving fades where it is.
-        remove: Transition {
-            Fade {
-                leaf: "fadeOut"
-                property: "opacity"
-                to: 0
-            }
-        }
+                required property var modelData
+                required property int index
 
-        // The rest move the way hyprland moves a layer: down in step with a
-        // new one dropping in above them...
-        displaced: Transition {
-            Slide {
-                leaf: "layers"
-                property: "y"
-            }
+                // in the view, and so to be opened: set a moment after it is
+                // made, so it opens from nothing rather than starting out
+                property bool placed: false
+                // out of the model, and closing up before it goes
+                property bool leaving: false
+                // whether a hairline parts it from the one above, held as it
+                // was once it is on its way out, when it no longer has an
+                // index to tell
+                property bool ruled: slot.index > 0
 
-            // One still fading in when it is pushed along has its arrival
-            // cut short by this, and would be left half there: it finishes
-            // fading in on the way.
-            Fade {
-                property: "opacity"
-                to: 1
-            }
-        }
+                width: ListView.view.width
+                height: Math.round(toast.implicitHeight * Math.max(0, opening.value))
 
-        // ...and back up over the gap one leaving has left, but only once it
-        // has gone, rather than up through it while it is still fading.
-        removeDisplaced: Transition {
-            // as above
-            Fade {
-                property: "opacity"
-                to: 1
-            }
+                clip: true
 
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: Theme.duration("fadeOut")
+                Component.onCompleted: Qt.callLater(() => slot.placed = true)
+
+                // Kept on in the view until it has closed up, unless there is
+                // nothing of it out to close. Held before it starts closing:
+                // with no motion it is closed at once, and lets go there and
+                // then.
+                ListView.onRemove: {
+                    slot.ruled = slot.ruled;
+                    toast.freeze();
+                    if (opening.value > 0 || opening.moving)
+                        slot.ListView.delayRemove = true;
+                    slot.leaving = true;
                 }
 
-                Slide {
-                    leaf: "layers"
-                    property: "y"
+                // out of the top edge the way the notch comes out of it
+                Spring {
+                    id: opening
+
+                    to: slot.placed && !slot.leaving ? 1 : 0
+
+                    onArrived: {
+                        if (slot.leaving)
+                            slot.ListView.delayRemove = false;
+                    }
+                }
+
+                Toast {
+                    id: toast
+
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+
+                    notification: slot.modelData
+
+                    // fading as it closes up, but not as it opens: it comes
+                    // out of the edge whole, the way the notch does
+                    opacity: slot.leaving ? Math.max(0, Math.min(1, opening.value)) : 1
+                }
+
+                // in front of the toast, which slides under it
+                Rule {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.leftMargin: Theme.toastPadding
+                    anchors.rightMargin: Theme.toastPadding
+                    y: 0
+
+                    visible: slot.ruled
                 }
             }
         }
+    }
+
+    // The stack's ears, flaring its sides out into the top edge the way the
+    // slab's do, and going the same way once only its rounded corners are
+    // still below the edge — see `earReach`.
+    readonly property int stackEar: Math.max(0, Math.min(Theme.earRadius, stack.height - stack.bottomLeftRadius))
+
+    Ear {
+        x: stack.x - root.stackEar
+        y: 0
+        width: root.stackEar
+        height: root.stackEar
+
+        visible: root.stackEar > 0
+    }
+
+    Ear {
+        x: stack.x + stack.width
+        y: 0
+        width: root.stackEar
+        height: root.stackEar
+
+        visible: root.stackEar > 0
+        mirror: true
+    }
+
+    // The line round it that tells it from a dark window, as round the open
+    // sheet: it hangs over the desktop as the sheet does, carrying as much.
+    // It comes up as the stack widens, and is not there while the stack is
+    // still no wider than the pill, which has none.
+    KeyLine {
+        target: stack
+        radius: stack.bottomLeftRadius
+        ear: root.stackEar
+
+        opacity: stack.unfold
     }
 
     // ── the tally ─────────────────────────────────────────────────────────
