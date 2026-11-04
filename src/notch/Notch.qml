@@ -234,8 +234,8 @@ PanelWindow {
             item: slab
         }
 
-        // the toasts, by the stack that holds them rather than by the view,
-        // which is taller than that — see `toasts`
+        // the toasts, by the stack that holds them, which clips them to as
+        // much of them as is out
         Region {
             item: stack
         }
@@ -387,6 +387,90 @@ PanelWindow {
 
     // ── the notifications ─────────────────────────────────────────────────
 
+    // What should be hanging under this notch: the toasts that are up,
+    // unless the panel is open, where the toasts get out of the way.
+    readonly property var current: root.expanded ? [] : Notifs.toasts
+
+    // A toast in the stack: one that is up, or one on its way out, closing
+    // up where it stood. Kept here rather than left to a view, because a
+    // view lets go of the place of whatever has left its model: the toast
+    // on its way out stays where it was drawn while the rest close over it,
+    // and stops counting toward how deep the stack is, so the stack comes
+    // up short and drops back the moment it has gone.
+    component Entry: QtObject {
+        property var notification
+        // out of `current`, and closing up before it goes
+        property bool gone: false
+    }
+
+    Component {
+        id: entryComponent
+
+        Entry {}
+    }
+
+    // in the order they stand, newest at the head, the ones on their way
+    // out where they were
+    property var shown: []
+    // the entry each notification that is up stands in
+    readonly property var entries: new Map()
+
+    // Bring `shown` in line with `current`. What has left it is marked gone
+    // and keeps its place until it has closed up — see `release`; what has
+    // come into it opens just above whichever of the ones after it is
+    // already there, which for one arriving is the head of the stack. One
+    // that comes back while it is still closing up gets a new entry, opening
+    // at its new place, rather than turning round in its old one: what is on
+    // its way out has stopped being a notification and is only a picture of
+    // one — see Toast.freeze.
+    //
+    // What has left starts closing a moment later, on the same turn as what
+    // has come in starts opening — see `placed` — so one pushed off the foot
+    // as another opens at the head are the same spring run both ways, and the
+    // stack holds its depth to the pixel while they trade places.
+    function restack(): void {
+        const left = [];
+        for (const [notification, entry] of root.entries) {
+            if (!root.current.includes(notification)) {
+                left.push(entry);
+                root.entries.delete(notification);
+            }
+        }
+        if (left.length > 0)
+            Qt.callLater(() => left.forEach(entry => entry.gone = true));
+
+        const shown = [...root.shown];
+        root.current.forEach((notification, i) => {
+            if (root.entries.has(notification))
+                return;
+
+            const entry = entryComponent.createObject(root, {
+                notification: notification
+            });
+            root.entries.set(notification, entry);
+
+            let at = -1;
+            for (let j = i + 1; j < root.current.length && at < 0; j++)
+                at = shown.indexOf(root.entries.get(root.current[j]));
+            if (at < 0)
+                at = i === 0 ? 0 : shown.indexOf(root.entries.get(root.current[i - 1])) + 1;
+            shown.splice(at, 0, entry);
+        });
+        root.shown = shown;
+    }
+
+    onCurrentChanged: root.restack()
+    Component.onCompleted: root.restack()
+
+    // An entry that has closed up, out of the stack.
+    function release(entry: Entry): void {
+        if (!root.shown.includes(entry))
+            return;
+
+        root.shown = root.shown.filter(e => e !== entry);
+        entry.destroy();
+    }
+
     // What lifts the stack off the window behind it, pulled up off the top
     // edge by the radius of its corners the way the slab's is.
     Shadow {
@@ -417,7 +501,7 @@ PanelWindow {
         readonly property real unfold: Math.max(0, Math.min(1, (stack.width - slab.pillWidth) / (Theme.toastWidth - slab.pillWidth)))
         // How much of the notifications is out, frame by frame, as each one
         // opens and closes — see the delegate.
-        readonly property real fill: toasts.contentHeight
+        readonly property real fill: toasts.implicitHeight
         // The room it keeps at its head for the pill or the tally, which hang
         // in front of it from the same edge — see `hang`. Taken up only as the
         // notifications come out, so an empty stack is nothing at all rather
@@ -446,13 +530,13 @@ PanelWindow {
             id: spreading
 
             leaf: "windows"
-            to: toasts.count > 0 ? Theme.toastWidth : slab.pillWidth
+            to: root.current.length > 0 ? Theme.toastWidth : slab.pillWidth
         }
 
-        // A list rather than a column so that a toast can be seen leaving:
-        // the view keeps a delegate on until it has closed up, where a column
-        // would drop it the moment it left the model.
-        ListView {
+        // A column of what `shown` holds, the ones on their way out among
+        // them, so each closes up where it stands and counts toward the
+        // depth of the stack until it has.
+        Column {
             id: toasts
 
             // laid out at a notification's width from the start, and shown
@@ -462,105 +546,99 @@ PanelWindow {
             y: Math.round(stack.head)
 
             width: Theme.toastWidth
-            // As tall as there is screen for it, or one opening at the foot
-            // of a full stack would be laid out off the end of the view. The
-            // stack clips it to what is out, and the mask takes the stack —
-            // see `occupied`.
-            height: Theme.windowHeight
 
             // in after the stack has started to widen, and all there by two
             // thirds of the way, so it is never seen squeezed
             opacity: Math.max(0, Math.min(1, (stack.unfold - 0.2) / 0.45))
 
-            // it is a stack, not a scroller: no flicking, no wheel
-            interactive: false
-
-            // Diffed against what is already there, so a notification
-            // arriving or leaving touches only its own toast. A plain array
-            // would rebuild every one of them — restarting their clocks,
-            // reloading their icons — each time the list changed.
-            model: ScriptModel {
-                values: root.expanded ? [] : Notifs.toasts
-            }
-
-            // Its place in the stack, which opens from nothing to the height
-            // of the toast in it and closes back up to nothing again. The
-            // toast stands on the foot of it, so as it opens the toast comes
-            // down out of the top of its place — out of the top edge, for the
-            // newest, from behind the pill if the pill is out — and as it
-            // closes the toast goes back up into it. The rest of the stack
-            // follows its foot, so they move in step with it rather than on a
-            // curve of their own, and the stack deepens by exactly as much.
-            delegate: Item {
-                id: slot
-
-                required property var modelData
-                required property int index
-
-                // in the view, and so to be opened: set a moment after it is
-                // made, so it opens from nothing rather than starting out
-                property bool placed: false
-                // out of the model, and closing up before it goes
-                property bool leaving: false
-                // whether a hairline parts it from the one above, held as it
-                // was once it is on its way out, when it no longer has an
-                // index to tell
-                property bool ruled: slot.index > 0
-
-                width: ListView.view.width
-                height: Math.round(toast.implicitHeight * Math.max(0, opening.value))
-
-                clip: true
-
-                Component.onCompleted: Qt.callLater(() => slot.placed = true)
-
-                // Kept on in the view until it has closed up, unless there is
-                // nothing of it out to close. Held before it starts closing:
-                // with no motion it is closed at once, and lets go there and
-                // then.
-                ListView.onRemove: {
-                    slot.ruled = slot.ruled;
-                    toast.freeze();
-                    if (opening.value > 0 || opening.moving)
-                        slot.ListView.delayRemove = true;
-                    slot.leaving = true;
+            Repeater {
+                // Diffed against what is already there, so a notification
+                // arriving or leaving touches only its own toast. A plain
+                // array would rebuild every one of them — restarting their
+                // clocks, reloading their icons — each time the list changed.
+                model: ScriptModel {
+                    values: root.shown
                 }
 
-                // out of the top edge the way the notch comes out of it
-                Spring {
-                    id: opening
+                // Its place in the stack, which opens from nothing to the
+                // height of the toast in it and closes back up to nothing
+                // again. The toast stands on the foot of it, so as it opens
+                // the toast comes down out of the top of its place — out of
+                // the top edge, for the newest, from behind the pill if the
+                // pill is out — and as it closes the toast goes back up into
+                // it. The rest of the stack follows its foot, so they move in
+                // step with it rather than on a curve of their own, and the
+                // stack deepens by exactly as much. A new one opening at the
+                // head as the last is pushed off the foot is the one spring
+                // twice, so the stack holds its depth while they trade places.
+                delegate: Item {
+                    id: slot
 
-                    to: slot.placed && !slot.leaving ? 1 : 0
+                    required property Entry modelData
+                    required property int index
 
-                    onArrived: {
-                        if (slot.leaving)
-                            slot.ListView.delayRemove = false;
+                    // in the stack, and so to be opened: set a moment after
+                    // it is made, so it opens from nothing rather than
+                    // starting out
+                    property bool placed: false
+                    readonly property bool leaving: slot.modelData.gone
+
+                    width: toasts.width
+                    height: Math.round(toast.implicitHeight * Math.max(0, opening.value))
+
+                    clip: true
+
+                    Component.onCompleted: Qt.callLater(() => slot.placed = true)
+
+                    // What it shows is held from the moment it leaves. With
+                    // nothing of it out yet there is nothing to close up, and
+                    // it goes there and then; so does one that closes with no
+                    // motion at all, which the spring reports as arriving.
+                    onLeavingChanged: {
+                        if (!slot.leaving)
+                            return;
+
+                        toast.freeze();
+                        if (!slot.placed || (opening.value <= 0 && !opening.moving))
+                            Qt.callLater(() => root.release(slot.modelData));
                     }
-                }
 
-                Toast {
-                    id: toast
+                    // out of the top edge the way the notch comes out of it
+                    Spring {
+                        id: opening
 
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
+                        to: slot.placed && !slot.leaving ? 1 : 0
 
-                    notification: slot.modelData
+                        onArrived: {
+                            if (slot.leaving)
+                                Qt.callLater(() => root.release(slot.modelData));
+                        }
+                    }
 
-                    // fading as it closes up, but not as it opens: it comes
-                    // out of the edge whole, the way the notch does
-                    opacity: slot.leaving ? Math.max(0, Math.min(1, opening.value)) : 1
-                }
+                    Toast {
+                        id: toast
 
-                // in front of the toast, which slides under it
-                Rule {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.leftMargin: Theme.toastPadding
-                    anchors.rightMargin: Theme.toastPadding
-                    y: 0
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
 
-                    visible: slot.ruled
+                        notification: slot.modelData.notification
+
+                        // fading as it closes up, but not as it opens: it
+                        // comes out of the edge whole, the way the notch does
+                        opacity: slot.leaving ? Math.max(0, Math.min(1, opening.value)) : 1
+                    }
+
+                    // in front of the toast, which slides under it
+                    Rule {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.leftMargin: Theme.toastPadding
+                        anchors.rightMargin: Theme.toastPadding
+                        y: 0
+
+                        visible: slot.index > 0
+                    }
                 }
             }
         }

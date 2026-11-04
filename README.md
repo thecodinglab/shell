@@ -24,7 +24,10 @@ bezel: it comes out at the width of the tab and widens as it deepens, its
 corners rounding out the way the tab's do when it unfolds, with ears where
 it meets the edge. Another one arriving opens at the head of it, under the
 edge, and the stack deepens to take it, pushing the rest down, with nothing
-between them but a hairline; one going closes up and the rest follow it up.
+between them but a hairline; one going closes up where it stands and the
+rest follow it up. With three up, a fourth pushes the oldest that can go
+off the foot as it opens at the head, the one closing up as the other
+opens, so the stack holds its depth while they trade places.
 One that goes back up unread is kept in the notifications panel, and one
 that was clicked or put away is not. The volume comes out on its own too,
 but as glass: set it from a media key and a capsule drops out under the
