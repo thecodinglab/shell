@@ -137,6 +137,63 @@ ShellRoot {
         }
     }
 
+    // ── bluetooth, from wherever it was asked for ─────────────────────────
+    //
+    // A device connecting, disconnecting, or done doing either, announced
+    // on the focused monitor — or on the one already announcing it, so a
+    // connection that is still being made does not jump screens when the
+    // focus moves while it is.
+    Connections {
+        target: Bt
+
+        function onMoved(): void {
+            const notch = notches.instances.find(n => n.hailing) ?? root.focused();
+            notch?.showDevice(Bt.heard, Bt.failed);
+        }
+    }
+
+    // Bluetooth from the command line, in place of `bluetoothctl connect`:
+    //
+    //     qs -p ~/dev/shell/src ipc call bluetooth connect "WH-1000XM4"
+    //     qs -p ~/dev/shell/src ipc call bluetooth disconnect 94:DB:56:94:55:D4
+    //
+    // Bluez has no word for a connection that is still being made, so one
+    // started anywhere else is only heard of once it has been — or has
+    // failed. Started here, the shell knows it is under way from the first
+    // moment, and the announcement above says so for as long as it is.
+    // A device is named by its address, its name, or any part of the name
+    // that no other device shares; what was done, or why nothing was, is
+    // printed back.
+    IpcHandler {
+        target: "bluetooth"
+
+        function connect(device: string): string {
+            const found = Bt.find(device);
+            if (!found)
+                return `no one device matches "${device}"`;
+            if (found.connected)
+                return `${Bt.label(found)} is already connected`;
+            if (Bt.busy(found))
+                return `${Bt.label(found)} is busy: ${Bt.status(found)}`;
+
+            found.connect();
+            return `connecting to ${Bt.label(found)}`;
+        }
+
+        function disconnect(device: string): string {
+            const found = Bt.find(device);
+            if (!found)
+                return `no one device matches "${device}"`;
+            if (!found.connected)
+                return `${Bt.label(found)} is not connected`;
+            if (Bt.busy(found))
+                return `${Bt.label(found)} is busy: ${Bt.status(found)}`;
+
+            found.disconnect();
+            return `disconnecting from ${Bt.label(found)}`;
+        }
+    }
+
     // The notch from the command line, for a keybind:
     //
     //     qs -p ~/dev/shell/src ipc call notch toggle

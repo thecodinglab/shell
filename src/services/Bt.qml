@@ -1,4 +1,5 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
@@ -29,6 +30,78 @@ Singleton {
 
     // what the home tile shows, and what its icon is drawn from
     readonly property BluetoothDevice primary: root.devices.find(d => d.connected) ?? null
+
+    // ── what a device is in the middle of ─────────────────────────────────
+    //
+    // A connection is mostly made from outside the shell — `bluetoothctl
+    // connect`, a headset switched on, a keyboard waking up — so the shell
+    // hears about it the way it hears about the volume: bluez says a
+    // device's state has moved. The last device to move is `heard`, and
+    // `moved` goes out every time one does, for the notch to announce it.
+
+    // the device whose connection moved last
+    property BluetoothDevice heard: null
+    // It was being connected and went straight back to disconnected: the
+    // device never answered, or turned it down.
+    property bool failed: false
+
+    signal moved
+
+    // Bluez hands every device over with its state as the shell connects to
+    // it, which would otherwise announce every one of them at start.
+    property bool settled: false
+
+    Timer {
+        interval: 2000
+        running: true
+
+        onTriggered: root.settled = true
+    }
+
+    // One watcher per device, kept for as long as bluez knows it.
+    Variants {
+        model: Bluetooth.devices.values
+
+        QtObject {
+            id: watcher
+
+            required property BluetoothDevice modelData
+
+            readonly property int state: watcher.modelData.state
+            readonly property bool pairing: watcher.modelData.pairing
+            // what it was before the move being heard, to tell a connection
+            // that failed from one that was hung up on. Set rather than
+            // bound, or it would follow the state before the move was heard.
+            property int was: BluetoothDeviceState.Disconnected
+
+            Component.onCompleted: watcher.was = watcher.state
+            onStateChanged: {
+                root.hear(watcher.modelData, watcher.was === BluetoothDeviceState.Connecting && watcher.state === BluetoothDeviceState.Disconnected);
+                watcher.was = watcher.state;
+            }
+            onPairingChanged: root.hear(watcher.modelData, false)
+        }
+    }
+
+    function hear(device: BluetoothDevice, failed: bool): void {
+        if (!root.settled)
+            return;
+
+        root.heard = device;
+        root.failed = failed;
+        root.moved();
+    }
+
+    // What the announcement says under a device's name: what is happening
+    // to it, or what came of it.
+    function news(device: BluetoothDevice, failed: bool): string {
+        if (!device)
+            return "";
+        if (root.busy(device) || device.connected)
+            return root.status(device);
+
+        return failed ? "Couldn't connect" : "Disconnected";
+    }
 
     function label(device: BluetoothDevice): string {
         return device?.name || device?.deviceName || device?.address || "unknown device";
@@ -112,6 +185,22 @@ Singleton {
             return root.devices;
 
         return root.devices.filter(device => root.label(device).toLowerCase().includes(needle) || (device.address ?? "").toLowerCase().includes(needle));
+    }
+
+    // The one device `query` names, for the command line: its address, its
+    // name exactly, or failing those the only name it is part of — all
+    // without regard to case. Null if it names none, or more than one.
+    function find(query: string): BluetoothDevice {
+        const needle = (query ?? "").trim().toLowerCase();
+        if (needle.length === 0)
+            return null;
+
+        const exact = root.devices.find(device => (device.address ?? "").toLowerCase() === needle || root.label(device).toLowerCase() === needle);
+        if (exact)
+            return exact;
+
+        const partial = root.devices.filter(device => root.label(device).toLowerCase().includes(needle));
+        return partial.length === 1 ? partial[0] : null;
     }
 
     // One gesture for the whole lifecycle: pair what is new, connect what is

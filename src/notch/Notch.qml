@@ -207,6 +207,13 @@ PanelWindow {
         osd.show();
     }
 
+    // ...and a bluetooth device's connection moving, the same way.
+    readonly property bool hailing: hail.shown
+
+    function showDevice(device: var, failed: bool): void {
+        hail.show(device, failed);
+    }
+
     screen: root.modelData
 
     anchors {
@@ -383,6 +390,23 @@ PanelWindow {
         value: Audio.muted ? 0 : Audio.volume
         // a muted output draws an empty track, and the figure has to agree
         text: Audio.muted ? "Muted" : Fmt.percent(Audio.volume)
+    }
+
+    // A bluetooth device connecting or disconnecting, announced the same
+    // way and on the same monitor, see `showDevice`. It hangs under the
+    // volume reading while that is out, following it as it comes and goes,
+    // and stays in while the notch is open, where the bluetooth tile and
+    // panel already say it.
+    Hail {
+        id: hail
+
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        readonly property int rest: osd.rest + Math.round(Math.max(0, 1 - osd.slide) * (osd.height + Theme.toastSpacing))
+
+        y: Math.round(hail.rest - hail.slide * (hail.rest + hail.height))
+
+        suppressed: root.unfolded
     }
 
     // ── the notifications ─────────────────────────────────────────────────

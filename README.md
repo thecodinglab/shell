@@ -35,6 +35,17 @@ notch, or under the notifications while there are any, on the focused
 monitor with the speaker glyph, a bar and the figure, moves with every
 further press, and goes back up a moment and a half after the last one.
 It is not there while the notch is open, where the slider already is.
+A bluetooth device connecting or disconnecting comes out the same way, as
+a capsule with the device's glyph, its name and what is happening to it,
+under the volume reading if that is out too. Once the device has settled
+it says connected, disconnected, or couldn't connect, and goes back up a
+moment and a half later. Bluez has no word for a connection still being
+made, so one started from the panel or from the shell's own `bluetooth
+connect` call — see below — is the only kind the shell sees under way:
+for those it says connecting, with a spinner turning at its end, for as
+long as that takes. One started anywhere else, `bluetoothctl connect` or
+a headset switched on, is only heard of once it has been made. It stays
+in while the notch is open, where the bluetooth panel says the same.
 
 While something is recording the microphone, reading the camera or sharing
 the screen, the pill carries a dot at its trailing end, the way a mac puts
@@ -361,6 +372,8 @@ qs -p ~/dev/shell/src ipc call notch dismiss        # put away the newest notifi
 qs -p ~/dev/shell/src ipc call spotlight toggle     # spotlight, on the focused monitor
 qs -p ~/dev/shell/src ipc call spotlight search x   # ...with x already typed into it
 qs -p ~/dev/shell/src ipc call spotlight clipboard  # ...on the clipboard history
+qs -p ~/dev/shell/src ipc call bluetooth connect WH-1000XM4   # by address, name or a part of the name only it has
+qs -p ~/dev/shell/src ipc call bluetooth disconnect WH-1000XM4
 ```
 
 For the packaged build, `-p` is the store path the service runs from; the

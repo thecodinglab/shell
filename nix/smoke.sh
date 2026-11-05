@@ -168,6 +168,18 @@ for step in "${steps[@]}"; do
         fail "ipc call $step failed: $answer"
     [ -z "$answer" ] || fail "ipc call $step: $answer"
 done
+
+# The bluetooth calls do answer, with what they did; with no bluez there is
+# no device to find, and that is what they have to say.
+for step in "bluetooth connect nothing" "bluetooth disconnect nothing"; do
+    sleep "$dwell"
+    kill -0 "$shell" 2>/dev/null || fail "the shell exited before: ipc call $step"
+    # shellcheck disable=SC2086 # a step is the words of the call
+    answer=$(quickshell ipc --pid "$shell" call $step 2>&1) ||
+        fail "ipc call $step failed: $answer"
+    [ "$answer" = 'no one device matches "nothing"' ] || fail "ipc call $step: $answer"
+    steps+=("$step")
+done
 sleep "$dwell"
 kill -0 "$shell" 2>/dev/null || fail "the shell exited after the last step"
 
