@@ -71,20 +71,42 @@ and the sheet are one piece of hardware rather than a black tab turning into
 a pale window. While it is open a faint line in the palette's tint runs down
 its sides and along its bottom, never its top, the way a key line is drawn
 round the island on a phone, so the sheet keeps its edge over a window as
-dark as it is. It is laid out as a page rather than as a stack of boxes: the
-clock is its title, set large at the top left, and the sections follow down
-the page with nothing between them but air. Only the things that can be
-pressed have a ground of their own, and a list is a column of names with a
-hairline between them.
+dark as it is. It is laid out as a page rather than as a stack of boxes,
+the sections following down it with nothing between them but air. Only the
+things that can be pressed have a ground of their own, and a list is a
+column of names with a hairline between them.
+
+The sheet takes its size from each page as the page comes in — as the
+notch opens, and stepping from one page to another — up to half the
+screen, and then holds it for as long as that page is open. Nothing on the
+page moves the sheet under the pointer once it is there: a list filling up,
+a second player turning up or a device being found scrolls the page rather
+than growing it, with a band in the margin beside it while it does, and
+whatever the keyboard tabs to is scrolled into view. Something going leaves
+its room where it was: the home page keeps the sound and the four marks at
+its foot, an empty list says so in the middle of the room it had, and the
+rest read from the top down. Anything that floats — the list of outputs —
+is drawn over the page rather than laid out on it. Coming back to a page,
+or opening the notch again, measures it afresh.
+
+The page says what is going on and what is out of the ordinary, rather than
+reading out everything that is fine. With nothing wrong it is short: the
+head, what is playing, how loud and through what, and four marks. A figure
+nobody acts on — an address that never changes, a processor at one percent
+— stays on its own page and only comes out here when it is something to act
+on. What is rarely reached for sits behind a mark: the ways out of the
+session behind the power mark, which brings out a pane of their own — see
+below — and the other outputs behind the name of the one in use, a pop-up
+whose list floats over the page; escape folds the list back up before it
+folds the notch.
 
 | | |
 | --- | --- |
-| head | the clock grown into the title with the date under it; at the right the dots where they were, and a bell with a count of what is waiting, which leads to the notifications |
+| head | the clock at the size it was on the pill with the date under it; at the right the dots where they were, a bell with a count of what is waiting, which leads to the notifications, and the power mark, which brings out the power pane |
 | in use | only while something is: the microphone, the camera, the screen, each a lit disc with its name and the applications using it underneath |
-| now playing | one section per mpris player: cover, title, transport, and a scrubber the width of the page |
-| sound | the name of the section, where the sound is going, and a bar to set how loud; the head of the section leads to the panel |
-| tiles | two rows of two modules, each a capsule on a ground of its own the way the blocks of a control centre are: bluetooth, network, stay awake and system, each a disc, a name and one line on how it is doing; a chevron at the right says the tile leads to a panel, and stay awake, which has none, is a switch the size of the tile |
-| session | four discs at the foot: lock, sleep, restart and shut down, the last two asking "Restart?" or "Shut down?" before they do it |
+| now playing | the player playing, or the one picked: cover, title, artist, transport, and a scrubber the width of the page; every other player a line under it with its name, its track and a play button of its own, which picks it to lead |
+| sound | at the foot of the page, over the marks: a bar to set how loud, and at its end the name of the output, a pop-up with the list of outputs and a way on to the sound page |
+| marks | four discs in a row with their names under them: bluetooth, network, stay awake and system; the name gives way to what is wrong when something is |
 
 A disc lit in the accent means the thing behind it is on — the bluetooth
 radio up, a link carrying an address, the inhibitor held, the microphone
@@ -105,33 +127,44 @@ The volume bar is the notch's own control: tall enough to be the target, no
 knob, and the speaker glyph riding inside the fill. Drag or scroll the bar to
 set it; click the glyph to mute. When the fill passes under the glyph the
 glyph swaps its ink, so a bar at nothing and a bar that is muted both still
-have their mark. With nowhere for the sound to go, the head of the section
-says "No output" and the bar is greyed out and stays put.
+have their mark. With nowhere for the sound to go, the name at its end says
+"No output" and the bar is greyed out and stays put. The name is a pop-up:
+clicked, a menu of glass floats out of it over the page — under the name,
+or over it when there is no room below — with every output there is, the
+one in use checked, and one click on another sends the sound there and
+puts the menu away. At its foot, "Sound settings" leads to the sound page.
+A click anywhere else on the sheet, or escape, puts it away and does
+nothing more.
 
-The system tile's disc is a ring rather than a glyph — how busy the
-processor is, drawn in the ink the way the dials inside are, and red from
-nine tenths up — and the line under it carries the processor and memory
-figures, "CPU 12% · RAM 26%".
+Something playing in two places at once — music, and a video in the
+browser — leads with one that is playing, and puts the other on a line
+underneath: its application, its track, and a play button of its own, so
+the second can be stopped without the first leaving the page. Clicking the line puts that player in the lead; folding
+the notch forgets the choice, so the next time it opens on what is playing.
 
-The stay awake tile is an idle inhibitor, and the whole tile is its switch:
-pressed, its disc lights, the line under it says "On", and the notch holds a
-wayland inhibitor on its window, so hypridle neither locks the screen nor
-turns it off; pressed again, the idle daemon is left to its timeouts. A
-screen reader hears it as something checked or not, rather than as a
-button.
+The four marks say nothing but their names while all is well, so the row
+reads the same every time the notch opens. The network mark is named for
+the link it is on — Ethernet, Wi-Fi — and says "No address" or
+"Offline" in the red in place of its name when that is what is going on.
+The system mark's disc is a ring rather than a glyph — how busy the
+processor is, drawn in the ink the way the dials inside are — and from nine
+tenths up the ring turns red and the name gives way to the figure, "CPU
+94%", or to the memory's, "Memory 91%", if that is the one that is full.
+The bluetooth mark's disc carries the glyph of the device connected, if
+one is. A screen reader hears the rest — the device and its battery, the
+address, the two figures — as the mark's description.
 
-The session marks at the foot of the page put the machine down: four discs
-in a row, each with its name under it, all through logind, so a press does
-whatever the session is set up to do — lock is `loginctl lock-session`,
-which hypridle answers with hyprlock, and sleep is `systemctl suspend`, which
-it locks ahead of. Restart and shut down are pressed twice: the first press
-turns the disc red and swaps its name for a question — "Restart?", "Shut
-down?" — a second one within a few seconds is the answer, and pressing
-anything else, or waiting, lets it go. The notch folds before any of them
-runs.
+The stay awake mark is an idle inhibitor, and the whole mark is its switch:
+pressed, its disc lights and the notch holds a wayland inhibitor on its
+window, so hypridle neither locks the screen nor turns it off; pressed
+again, the idle daemon is left to its timeouts. A screen reader hears it as
+something checked or not, rather than as a button.
 
-Three of the tiles are doors, and so are the bell and the head of the sound
-section; each leads to exactly one panel:
+The power mark at the end of the head folds the notch and brings out the
+power pane on the same monitor — see [The ways out](#the-ways-out).
+
+Three of the marks are doors, and so are the bell and the sound settings
+at the foot of the outputs; each leads to exactly one panel:
 
 - **Notifications** — what has come in and not been dealt with, newest at
   the top, the way a laptop's notification centre keeps it. A toast that
@@ -185,8 +218,9 @@ section; each leads to exactly one panel:
   connected; a device still making up its mind spins instead and takes no
   clicks until it has finished. The line under each name says what is
   happening to it, or failing that what it is. The field at the top narrows
-  the list down, and the list grows the notch until it is half the height of
-  the screen and scrolls from there. The header toggles the adapter, and
+  the list down, and the list grows the notch as the page comes in, until
+  it is half the height of the screen, and scrolls from there; a device
+  found while the page is open scrolls rather than growing it. The header toggles the adapter, and
   spins with "Scanning" beside it while it looks for devices; a machine with
   no adapter has nothing to toggle, and the page says so.
 - **Network** — one row per interface `ip` reports as up, titled by what it
@@ -211,7 +245,7 @@ so it is told by its shape as well as its colour.
 
 ## Spotlight
 
-The one thing the shell opens from a keybind rather than from the notch:
+Opened from a keybind rather than from the notch:
 `shell ipc call spotlight toggle` brings it out on the focused monitor, or
 puts it away again if it is already out there. It is drawn after the one on
 a mac: two pieces of glass floating a little above the middle of the screen,
@@ -229,8 +263,8 @@ name — "Web Browser", or failing that "Application"; then the rest of the
 and workspace at the far end of its row; then the *Notch*, its own pages —
 Sound, Bluetooth, Network, System and Notifications — which open there; then
 the *Actions*: the clipboard history, and the two ways out of the session
-that are safe to press once, lock and sleep. Restart and shut down want
-their second press and stay on the notch's home page where they get it.
+that are safe to press once, lock and sleep. Restart and shut down are left
+to the power pane, which is there to be sure of them.
 `shell ipc call spotlight search <text>` brings it out with the text already
 typed.
 
@@ -289,7 +323,7 @@ to the rest of the config.
 
 Spotlight is frosted glass on a mac, and so is everything here that floats
 over the windows rather than hanging from the edge: Spotlight's two pieces,
-the volume reading and the password pane. They follow the
+the volume reading, the password pane and the power pane. They follow the
 palette, light in a light session, and their ground is near opaque —
 `glassOpacity`, 0.94 by default — so they read over anything. It goes no
 lower than 0.92, and a lower setting is raised to that: every caption on the
@@ -359,6 +393,37 @@ As with Spotlight, a blur rule on its layer frosts the desktop behind it:
 hl.layer_rule({ name = "polkit-blur", match = { namespace = "^shell-polkit$" }, blur = true, ignore_alpha = 0.5 })
 ```
 
+## The ways out
+
+Lock, sleep, restart and shut down have a pane of their own, the way the
+power key on a mac brings one up: the power mark on the notch's home page
+brings it out on that monitor, and `shell ipc call power open` on the
+focused one, for a keybind. It is the password pane's glass, a little above
+the middle of the screen, a little wider: the power mark at its head, "Shut
+down this computer now?" under it, then the four ways out side by side, a
+disc each with its name under it, and Cancel across the foot. The pane is
+the confirmation, so every one of them acts on a single press — no second
+press, no question in red — and nothing that ends the session is ever a
+stray click away on the home page.
+
+All four go through logind, so a press does whatever the session is set up
+to do: lock is `loginctl lock-session`, which hypridle answers with
+hyprlock, sleep is `systemctl suspend`, which it locks ahead of, and restart
+and shut down are `systemctl reboot` and `systemctl poweroff`. The pane is
+put away before any of them runs.
+
+Escape, Cancel, or a click anywhere off the pane puts it away with nothing
+done. While it is out it has the keyboard: Tab walks the four and Cancel,
+the arrows step along the four, and space or Return presses whichever the
+keyboard is on. Nothing is pressed for Return by default, so a Return meant
+for something else never ends the session. Spotlight closes and every notch
+folds as it comes out, and it does not come out while a password is being
+asked for — a password request arriving puts it away.
+
+```lua
+hl.layer_rule({ name = "power-blur", match = { namespace = "^shell-power$" }, blur = true, ignore_alpha = 0.5 })
+```
+
 ## From the keyboard
 
 The shell answers `qs ipc`, so any of it can be put on a hyprland bind:
@@ -372,6 +437,7 @@ qs -p ~/dev/shell/src ipc call notch dismiss        # put away the newest notifi
 qs -p ~/dev/shell/src ipc call spotlight toggle     # spotlight, on the focused monitor
 qs -p ~/dev/shell/src ipc call spotlight search x   # ...with x already typed into it
 qs -p ~/dev/shell/src ipc call spotlight clipboard  # ...on the clipboard history
+qs -p ~/dev/shell/src ipc call power open           # the power pane, on the focused monitor
 qs -p ~/dev/shell/src ipc call bluetooth connect WH-1000XM4   # by address, name or a part of the name only it has
 qs -p ~/dev/shell/src ipc call bluetooth disconnect WH-1000XM4
 ```
@@ -383,10 +449,11 @@ notch.
 
 Once it is open, the notch is the keyboard's. Tab walks everything on the
 page that can be pressed — the dots, the bell, the transport, the bars, the
-tiles, the rows of a list — and draws a ring in the accent around wherever
+marks, the rows of a list — and draws a ring in the accent around wherever
 it is; space or return presses it, the arrow keys move a bar and M mutes it,
-and escape steps back out, one page at a time. The ring is only drawn while
-the keyboard is what is being used: reach for the pointer and it goes.
+and escape steps back out: the list of outputs on the home page first,
+then one page at a time. The ring is only drawn while the keyboard is what is being
+used: reach for the pointer and it goes.
 
 Spotlight keeps the keys in its field. The arrows step through the list and
 Return opens what the step is on; escape clears the field, then leaves the
@@ -543,31 +610,28 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   and along its bottom, so it keeps its edge over a window as dark as it is;
   the line comes in with the unfold, so the pill stays plain hardware.
   Everything that floats over the windows — a toast, the volume reading,
-  Spotlight, the password pane — is glass: the pane's ground laid at
-  `glassOpacity` and never below the 0.92 its inks are measured at, a
-  hairline of the ink drawn over its edge, the way the rim of a sheet of
-  glass catches the light, and the same one soft shadow. Nothing on either
-  casts any. On both, a page, not a stack of boxes: content sits directly on
+  Spotlight, the password pane, the power pane — is glass: the pane's
+  ground laid at `glassOpacity` and never below the 0.92 its inks are
+  measured at, a hairline of the ink drawn over its edge, the way the rim of
+  a sheet of glass catches the light, and the same one soft shadow. Nothing
+  on either casts any. On both, a page, not a stack of boxes: content sits directly on
   the sheet and is told apart by the air around it; nothing has a ground of
   its own until the pointer, or the keyboard, finds it, except a disc, a
   switch, a bar, a field and a button, which are raised because they are the
-  things you set. The tiles on the home page are the exception the way a
-  control centre's blocks are: modules, each on a ground of its own. The one
-  line the surface draws is the hairline between two rows of a list or two
-  sections of a page.
+  things you set. The one line the surface draws is the hairline between two
+  rows of a list or two sections of a page.
 - **Type.** One family, on the steps a mac sets its own text in: small at
   11 for metadata and figures (its subheadline), body at 13 for everything
   read and every control with a word on it (its body), title at 15 for the
   name of a page and the clock on the pill (title 3), 22 for what is typed
-  into Spotlight's field (title 1), and display at 28 for the clock at the
-  head of the page, a little over its large title. Small sits far enough
+  into Spotlight's field (title 1), and display at 28 for the answer to a
+  sum in Spotlight, a little over its large title. Small sits far enough
   under body that size carries some of the hierarchy; weight and ink carry
   the rest — regular for what is read, medium for names and the words on
-  buttons, demibold for headings, titles and the large clock, and bold only
-  for what the password pane is asking. The mono is there for the nerd font
-  glyphs alone, and no glyph stands on its own: each sits beside a name or
-  on a button that says in words what it does, which is read out and put up
-  as a tooltip once the pointer has rested on it. Anything that ticks is set
+  buttons, demibold for headings and titles, and bold only for what the
+  password pane is asking. The mono is there for the nerd font glyphs alone,
+  and no glyph stands on its own: each sits beside a name or on a button
+  that says in words what it does, which is read out and put up as a tooltip once the pointer has rested on it. Anything that ticks is set
   with tabular figures, so a clock turning over does not reflow the row it
   is in. `displayFamily` is the optical size the clock and the titles are
   cut at, and defaults to Inter's display cut when the session is set in
@@ -586,7 +650,7 @@ Directories are importable as `qs.<name>`, so `import qs.theme` gets you
   less the inset it sits at, and the password pane's is its capsules' a page
   margin out; the slab's goes from the hardware notch's to the island's as
   it unfolds. Anything you press or type into is a capsule or a circle — a
-  tile, a button, a field, a switch, a disc. Nothing outside `Theme.qml`
+  button, a field, a switch, a disc. Nothing outside `Theme.qml`
   names a colour, a size or a duration.
 - **Keyboard.** Everything that can be pressed can be tabbed to, and says
   what it is to a screen reader. The focus ring is drawn in the accent, just

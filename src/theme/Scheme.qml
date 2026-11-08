@@ -10,7 +10,7 @@ import QtQuick
 // Twelve steps from the ground to the ink:
 //
 //   0      the ground behind everything: the ink on a filled control
-//   1..3   a module, and the washes a row shows under the pointer
+//   1..3   the washes a row shows under the pointer
 //   4..6   the ground under a disc, an empty track, and their hover
 //   7      a workspace that exists but is not here
 //   8      disabled ink, the last tier that still passes as large text
@@ -69,13 +69,6 @@ QtObject {
     readonly property color edge: Qt.rgba(root.ink.r, root.ink.g, root.ink.b, root.contrastUp ? 0.32 : (Paint.luminance(root.ground) > 0.5 ? 0.10 : 0.14))
     // the line round the open sheet that tells it from what it opens over
     readonly property color keyLine: root.neutral[root.contrastUp ? 6 : 3]
-
-    // A module: a tile on the home page, standing on a ground of its own the
-    // way the blocks of a control centre do, and the two steps it takes
-    // under the pointer.
-    readonly property color module: root.wash(1)
-    readonly property color moduleHover: root.wash(2)
-    readonly property color modulePress: root.wash(3)
 
     // a row has no ground until the pointer finds it
     readonly property color rowHover: root.wash(2)

@@ -89,4 +89,13 @@ ColumnLayout {
             }
         }
     }
+
+    // the sheet is the same height whatever is on it; what this page does
+    // not fill is left at its foot, rather than spread between its sections;
+    // and it takes no gap of its own, so a page that does fill the sheet is
+    // not pushed past it by one
+    Item {
+        Layout.fillHeight: true
+        Layout.topMargin: -root.spacing
+    }
 }

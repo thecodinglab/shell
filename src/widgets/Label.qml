@@ -4,7 +4,7 @@ import qs.theme
 
 // A name, and the line under it: what a thing is, and how it is doing.
 //
-// The one arrangement of type every row and tile on the surface is built
+// The one arrangement of type every row on the surface is built
 // around, so a device, a link and the head of a section all read the same
 // way down the page. The line is there only when there is something to say
 // on it.

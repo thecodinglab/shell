@@ -87,17 +87,33 @@ ColumnLayout {
 
     // no spinner of its own while it is looking: the one in the header is
     // already turning
-    Empty {
+    // the room under the header, with what there is to say in the middle
+    // of it: as much as it takes to say it, and any more the page has
+    Item {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        implicitHeight: empty.implicitHeight
+
         visible: root.matches.length === 0
 
-        text: {
-            if (!Bt.available)
-                return "No Bluetooth adapter";
-            if (!Bt.enabled)
-                return "Bluetooth is off";
-            if (Bt.devices.length === 0)
-                return Bt.discovering ? "Looking for devices" : "No devices yet";
-            return `Nothing called “${search.text.trim()}”`;
+        Empty {
+            id: empty
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+
+            centred: true
+
+            text: {
+                if (!Bt.available)
+                    return "No Bluetooth adapter";
+                if (!Bt.enabled)
+                    return "Bluetooth is off";
+                if (Bt.devices.length === 0)
+                    return Bt.discovering ? "Looking for devices" : "No devices yet";
+                return `Nothing called “${search.text.trim()}”`;
+            }
         }
     }
 
@@ -110,10 +126,10 @@ ColumnLayout {
 
         visible: root.matches.length > 0
 
-        // what is left once the panel has had its half of the screen:
-        // everything above the list is a fixed height, so the list gets the
-        // rest and scrolls once it runs out
-        maxHeight: Math.max(Theme.listMinHeight, root.notch.bodyMaxHeight - header.height - search.height - root.spacing * 2)
+        // the rest of the room under the field, scrolling once it runs out;
+        // and any room left over, should rows go while the page is open
+        Layout.fillHeight: true
+        maxHeight: Math.max(Theme.listMinHeight, root.notch.pageRoom - header.height - search.height - root.spacing * 2)
 
         values: root.matches
 

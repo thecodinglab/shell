@@ -120,7 +120,7 @@ Singleton {
     // text in: small for metadata and figures (its subheadline, 11), body
     // for everything read and every control with a word on it (its body,
     // 13), title for the name of a page and the clock on the pill (title
-    // three, 15), display for the clock at the head of the page. Small sits
+    // three, 15), display for the answer to a sum in Spotlight. Small sits
     // far enough under body that size carries some of the hierarchy, not
     // the ink alone.
     readonly property int fontSmall: root.px(11)
@@ -224,9 +224,10 @@ Singleton {
     // enough to keep one on through its exit — see `Notch.toasts` — and the
     // window is masked down to what is in it, so being generous costs nothing.
     readonly property int windowHeight: root.px(640)
-    // A list grows the sheet until the notch would be taller than half the
-    // screen — see `Notch.bodyMaxHeight` — and scrolls from there. This is the
-    // floor under that: a list you cannot see two rows of is not a list.
+    // A list grows the sheet as its page comes in, until the notch would be
+    // taller than half the screen — see `Notch.pageRoom` — and scrolls from
+    // there. This is the floor under that: a list you cannot see two rows of
+    // is not a list.
     readonly property int listMinHeight: root.px(120)
 
     // ── spotlight ─────────────────────────────────────────────────────────
@@ -261,8 +262,8 @@ Singleton {
 
     // ── controls ──────────────────────────────────────────────────────────
 
-    // the disc an icon sits in: on a row, on a tile, and under a session
-    // mark at the foot of the page
+    // the disc an icon sits in: on a row, and large over the name of each of
+    // the four marks at the foot of the home page
     readonly property int discSizeSmall: root.px(28)
     readonly property int discSize: root.space8
     readonly property int discSizeLarge: root.px(36)
@@ -309,13 +310,19 @@ Singleton {
     readonly property int scrollThickness: root.px(3)
     readonly property int scrollGutter: root.space3
 
+    // A pop-up menu floating over the page: as wide as a device's name
+    // needs, and its rows inset from its edge by this much, so their hover
+    // grounds sit inside its corners rather than against them.
+    readonly property int menuWidth: root.px(240)
+    readonly property int menuInset: root.space1
+
     // the ring that turns while a device is making up its mind
     readonly property int spinnerSize: root.space4
     readonly property int spinnerThickness: root.px(2)
 
     // A dial: the outside diameter of the ring, the width of the band it is
     // drawn with, and the room it is given around it. Large, one to a row in
-    // the system page; and tiny, the ring inside the system tile's disc.
+    // the system page; and tiny, the ring inside the system mark's disc.
     readonly property int gaugeSize: root.px(64)
     readonly property int gaugeThickness: root.px(4)
     readonly property int gaugePadding: root.space1
@@ -389,6 +396,15 @@ Singleton {
     // How hard a wrong answer knocks the pane sideways, in pixels a second:
     // it swings out and springs back, the way a login window shakes its head.
     readonly property int polkitShake: root.px(720)
+
+    // ── the ways out ──────────────────────────────────────────────────────
+
+    // The power pane: the password pane's glass, its place on the screen,
+    // its corners and the way it comes and goes, at the width of four
+    // choices side by side rather than of a question...
+    readonly property int powerWidth: root.px(360)
+    // ...and each choice a disc large enough to be the target on its own
+    readonly property int powerDiscSize: root.px(48)
 
     // ── privacy ───────────────────────────────────────────────────────────
 

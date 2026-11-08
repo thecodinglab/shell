@@ -12,6 +12,9 @@ RowLayout {
 
     property string text: ""
     property bool busy: false
+    // in the middle of the room it is given rather than at its head: the
+    // whole of a page that has nothing else to show
+    property bool centred: false
 
     Layout.fillWidth: true
     Layout.topMargin: Theme.space1
@@ -32,6 +35,7 @@ RowLayout {
         text: root.text
         color: root.scheme.textDim
 
+        horizontalAlignment: root.centred ? Text.AlignHCenter : Text.AlignLeft
         wrapMode: Text.Wrap
     }
 }

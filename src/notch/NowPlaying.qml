@@ -8,7 +8,8 @@ import qs.util
 import qs.widgets
 
 // One mpris player: its cover, what it is playing, and the transport,
-// straight on the sheet.
+// straight on the sheet. The home page shows one of these, for whichever
+// player leads, and a line for each of the others.
 //
 // The cover and the name of the track are the section; the transport sits
 // beside them, and the scrubber runs the whole width underneath with the
@@ -103,7 +104,9 @@ ColumnLayout {
 
                 visible: text !== ""
 
-                text: [root.player.trackArtist, root.player.trackAlbum].filter(part => part).join(" — ")
+                // the artist alone: the album is a third thing to read on a
+                // line that only needs to say whose it is
+                text: root.player.trackArtist
                 color: Theme.bezel.textMuted
             }
 

@@ -42,10 +42,26 @@ ColumnLayout {
         }
     }
 
-    Empty {
+    // the room under the header, with what there is to say in the middle
+    // of it: as much as it takes to say it, and any more the page has
+    Item {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        implicitHeight: empty.implicitHeight
+
         visible: Notifs.count === 0
 
-        text: "No notifications"
+        Empty {
+            id: empty
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+
+            centred: true
+
+            text: "No notifications"
+        }
     }
 
     ScrollList {
@@ -57,10 +73,10 @@ ColumnLayout {
 
         visible: Notifs.count > 0
 
-        // what is left once the panel has had its half of the screen: the
-        // header is a fixed height, so the list gets the rest and scrolls
-        // once it runs out
-        maxHeight: Math.max(Theme.listMinHeight, root.notch.bodyMaxHeight - header.height - root.spacing)
+        // the rest of the room under the header, scrolling once it runs out;
+        // and any room left over, should rows go while the page is open
+        Layout.fillHeight: true
+        maxHeight: Math.max(Theme.listMinHeight, root.notch.pageRoom - header.height - root.spacing)
 
         values: Notifs.kept
 

@@ -8,6 +8,7 @@ import qs.services
 import qs.notch
 import qs.spotlight
 import qs.polkit
+import qs.power
 
 ShellRoot {
     id: root
@@ -18,14 +19,20 @@ ShellRoot {
         model: Quickshell.screens
 
         // a notch unfolding, however it was asked to, takes the keyboard, and
-        // Spotlight goes so the two never both want it
+        // Spotlight and the power pane go so no two ever both want it
         Notch {
             id: notch
 
             onExpandedChanged: {
-                if (notch.expanded)
-                    root.closeSpotlights();
+                if (!notch.expanded)
+                    return;
+                root.closeSpotlights();
+                power.open = false;
             }
+
+            // the power mark on its home page, which brings the pane out on
+            // this monitor rather than the focused one
+            onPowerRequested: root.showPower(notch.modelData)
         }
     }
 
@@ -67,6 +74,7 @@ ShellRoot {
         if (root.authenticating)
             return null;
 
+        power.open = false;
         const notch = root.focused();
         const spotlight = notch ? spotlights.instances.find(s => s.modelData === notch.modelData) : null;
         for (const other of spotlights.instances)
@@ -100,9 +108,46 @@ ShellRoot {
         focusedScreen: root.focused()?.modelData ?? null
 
         onOpened: {
+            power.open = false;
             root.closeSpotlights();
             for (const notch of notches.instances)
                 notch.expanded = false;
+        }
+    }
+
+    // ── the ways out ──────────────────────────────────────────────────────
+    //
+    // The power pane, one for the whole shell, out on the monitor it was
+    // asked for on. It takes the keyboard, so Spotlight closes and every
+    // notch folds as it comes; and like everything else it stays put while
+    // a password is being asked for.
+    PowerDialog {
+        id: power
+    }
+
+    function showPower(screen: var): void {
+        if (root.authenticating || !screen)
+            return;
+
+        root.closeSpotlights();
+        for (const notch of notches.instances)
+            notch.expanded = false;
+        power.show(screen);
+    }
+
+    // ...and from the command line, for a keybind the way a mac's power key
+    // brings it up:
+    //
+    //     qs -p ~/dev/shell/src ipc call power open
+    IpcHandler {
+        target: "power"
+
+        function open(): void {
+            root.showPower(root.focused()?.modelData ?? null);
+        }
+
+        function close(): void {
+            power.open = false;
         }
     }
 

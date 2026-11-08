@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import qs.theme
 import qs.util
 
-// A row in a list, or a tile on the home page: something you can press, laid
+// A row in a list, or a mark on the home page: something you can press, laid
 // out left to right.
 //
 // It has no ground until the pointer finds it, so a list is a column of names
@@ -30,9 +30,6 @@ Rectangle {
     property bool held: false
     // the row a field above the list has stepped to: what Return will press
     property bool selected: false
-    // A module rather than a row: it stands on a ground of its own, the way
-    // the blocks of a control centre do, which the pointer only lightens.
-    property bool raised: false
     property Scheme scheme: Theme.schemeOf(root)
 
     // the row is lit, whichever of the three lit it
@@ -54,8 +51,6 @@ Rectangle {
     color: {
         if (!root.interactive)
             return "transparent";
-        if (root.raised)
-            return mouse.pressed ? root.scheme.modulePress : root.hovered ? root.scheme.moduleHover : root.scheme.module;
         if (mouse.pressed)
             return root.scheme.rowPress;
         if (root.hovered)

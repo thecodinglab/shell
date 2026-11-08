@@ -9,11 +9,12 @@ import qs.widgets
 // What the dot on the pill is about: the microphone, the camera and the
 // screen, whichever of them is in use, and which applications are using it.
 //
-// A line each, laid out the way a tile is but without its ground, because
-// there is nothing here to press: the disc, lit, since the thing behind it is
-// in use, the same as a tile's; what it is; and under that who has it. It is
-// only on the page while something is in use, and then it is the first thing
-// under the clock, where the eye lands coming down from the pill.
+// A line each, laid out the way a row of a list is but with no ground under
+// the pointer, because there is nothing here to press: the disc, lit, since
+// the thing behind it is in use, the same as the marks further down; what it
+// is; and under that who has it. It is only on the page while something is
+// in use, and then it is the first thing under the clock, where the eye lands
+// coming down from the pill.
 ColumnLayout {
     id: root
 

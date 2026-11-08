@@ -1,12 +1,14 @@
 import QtQuick
 import qs.theme
 
-// A glyph in a disc: the mark at the head of a tile or a row.
+// A glyph in a disc: the mark at the head of a row, or over the name of one
+// of the marks on the home page.
 //
 // The disc is the state. Lit in the accent it says the thing behind it is
 // on — a device connected, a link carrying an address — and in the plain
 // ground it says the thing is there but idle. `danger` is the third state,
-// for a mark waiting on a second press that will end the session. The glyph
+// for something urgent, or waiting on a second press that cannot be
+// taken back. The glyph
 // inside only says what the thing is, so a row of discs reads as a row of
 // switches before it reads as a row of icons.
 Rectangle {

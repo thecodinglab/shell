@@ -34,6 +34,10 @@ PanelWindow {
 
     required property var modelData
 
+    // the power mark on the home page was pressed, for the shell root to
+    // bring the power pane out on this monitor
+    signal powerRequested
+
     // Out of the top edge, but still folded up: the pill.
     property bool revealed: false
     property bool expanded: false
@@ -66,20 +70,85 @@ PanelWindow {
     // so a pointer crossing the top edge does not flick it in and out.
     readonly property bool wanted: hot.hovered || hover.hovered || root.expanded || root.held
 
-    // How tall a panel may make itself: enough for the unfolded notch to
-    // cover half the screen, and no more. A panel with a list in it grows the
-    // slab until it reaches this and scrolls from there, so how much of the
-    // desktop the notch is willing to take is a property of the screen it is
-    // on rather than a number picked in the theme.
+    // How tall a page may make itself: enough for the unfolded notch to
+    // cover half the screen, and no more, so how much of the desktop the
+    // notch is willing to take is a property of the screen it is on rather
+    // than a number picked in the theme.
     readonly property int bodyMaxHeight: Math.round(root.modelData.height / 2) - Theme.pagePadding * 2
 
+    // How tall the page in front would have the sheet: as tall as it is, up
+    // to the most it may be.
+    readonly property int naturalHeight: Math.min((body.page.item as Item)?.implicitHeight ?? 0, root.bodyMaxHeight)
+
+    // The sheet takes its size from each page as the page comes in — as the
+    // notch opens, and stepping from one page to another — and then holds
+    // it for as long as that page is open. Nothing on the page moves the
+    // sheet under the pointer once it is there: a list filling up scrolls
+    // rather than growing it, a second player turning up scrolls the page,
+    // and something going leaves its room where it was.
+    //
+    // It is held once the page has had a moment to come in, so the sheet
+    // follows the page as it arrives and settles with it.
+    property bool holding: false
+    property int heldHeight: 0
+    readonly property int bodyHeight: root.holding ? root.heldHeight : root.naturalHeight
+    // The room a page has to fill: the height it is held at, or the most it
+    // may have while it is still coming in. A list sizes itself from this.
+    readonly property int pageRoom: root.holding ? root.heldHeight : root.bodyMaxHeight
+
+    // let go, and take the size again once the page is in
+    function settle(): void {
+        root.holding = false;
+        settling.restart();
+    }
+
+    Timer {
+        id: settling
+
+        interval: Theme.duration("windows")
+
+        onTriggered: {
+            if (!root.unfolded)
+                return;
+            root.heldHeight = root.naturalHeight;
+            root.holding = true;
+        }
+    }
+
+    // What floats over the page rather than being laid out on it — a pop-up
+    // menu, say — is put in here, over the open sheet and under the tooltip,
+    // so it neither moves the page nor is cut off by it.
+    readonly property Item overlay: overlayLayer
+
     // One step back out: a sub-panel returns to the home panel, and the home
-    // panel folds the notch up.
+    // panel folds whatever it has open in place, and then the notch.
     function dismiss(): void {
+        const home = body.page.item as HomePanel;
+        if (home && home.back())
+            return;
         if (root.pinned)
             root.panel = "home";
         else
             root.expanded = false;
+    }
+
+    // Scroll whatever `item` scrolls in — the page, or a menu floating over
+    // it — just far enough to show it, if that scrolls at all.
+    function reveal(item: Item): void {
+        if (!item)
+            return;
+
+        let view = null;
+        for (let p = item.parent; p && !view; p = p.parent)
+            view = p as Flickable;
+        if (!view || !view.interactive)
+            return;
+
+        const top = item.mapToItem(view.contentItem, 0, 0).y;
+        if (top < view.contentY)
+            view.contentY = top;
+        else if (top + item.height > view.contentY + view.height)
+            view.contentY = Math.min(top + item.height - view.height, view.contentHeight - view.height);
     }
 
     // Take the keyboard back from a panel that had borrowed it, so escape
@@ -112,6 +181,9 @@ PanelWindow {
         if (root.expanded) {
             // opened again on its way off the top edge: it is not folding any more
             root.folding = false;
+            // and whatever has changed on the page while it was put away,
+            // it is measured afresh
+            root.settle();
             keys.forceActiveFocus();
             // Unfolding in place from the pill, the page cascades in under
             // it, once the page it is opening on has been chosen — see
@@ -137,6 +209,7 @@ PanelWindow {
     function turn(): void {
         // a turn still under way is finished first, so two never share a page
         pageTurn.complete();
+        root.settle();
 
         const component = root.panels[root.panel] ?? homePanel;
         const leaving = body.page;
@@ -395,8 +468,8 @@ PanelWindow {
     // A bluetooth device connecting or disconnecting, announced the same
     // way and on the same monitor, see `showDevice`. It hangs under the
     // volume reading while that is out, following it as it comes and goes,
-    // and stays in while the notch is open, where the bluetooth tile and
-    // panel already say it.
+    // and stays in while the notch is open, where the bluetooth mark's
+    // disc and the panel already say it.
     Hail {
         id: hail
 
@@ -799,7 +872,7 @@ PanelWindow {
 
             leaf: "windows"
             enabled: root.revealed
-            to: root.unfolded ? body.height + Theme.pagePadding * 2 : Theme.collapsedHeight
+            to: root.unfolded ? root.bodyHeight + Theme.pagePadding * 2 : Theme.collapsedHeight
         }
 
         // Revealed it grows out of the top edge, so the top corners are
@@ -921,16 +994,17 @@ PanelWindow {
 
             // Two pages, so that the one being left can be seen going while
             // the one stepped to comes in — see `turn`. `front` is the one
-            // showing `panel`, and the sheet is as tall as it is.
+            // showing `panel`.
             property int front: 0
             readonly property Loader page: body.front === 0 ? first : second
+            readonly property Flickable view: body.front === 0 ? firstView : secondView
 
             // whole pixels, or the text on it shimmers as the slab grows
             x: Math.round((slab.width - width) / 2)
             y: Theme.pagePadding
 
             width: Theme.expandedWidth - Theme.pagePadding * 2
-            height: body.page.height
+            height: root.bodyHeight
 
             // ...and the page is the other half of that: it arrives once the
             // slab is a fifth of the way open, and is all there by two thirds,
@@ -942,26 +1016,95 @@ PanelWindow {
             // to be shown.
             visible: root.unfolded || opacity > 0
 
-            Loader {
-                id: first
+            // Each page in a view of its own, which scrolls only when the
+            // page is taller than the sheet. The view reaches out to the
+            // slab's sides, so a page sliding in or out is cut off where the
+            // sheet ends rather than at its margin; top and bottom it stops
+            // at the page, so what scrolls goes under a margin of the sheet.
+            // A page is never shorter than the view: what it does with the
+            // room it has over is up to it.
+            Flickable {
+                id: firstView
 
-                // how far to the side it is on its way in or out, put on
-                // whole pixels so the text on it holds still
-                property real shift: 0
+                x: -Theme.pagePadding
+                width: parent.width + Theme.pagePadding * 2
+                height: parent.height
 
-                x: Math.round(shift)
-                width: parent.width
+                clip: true
+                contentWidth: width
+                contentHeight: first.height
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
 
-                sourceComponent: homePanel
+                Loader {
+                    id: first
+
+                    // how far to the side it is on its way in or out, put on
+                    // whole pixels so the text on it holds still
+                    property real shift: 0
+
+                    x: Theme.pagePadding + Math.round(shift)
+                    width: body.width
+                    height: Math.max((first.item as Item)?.implicitHeight ?? 0, firstView.height)
+
+                    sourceComponent: homePanel
+
+                    // every page starts at its top
+                    onLoaded: firstView.contentY = 0
+                }
             }
 
-            Loader {
-                id: second
+            Flickable {
+                id: secondView
 
-                property real shift: 0
+                x: -Theme.pagePadding
+                width: parent.width + Theme.pagePadding * 2
+                height: parent.height
 
-                x: Math.round(shift)
-                width: parent.width
+                clip: true
+                contentWidth: width
+                contentHeight: second.height
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+
+                Loader {
+                    id: second
+
+                    property real shift: 0
+
+                    x: Theme.pagePadding + Math.round(shift)
+                    width: body.width
+                    height: Math.max((second.item as Item)?.implicitHeight ?? 0, secondView.height)
+
+                    onLoaded: secondView.contentY = 0
+                }
+            }
+
+            // How far down a page that scrolls is, in the margin beside it:
+            // a band for what is in view, there only while there is more
+            // than fits. It is not to be grabbed; the wheel moves the page.
+            Rectangle {
+                x: body.width + Math.round((Theme.pagePadding - width) / 2)
+                y: Math.round(body.view.visibleArea.yPosition * body.height)
+
+                visible: body.view.interactive
+
+                width: Theme.scrollThickness
+                height: Math.round(body.view.visibleArea.heightRatio * body.height)
+
+                radius: width / 2
+                color: Theme.bezel.track
+            }
+
+            // Whatever the keyboard reaches on a page that scrolls, or in a
+            // menu that does, is brought into view, the way a list brings in
+            // the row it is on.
+            Connections {
+                target: body.Window
+
+                function onActiveFocusItemChanged(): void {
+                    root.reveal(body.Window.activeFocusItem);
+                }
             }
         }
 
@@ -1025,6 +1168,15 @@ PanelWindow {
                 from: 0
                 to: 1
             }
+        }
+
+        // what floats over the page — see `overlay`
+        Item {
+            id: overlayLayer
+
+            anchors.fill: parent
+
+            visible: body.visible
         }
 
         // the one tooltip, over everything on the page

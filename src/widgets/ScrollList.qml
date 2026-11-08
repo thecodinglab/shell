@@ -3,8 +3,11 @@ import Quickshell
 import qs.theme
 import qs.util
 
-// A list that grows the panel it is in until the notch would be half the
-// screen tall, and scrolls from there, with a bar beside it once it does.
+// A list that is as tall as its rows, up to `maxHeight`, and scrolls from
+// there, with a bar beside it once it does. The page it is on works the most
+// out from the room the sheet has: as the page comes in, enough for the
+// notch to be half the screen; once it is in, the height the sheet is held
+// at, so rows arriving after that scroll rather than growing it.
 //
 // The rows are diffed against what is already there — one arriving or
 // leaving touches only itself, and one updated in place is the same row with

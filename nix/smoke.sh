@@ -148,6 +148,8 @@ steps=(
     "notch open resources"
     "notch open home"
     "notch close"
+    "power open"
+    "power close"
     "notch peek"
     "spotlight search a"
     "spotlight search 2^10"

@@ -6,8 +6,8 @@ import Quickshell.Services.Mpris
 
 // Every player that can be controlled, whatever is playing first.
 //
-// The notch shows all of them stacked rather than picking one, so a paused
-// video does not disappear the moment music starts somewhere else.
+// The notch leads with the first of them and lists the rest under it, so a
+// paused video does not disappear the moment music starts somewhere else.
 //
 // A player that cannot be started or stopped is left out entirely: an
 // application that registered an mpris name and then went quiet is a card of

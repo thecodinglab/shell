@@ -28,7 +28,7 @@ Singleton {
         return root.label(a).localeCompare(root.label(b));
     })
 
-    // what the home tile shows, and what its icon is drawn from
+    // what the bluetooth mark on the home page draws its icon from
     readonly property BluetoothDevice primary: root.devices.find(d => d.connected) ?? null
 
     // ── what a device is in the middle of ─────────────────────────────────
