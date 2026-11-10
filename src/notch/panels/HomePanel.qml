@@ -136,6 +136,8 @@ ColumnLayout {
 
         // the bell, with the count of what is waiting on its shoulder
         Item {
+            id: shoulder
+
             Layout.alignment: Qt.AlignVCenter
 
             implicitWidth: bell.implicitWidth
@@ -157,7 +159,10 @@ ColumnLayout {
             Badge {
                 anchors.top: parent.top
                 anchors.right: parent.right
-                anchors.topMargin: -Theme.space2
+                // up out of the bell, but no higher than the head: the page
+                // is cut off at its top, where the head is, so any further
+                // and the top of the count would be clipped away
+                anchors.topMargin: -Math.min(Theme.space2, shoulder.y)
                 anchors.rightMargin: -Theme.space2
 
                 count: Notifs.count
